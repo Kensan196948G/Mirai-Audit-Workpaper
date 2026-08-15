@@ -27,10 +27,13 @@
     "current_phase": "improvement",
     "stable": true,
     "verification": {
-      "link_check": "PASS (MD 68 / HTML 19)",
+      "link_check": "PASS (MD 76 / HTML 20)",
       "html_structure": "PASS (5 files)",
-      "git": "main branch, 3 logical commits (sources / policy / tooling)",
-      "next_action": "文書のGit管理を開始し、正式規程・権限・保存年限・採用製品を関係者承認後、PoCと受入試験へ進む"
+      "mermaid_blocks": "PASS (17/17)",
+      "secret_scan": "PASS (0 hits)",
+      "git": "main branch, 9 logical commits, working tree clean",
+      "tracked_files": 42,
+      "next_action": "正式規程・権限・保存年限・採用製品の関係者承認を取得し、PoCと受入試験（UAT-01〜10）へ進む。文書変更は変更履歴台帳（docs/変更履歴.md）とリンク検証（scripts/check-links.py）を経てmainへマージ"
     }
   },
   "priority": {
@@ -39,13 +42,15 @@
   "learning": {
     "failure_patterns": [
       "GitリポジトリとCIが存在しないため、ソフトウェアの実装・試験・CI状態は検証できない（→ 文書プロジェクトのため、リンク検証スクリプトをCI相当として整備）",
-      "原典資料への相対リンクがワークスペース外を指し破損していた（→ リポジトリ直下へ複製して解決）"
+      "原典資料への相対リンクがワークスペース外を指し破損していた（→ リポジトリ直下へ複製して解決）",
+      "初期コミットで docs/ と要件定義書.html の追跡が漏れていた（→ 全42ファイルの追跡を最終検証で確認）"
     ],
     "success_patterns": [
       "実装済み、要件、将来構想、人が行う判断を分離する",
       "ローカルリンク、UTF-8、HTML構造、デスクトップ・モバイル表示を横断検証する",
       "監査役、監査役会、総務部、被監査部門ごとの入口と責任境界を示す",
-      "文書変更と判断を変更履歴台帳へ記録し、再開時の継続性を確保する"
+      "文書変更と判断を変更履歴台帳へ記録し、再開時の継続性を確保する",
+      "状態遷移・機能ID・UAT↔AC・用語・機密区分の文書間トレーサビリティを機械検証する"
     ]
   }
 }
