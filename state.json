@@ -29,7 +29,7 @@
     "verification": {
       "link_check": "PASS (MD 68 / HTML 19)",
       "html_structure": "PASS (5 files)",
-      "git": "main branch initialized, no commits yet",
+      "git": "main branch, 3 logical commits (sources / policy / tooling)",
       "next_action": "文書のGit管理を開始し、正式規程・権限・保存年限・採用製品を関係者承認後、PoCと受入試験へ進む"
     }
   },
