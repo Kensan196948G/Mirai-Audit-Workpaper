@@ -1,0 +1,28 @@
+# OS / エディタ
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+*.code-workspace
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 一時ファイル
+*.tmp
+*.bak
+*.orig
+
+# 秘密情報（万一混入した場合に追跡しない）
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials*
