@@ -1,0 +1,51 @@
+{
+  "project": {
+    "name": "Mirai-Audit-Workpaper",
+    "start_date": "2026-08-15",
+    "release_deadline": "2027-02-15",
+    "repo_started": "2026-08-16"
+  },
+  "phase": {
+    "current": "build",
+    "week": 1
+  },
+  "kpi": {
+    "ci_success_rate": 1.0,
+    "test_pass_rate": 1.0,
+    "review_blocker_count": 0,
+    "security_issue_count": 0,
+    "broken_link_count": 0
+  },
+  "execution": {
+    "max_duration_minutes": 300,
+    "loop_count": 1,
+    "max_loops": 3,
+    "ci_retry_limit": 5,
+    "same_error_limit": 2
+  },
+  "status": {
+    "current_phase": "improvement",
+    "stable": true,
+    "verification": {
+      "link_check": "PASS (MD 68 / HTML 19)",
+      "html_structure": "PASS (5 files)",
+      "git": "main branch initialized, no commits yet",
+      "next_action": "文書のGit管理を開始し、正式規程・権限・保存年限・採用製品を関係者承認後、PoCと受入試験へ進む"
+    }
+  },
+  "priority": {
+    "score": 0
+  },
+  "learning": {
+    "failure_patterns": [
+      "GitリポジトリとCIが存在しないため、ソフトウェアの実装・試験・CI状態は検証できない（→ 文書プロジェクトのため、リンク検証スクリプトをCI相当として整備）",
+      "原典資料への相対リンクがワークスペース外を指し破損していた（→ リポジトリ直下へ複製して解決）"
+    ],
+    "success_patterns": [
+      "実装済み、要件、将来構想、人が行う判断を分離する",
+      "ローカルリンク、UTF-8、HTML構造、デスクトップ・モバイル表示を横断検証する",
+      "監査役、監査役会、総務部、被監査部門ごとの入口と責任境界を示す",
+      "文書変更と判断を変更履歴台帳へ記録し、再開時の継続性を確保する"
+    ]
+  }
+}
