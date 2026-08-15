@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>経営・統治・委員会 システム化アイデア一覧</title>
+  <style>
+:root{color-scheme:light;--ink:#172033;--muted:#566176;--line:#d8dee9;--panel:#f6f8fb;--accent:#075985;--head:#0f3d56}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);background:#eef2f6;font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;line-height:1.75}
+.page{width:min(1480px,calc(100% - 32px));margin:24px auto 56px;padding:clamp(24px,4vw,56px);background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px rgba(15,61,86,.08)}
+.document-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 28px;padding:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.document-nav a{color:var(--accent);text-decoration:none;font-weight:700;padding:6px 10px;border-radius:7px}
+.document-nav a[aria-current="page"]{background:#e0f2fe}
+h1{color:var(--head);margin-top:0;padding-bottom:14px;border-bottom:3px solid var(--accent);font-size:clamp(1.65rem,3vw,2.35rem);line-height:1.35}
+h2{color:var(--head);margin-top:2.1em;padding-left:12px;border-left:5px solid var(--accent);font-size:1.45rem}
+p{max-width:105ch}
+.table-wrap{width:100%;margin:16px 0 28px;overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;min-width:1100px;border-collapse:collapse;background:#fff;font-size:.94rem}
+th,td{padding:12px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th:last-child,td:last-child{border-right:0}
+tr:last-child td{border-bottom:0}
+thead th{position:sticky;top:0;z-index:1;color:#fff;background:var(--head);white-space:nowrap}
+tbody tr:nth-child(even){background:#f9fbfd}
+tbody tr:hover{background:#eff8ff}
+code{padding:.12em .35em;background:#eef2f6;border-radius:4px}
+.source-note{margin-top:42px;padding-top:16px;color:var(--muted);border-top:1px solid var(--line);font-size:.86rem}
+@media(max-width:720px){.page{width:100%;margin:0;padding:20px 14px 40px;border:0;border-radius:0}table{font-size:.88rem}th,td{padding:10px}}
+@media print{body{background:#fff}.page{width:100%;margin:0;padding:0;border:0;box-shadow:none}.table-wrap{overflow:visible}thead{display:table-header-group}tr{break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <nav class="document-nav" aria-label="同一業務領域の資料">
+      <a href="システム化アイデア一覧.html" aria-current="page">システム化アイデア一覧</a>
+      <a href="業務内容一覧.html">業務内容一覧</a>
+      <a href="システム要件一覧.html">システム要件一覧</a>
+    </nav>
+    <h1>経営・統治・委員会 システム化アイデア一覧</h1>
+    <p>「業務内容一覧」を基に、<strong>DeskNetsNeo／AppSuite／OneDrive／DirectCloud</strong>を考慮したシステム化アイデアを10件選定しました。DeskNetsNeoは全社ポータル・通知・会議・アンケート、AppSuiteは受付・台帳・申請・承認・期限管理、OneDriveは草稿の共同編集・一時共有、DirectCloudは確定文書・証憑の正本保管として分担させています。</p>
+    <div class="table-wrap"><table>
+      <thead>
+        <tr><th>No.</th><th>システム名（日本語名）</th><th>システム名（英語名）</th><th>Gitレポジトリ名候補</th><th>対象部署名</th><th>詳細システム概要</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>取締役会運営・決議管理</td><td>Board Governance &amp; Resolution Management</td><td><code>mirai-board-governance</code></td><td>取締役会、監査役、総務部、コンプライアンス委員会</td><td>AppSuiteで議案受付・付議基準チェック・出欠・決議種別・宿題管理を行い、DeskNetsNeoのポータルで招集通知・会議資料配布・期限通知を実施します。OneDriveで会議資料の草稿を共同編集し、DirectCloudに確定版議事録・添付資料・電子署名済み書類の正本を保存します。決議後の担当・期限・証憑・再付議を追跡し、閲覧・出力・承認ログを監査可能にします。</td></tr>
+        <tr><td>2</td><td>監査業務・証跡管理</td><td>Audit Workpaper &amp; Evidence Management</td><td><code>mirai-audit-workpaper</code></td><td>監査役、監査役会、総務部、被監査部門（全社）</td><td>AppSuiteで監査計画・監査テーマ・手続・調書・指摘・改善期限を管理し、DeskNetsNeoで証憑依頼・ヒアリング予定・改善督促を通知します。OneDriveは監査人ごとの作業フォルダと共同編集に利用し、DirectCloudに確定調書・受領証憑・是正完了証憑の正本を保存します。監査対象部門と論理分離した権限、閲覧履歴、保存期間、リーガルホールドを備えます。</td></tr>
+        <tr><td>3</td><td>コンプライアンス・内部通報案件管理</td><td>Compliance &amp; Whistleblowing Case Management</td><td><code>mirai-compliance-cases</code></td><td>コンプライアンス委員会、監査役、総務部、リスク統括部</td><td>DeskNetsNeoのフォーム・アンケート機能で匿名通報を受付し、受付番号と双方向連絡手段を確保します。AppSuiteで案件登録・調査責任者・ヒアリング計画・是正期限・再発防止策を管理し、OneDriveは調査チームの作業用ドラフトに限定します。DirectCloudに通報内容・証拠・調査記録・委員会報告の正本を隔離保存し、通報者保護・最小権限・出力監査・リーガルホールドを必須とします。処分・法的評価は人が行います。</td></tr>
+        <tr><td>4</td><td>CSR・ESG実績管理</td><td>CSR &amp; ESG Performance Management</td><td><code>mirai-csr-esg</code></td><td>CSR委員会、総務部、安全品質環境本部、各支店・作業所</td><td>AppSuiteでGHG排出量・地域貢献・人権・教育等の部門別実績入力・検算・差戻し・承認ワークフローを構築します。DeskNetsNeoで収集依頼・未提出督促・委員会開催通知を行い、OneDriveで算定根拠や報告書の草稿を共同編集します。DirectCloudに証憑・算定根拠・確定集計表・外部提出版の正本を保存し、単位・対象期間・係数版・修正履歴を追跡します。</td></tr>
+        <tr><td>5</td><td>従業員エンゲージメント調査・改善管理</td><td>Employee Engagement Survey &amp; Improvement Tracker</td><td><code>mirai-engagement-survey</code></td><td>エンゲージメント委員会、人事部、全社員</td><td>DeskNetsNeoのアンケート機能で匿名性を確保した意識調査を実施し、回答者識別子と回答データを分離します。AppSuiteで課題から改善施策・責任者・期限・KPI・再調査結果までを管理し、OneDriveで集計レポート・経営回答の草稿を共同編集します。DirectCloudに匿名化済み集計データと確定フィードバックの正本を保存し、少人数集計の非表示・自由記述マスキング・再識別防止を実装します。</td></tr>
+        <tr><td>6</td><td>法令・規程遵守管理</td><td>Regulatory &amp; Policy Compliance Management</td><td><code>mirai-regulatory-compliance</code></td><td>コンプライアンス委員会、リスク統括部、総務部、全部門</td><td>AppSuiteで法令・社内規程・所管部門・対象業務・統制・点検頻度・是正状況を関連付けた台帳を構築します。DeskNetsNeoで法改正・規程改定の周知、教育受講案内、自己点検期限を通知し、OneDriveで規程草案や影響評価書を共同編集します。DirectCloudに承認済み規程・教育教材・点検結果の正本を保存し、受講履歴・例外承認・是正完了を監査します。</td></tr>
+        <tr><td>7</td><td>経営統合コックピット</td><td>Executive Management Cockpit</td><td><code>mirai-executive-cockpit</code></td><td>社長・執行役員、経営企画室、各本部</td><td>受注見込・施工進捗・実行予算・完成予測原価・資金・安全・要員・重大リスクを共通コードで集約し、KPIダッシュボードとドリルダウンを提供します。DeskNetsNeoで週次・月次ブリーフの配信と経営会議の日程管理を行い、OneDriveで報告原稿の共同編集を実施します。DirectCloudに役員向け確定資料と根拠データの正本を保存し、基準日・速報／確定区分・出所・更新監視を明示します。</td></tr>
+        <tr><td>8</td><td>重大事案指揮・危機対応管理</td><td>Major Incident Command &amp; Crisis Management</td><td><code>mirai-crisis-command</code></td><td>社長・執行役員、リスク統括部、総務部、DX推進部、各本部</td><td>AppSuiteで重大事故・不採算工事・訴訟・災害・サイバー事案の受付、重要度評価、時系列タスク、対策本部役割、エスカレーションを管理します。DeskNetsNeoで関係者の緊急招集・安否確認・進捗通知を行い、OneDriveで対策チームの作業資料を共同編集します。DirectCloudに証拠保全・対外報告版・復旧記録の正本を隔離保存し、機密区分別アクセスと事後検証を監査します。</td></tr>
+        <tr><td>9</td><td>役員・委員会資料ポータル</td><td>Board &amp; Committee Document Portal</td><td><code>mirai-board-portal</code></td><td>取締役会、各委員会、総務部、経営企画室</td><td>DeskNetsNeoのポータルを全社入口とし、会議ごとの議題・資料・出欠・議事録・関連規程・過去決議を一覧化します。AppSuiteで資料提出期限・レビュー状態・差戻し・承認を管理し、OneDriveで会議資料の草稿を役員・事務局が共同編集します。DirectCloudに確定資料・署名済み議事録・添付証憑の正本を保存し、役員・委員・事務局の最小権限と閲覧・出力履歴を保持します。</td></tr>
+        <tr><td>10</td><td>利益相反・決裁権限チェック</td><td>Conflict of Interest &amp; Approval Authority Check</td><td><code>mirai-conflict-approval</code></td><td>取締役会、コンプライアンス委員会、総務部、全役職者</td><td>AppSuiteで決裁権限マスター・付議基準・利益相反申告・案件別利害関係を管理し、付議前に権限者・定足数・利益相反の充足可否をチェックします。DeskNetsNeoで申告依頼・決裁通知・未申告の督促を行い、OneDriveで申告書や根拠資料の草稿を共同編集します。DirectCloudに確定申告書・決裁記録・承認証憑の正本を保存し、例外承認と監査ログを残します。</td></tr>
+      </tbody>
+    </table></div>
+    <p class="source-note">出典：01_経営・統治・委員会/業務内容一覧.md。正式な分掌・決裁権限・保存年限は社内規程で確定してください。</p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="経営・統治・委員会 システム要件一覧">
+  <title>経営・統治・委員会 システム要件一覧</title>
+  <style>
+:root {
+  color-scheme: light;
+  --ink: #172033;
+  --muted: #566176;
+  --line: #d8dee9;
+  --panel: #f6f8fb;
+  --accent: #075985;
+  --accent-soft: #e0f2fe;
+  --head: #0f3d56;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: #eef2f6;
+  font-family: "Yu Gothic UI", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  line-height: 1.75;
+}
+.page {
+  width: min(1480px, calc(100% - 32px));
+  margin: 24px auto 56px;
+  padding: clamp(24px, 4vw, 56px);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 12px 34px rgba(15, 61, 86, .08);
+}
+.document-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 28px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.document-nav a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 7px;
+}
+.document-nav a[aria-current="page"] { background: var(--accent-soft); }
+h1, h2, h3 { color: var(--head); line-height: 1.35; }
+h1 { margin-top: 0; padding-bottom: 14px; border-bottom: 3px solid var(--accent); font-size: clamp(1.65rem, 3vw, 2.35rem); }
+h2 { margin-top: 2.1em; padding-left: 12px; border-left: 5px solid var(--accent); font-size: 1.45rem; }
+h3 { margin-top: 1.8em; font-size: 1.15rem; }
+p, li { max-width: 105ch; }
+a { color: var(--accent); }
+.table-wrap { width: 100%; margin: 16px 0 28px; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+table { width: 100%; min-width: 860px; border-collapse: collapse; background: #fff; font-size: .94rem; }
+th, td { padding: 12px 14px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th:last-child, td:last-child { border-right: 0; }
+tr:last-child td { border-bottom: 0; }
+thead th { position: sticky; top: 0; z-index: 1; color: #fff; background: var(--head); white-space: nowrap; }
+tbody tr:nth-child(even) { background: #f9fbfd; }
+tbody tr:hover { background: #eff8ff; }
+code { padding: .12em .35em; background: #eef2f6; border-radius: 4px; }
+blockquote { margin-left: 0; padding: 8px 18px; color: var(--muted); border-left: 4px solid var(--line); background: var(--panel); }
+.source-note { margin-top: 42px; padding-top: 16px; color: var(--muted); border-top: 1px solid var(--line); font-size: .86rem; }
+@media (max-width: 720px) {
+  .page { width: 100%; margin: 0; padding: 20px 14px 40px; border: 0; border-radius: 0; }
+  table { font-size: .88rem; }
+  th, td { padding: 10px; }
+}
+@media print {
+  body { background: #fff; }
+  .page { width: 100%; margin: 0; padding: 0; border: 0; box-shadow: none; }
+  .document-nav { display: none; }
+  .table-wrap { overflow: visible; break-inside: auto; }
+  table { min-width: 0; font-size: 8.5pt; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+  <main class="page">
+    <nav class="document-nav" aria-label="同一業務領域の資料"><a href="システム化アイデア一覧.html">システム化アイデア一覧</a><a href="システム要件一覧.html" aria-current="page">システム要件一覧</a><a href="業務内容一覧.html">業務内容一覧</a></nav>
+    <h1 id="_1">経営・統治・委員会 システム要件一覧</h1>
+<h2 id="_2">設計方針</h2>
+<p>申請・台帳・通知は AppSuite／desknet's NEO、文書正本は SharePoint／DirectCloud、認証は Entra ID／HENNGE ONE、文書要約・検索は Lightblue を優先する。独自開発は経営データ統合、監査証跡、機密案件のアクセス隔離など既存基盤だけでは不足する領域に限定する。</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>対象業務</th>
+<th>システム名（日本語名）</th>
+<th>System Name（英語名）</th>
+<th>要件内容（詳細）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>取締役会の議案受付・審議・決議・履行監督</td>
+<td>取締役会運営・決議管理</td>
+<td>Board Governance &amp; Resolution Management</td>
+<td>AppSuite 等で議案受付、付議基準チェック、説明者・期限・関連規程・添付資料を管理する。会議単位の出欠、利益相反申告、閲覧制御、質疑、決議種別、決議条件、議事録、電子署名を保持する。決議後は担当・期限・証憑・進捗を追跡し、遅延を通知する。取締役会、監査役、事務局、説明部門で最小権限を分離し、閲覧・出力・承認を改ざん困難な監査ログへ記録する。AIは要約・論点候補・類似決議検索に限定し、決議を自動実行しない。</td>
+</tr>
+<tr>
+<td>社長・執行役員の全社戦略・業績レビュー</td>
+<td>経営統合コックピット</td>
+<td>Executive Management Cockpit</td>
+<td>受注見込、施工進捗、実行予算、完成予測原価、資金、安全・品質、要員、重大リスクを案件コード・工事コード・組織コードで統合する。データ出所、基準日、更新日時、速報・確定区分を明示し、閾値超過と前年差・計画差異をドリルダウンできるようにする。経営層・所管役員・部門責任者で閲覧範囲を制御し、個人情報・通報情報は表示しない。日次・週次ブリーフは根拠リンクと信頼度を添え、最終判断と指示は人が記録する。可用性、バックアップ、RPO・RTO、データ鮮度監視を定義する。</td>
+</tr>
+<tr>
+<td>重大事故・不採算・訴訟・災害等の対応</td>
+<td>重大事案指揮・危機対応管理</td>
+<td>Major Incident Command &amp; Crisis Management</td>
+<td>事案受付、重要度、影響範囲、初動、対策本部、役割、意思決定、外部連絡、復旧、再発防止を時系列で管理する。Safety、法務、広報、DX、施工等の関係者を事案種別に招集し、機密区分に応じて専用ワークスペースを作る。通知確認、承認、変更、証拠保全、対外公表版を監査可能にする。災害時にも利用できる冗長化、モバイル対応、オフライン連絡先の出力、定期訓練機能を備える。</td>
+</tr>
+<tr>
+<td>監査計画・調書・指摘・改善確認</td>
+<td>監査業務・証跡管理</td>
+<td>Audit Workpaper &amp; Evidence Management</td>
+<td>年度監査計画、監査テーマ、対象、手続、担当、日程を管理し、証憑依頼、受領、版、出所、閲覧履歴を記録する。調書テンプレート、サンプリング根拠、発見事項、重要度、監査意見、レビュー・承認を管理する。指摘ごとに改善責任者、期限、是正計画、完了証憑、再確認結果を追跡する。監査対象部門から論理的に分離した権限、保存期間、リーガルホールド、エクスポート制限、監査ログの追記専用化を要件とする。監査判断は人が行う。</td>
+</tr>
+<tr>
+<td>CSR方針・実績・外部開示</td>
+<td>CSR・ESG実績管理</td>
+<td>CSR &amp; ESG Performance Management</td>
+<td>KPI定義、算定式、単位、対象範囲、報告頻度、データ責任者をマスター化する。支店・作業所・部門から実績と証憑を収集し、自動検算、前期比較、異常値警告、差戻し、承認を行う。GHG・地域貢献・人権等の集計結果から開示表と報告書下書きを生成し、数値から証憑まで追跡可能にする。変更履歴、算定版、承認済み提出版を保存し、必要に応じ外部データ・会計・HSEQとAPI連携する。</td>
+</tr>
+<tr>
+<td>従業員意識調査・改善施策</td>
+<td>匿名エンゲージメント調査・改善管理</td>
+<td>Anonymous Engagement Survey &amp; Improvement Tracker</td>
+<td>desknet's NEO 等の既存アンケートを優先し、回答者識別子と回答データを分離する。少人数集計の非表示、自由記述の個人情報マスキング、閲覧者制限、再識別禁止を実装する。部署・職種・時系列の傾向を可視化し、課題から改善施策、責任者、期限、KPI、効果確認までを追跡する。AI分析は匿名集約した自由記述に限定し、個人の離職、性格、健康状態を推定・断定しない。</td>
+</tr>
+<tr>
+<td>内部通報受付・違反調査</td>
+<td>機密通報・コンプライアンス案件管理</td>
+<td>Confidential Whistleblowing &amp; Compliance Case Management</td>
+<td>匿名・記名の通報受付、双方向連絡、受付番号発行を提供する。案件ごとに利益相反チェックを行い、担当者、調査責任者、委員、外部専門家だけにアクセスを隔離する。通報者情報、調査記録、証拠、ヒアリング、事実認定、委員会報告、是正・再発防止を分離して管理する。通報者保護、アクセス・印刷・出力ログ、保存期間、リーガルホールド、暗号化、バックアップ、緊急エスカレーションを必須とする。処分・法的評価は権限者が決定する。</td>
+</tr>
+<tr>
+<td>法令・規程・教育・是正</td>
+<td>法令遵守・統制管理</td>
+<td>Compliance Obligation &amp; Control Management</td>
+<td>法令、規程、条項、所管、対象業務、統制、証拠、点検頻度を関連付ける。法改正と規程改定の影響評価、改定承認、周知、教育、自己点検、例外、是正をワークフロー化する。教育は対象者、教材版、期限、受講、理解度を管理する。GRC機能を優先利用し、組織・社員マスター、文書管理、eラーニング、通報システムとAPI連携する。</td>
+</tr>
+<tr>
+<td>全システム共通</td>
+<td>統合ID・権限・監査基盤</td>
+<td>Integrated Identity, Authorization &amp; Audit Foundation</td>
+<td>Entra ID／HENNGE ONEのSSOと多要素認証を利用し、役職だけでなく委員会所属、案件担当、機密区分、利益相反を含む属性ベース権限を実装する。入社・異動・退職時の権限付与・変更・剥奪、特権IDの期限付き承認、四半期棚卸しを行う。全サービスのログを共通形式で集約し、誰が、いつ、何を閲覧・変更・承認・出力したかを検索・保全する。APIは認可、レート制限、入力検証、秘密情報管理を共通化し、個人情報・機密情報の暗号化、バックアップ、障害監視、脆弱性管理を標準要件とする。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="_3">導入時に確定すべき事項</h2>
+<ol>
+<li>取締役会規程、各委員会規程、決裁権限規程に基づく起案者・確認者・承認者・閲覧者。</li>
+<li>議事録、監査調書、通報記録、CSR証憑の保存年限と廃棄承認。</li>
+<li>重大事案の重要度基準、招集先、報告期限、社外連絡権限。</li>
+<li>AI利用可能な情報区分と、AIへ投入してはならない通報者情報・個人情報・未公表情報。</li>
+</ol>
+    <p class="source-note">変換元: システム要件一覧.md / UTF-8 HTML5</p>
+  </main>
+</body>
+</html>
