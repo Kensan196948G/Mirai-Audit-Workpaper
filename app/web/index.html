@@ -384,7 +384,7 @@ async function refreshMe(){
   try{ state.me=await A.me(); render(); }
   catch{ state.me=null; render(); }
 }
-function render(){
+function render(skipLoad=false){
   renderSeq++;
   if(!state.me){ closeModal(); renderLogin(); return; }
   const me=state.me, role=me.user.role;
@@ -393,7 +393,8 @@ function render(){
     <div class="layout">${sidebarHTML(role,route)}
     <main class="main" id="main">${breadcrumbHTML(route)}${viewHTML(route)}</main>
     </div>`;
-  loadViewData(route);
+  // データ取得後の再描画（skipLoad=true）では再取得せず、無限ループを防ぐ
+  if(!skipLoad) loadViewData(route);
 }
 function viewHTML(route){
   const r=route;
@@ -409,14 +410,17 @@ function viewHTML(route){
 // 各ビューのデータ取得（取得後に再描画）
 function loadViewData(route){
   const seq=renderSeq;
-  const done=()=>{ if(seq===renderSeq) render(); };
+  const done=()=>{ if(seq===renderSeq) render(true); };
   try{
     if(route.view==="plans" && route.id) A.plan(route.id).then(x=>{cache.planDetail=x;done();}).catch(e=>{toast(e.message,"err");});
     else if(route.view==="plans") A.plans().then(x=>{cache.plans=x.plans;done();}).catch(e=>toast(e.message,"err"));
-    else if(route.view==="engagements" && !route.id) A.engagements().then(x=>{cache.engs=x.engagements;done();}).catch(e=>toast(e.message,"err"));
-    // 案件作成フォーム用に計画も取得（案件一覧表示とは独立。権限のあるロールのみ）
-    if(route.view==="engagements" && !route.id && uiCan(state.me.user.role,"plan:view"))
-      A.plans().then(x=>{cache.plans=x.plans; if(seq===renderSeq) render();}).catch(()=>{});
+    else if(route.view==="engagements" && !route.id) {
+      // 案件一覧と作成フォーム用の計画一覧を1回の更新でまとめて取得（重複描画・無限ループ防止）
+      const planReq = uiCan(state.me.user.role,"plan:view") ? A.plans().catch(()=>null) : Promise.resolve(null);
+      Promise.all([A.engagements(), planReq])
+        .then(([engRes, planRes])=>{ cache.engs=engRes.engagements; if(planRes) cache.plans=planRes.plans; done(); })
+        .catch(e=>{toast(e.message,"err");});
+    }
     else if(route.view==="engagements" && route.id) A.engagement(route.id).then(x=>{cache.engDetail=x;done();}).catch(e=>{toast(e.message,"err");});
     else if(route.view==="requests") A.requests(route.extra?`?status=${encodeURIComponent(route.extra)}`:"").then(x=>{cache.requests=x.requests;done();}).catch(e=>toast(e.message,"err"));
     else if(route.view==="auditlog"){
