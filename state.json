@@ -37,10 +37,10 @@
       "app_lint": "PASS (0 warnings)",
       "app_test": "PASS (78/78: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format/health-readiness/admin-users/remediation-status/audit-limit/session-invalidation/auditee-scoping)",
       "app_build": "PASS (web -> embedded -> typecheck)",
-      "deploy": "CHG-031〜034 は preview/MVP 自動デプロイ・本番デプロイ済み（deployment c0734b06）。CHG-035（被監査部門の閲覧範囲最小化・dry-run・バックアップ再試行）は PR マージ後の preview/MVP/本番反映を CHG-036 で記録予定",
-      "git": "main にPR#1〜12 マージ済み。CI green（app/docs/secretscan）・npm audit 0件・gitleaks 0件。branch protection 有効（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。CHG-035 は PR#13 で反映予定",
+      "deploy": "CHG-035/036 反映済み: main 980ace4（PR#13）→ preview/MVP 自動デプロイ成功・MVP実機で被監査部門の閲覧制限確認（scope null・workpapers 0・自部門依頼のみ・調書API 403）。本番は workflow_dispatch（run 31934106518・deployment 8fa8e29a）でデプロイ成功（health db:ok・bootstrap 403・/api/me 401・HSTS/no-store/CSP確認・DB 0ユーザー）。バックアップはD1 export＋アーティファクト30日（再試行3回）",
+      "git": "main にPR#1〜13 マージ済み（main 980ace4）。CI green（app/docs/secretscan）・npm audit 0件・gitleaks 0件。branch protection 有効（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
-      "next_action": "①CHG-035 の PR#13 を CI green 後にマージし preview/MVP 自動デプロイ→本番 workflow_dispatch で反映・スモーク（CHG-036）②初期安定化監視（1〜2週間のエラー率・ログ・メトリクス日次確認）③実アカウントのプロビジョニング（BL-09: 初回管理者はRunbook §3.1のCLI手順、以降はユーザー管理UI）と受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育 ④正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
+      "next_action": "①初期安定化監視（1〜2週間のエラー率・ログ・メトリクス日次確認）②実アカウントのプロビジョニング（BL-09: 初回管理者はRunbook §3.1のCLI手順、以降はユーザー管理UI）と受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育 ③正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
     }
   },
   "priority": {

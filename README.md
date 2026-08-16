@@ -20,7 +20,7 @@
   - 🚀 MVP: https://maw-mvp.mirai-dx-platform.com
   - 🏭 本番: https://maw.mirai-dx-platform.com
 - 詳細: [実装計画](docs/実装計画.md)、[実装・導入バックログ](docs/実装・導入バックログ.md)、[アプリ運用・障害対応Runbook](docs/アプリ運用・障害対応Runbook.md)
-- ✅ 本番デプロイ済み（2026-08-16・検証済みコード。health db:ok・bootstrap無効403・ヘッダー確認済み。本番DBはスキーマのみ・ユーザー0件。最新の是正反映は変更履歴 CHG-035 参照）
+- ✅ 本番デプロイ済み（2026-08-16・main 980ace4 相当の検証済みコード。health db:ok・bootstrap無効403・ヘッダー確認済み。本番DBはスキーマのみ・ユーザー0件。CHG-035/036 反映済み）
 - ⚠️ 本番（実データ）運用には、監査役会・総務部・情報システム部門の承認と受入試験の完了が必要です。テスト用ログイン情報は開発環境（preview/MVP）専用で、パスワードはCloudflare Secretsで管理します（Git・画面に表示しません）。
 
 ```mermaid
