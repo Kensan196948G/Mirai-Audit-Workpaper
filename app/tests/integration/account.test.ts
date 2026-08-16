@@ -1,5 +1,5 @@
 // 統合テスト — ユーザー一覧・パスワード変更・タスク導線情報
-// - GET /api/users: 指摘作成権限者（監査役）と管理者のみ閲覧可（WebUI改修 F-07/F-06 対応）
+// - GET /api/users: 指摘作成権限者（監査役）・監査ログ閲覧権限者（監査役会）・管理者のみ閲覧可（WebUI改修 F-07/F-06 対応）
 // - POST /api/auth/password: 現在パスワード検証・複雑性・変更後の旧パスワード無効化（F-09 対応）
 // - GET /api/me: タスクに engagement_id を含む（F-02 タスク導線対応）
 
@@ -44,7 +44,7 @@ async function authedFetch(app: any, cookie: string, path: string, init: Request
 }
 
 describe("integration: /api/users", () => {
-  test("auditor and admin can list users; committee/auditee denied", async () => {
+  test("auditor, committee and admin can list users; auditee denied", async () => {
     const app = await buildTestApp();
     const auditor = await login(app, "auditor@test.local", "TestPass2026!");
     const admin = await login(app, "admin@test.local", "TestPass2026!");
@@ -61,7 +61,7 @@ describe("integration: /api/users", () => {
     assert.equal(r2.status, 200);
 
     const r3 = await authedFetch(app, committee, "/api/users");
-    assert.equal(r3.status, 403);
+    assert.equal(r3.status, 200, "監査ログ閲覧権限者は操作者名解決のためユーザー一覧を閲覧できる");
 
     const r4 = await authedFetch(app, kensetsu, "/api/users");
     assert.equal(r4.status, 403);

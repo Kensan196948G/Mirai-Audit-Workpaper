@@ -53,7 +53,7 @@ npm run deploy:production
 - スモーク:
   - `curl https://maw.mirai-dx-platform.com/api/health` で `"db":"ok"` を含む `{"status":"ok"}` を確認
   - `curl -s -o /dev/null -w '%{http_code}' -X POST https://maw.mirai-dx-platform.com/api/admin/bootstrap` → `403` を確認（本番bootstrap無効）
-- 安全化: production ジョブは migration 前に `wrangler d1 export` で SQL バックアップを作成し、GitHub Actions アーティファクト（30日保持）に保存する
+- 安全化: production ジョブは migration 前に `wrangler d1 export` で SQL バックアップを作成し、GitHub Actions アーティファクト（30日保持）に保存する（一時エラー時は3回まで自動リトライ・CHG-035）。各環境とも `wrangler deploy --dry-run` で事前検証してから本デプロイする
 
 ### 2.4 ロールバック
 - Cloudflare Dashboard > Workers > mirai-audit-workpaper > Deployments から直前のデプロイメントを Rollback（Workers の履歴ロールバック）

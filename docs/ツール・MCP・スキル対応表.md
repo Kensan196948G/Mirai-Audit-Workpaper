@@ -19,6 +19,10 @@
 | スキル | 適用 | 判断 |
 |---|---|---|
 | AutoDesign / autodesign-run（WebUIデザイン生成系） | 🔴 利用不可 | 2026-08-16 セッションのスキルカタログに未登録（invalid skill name）で呼び出し失敗。WebUI（app/web/index.html）は同等のプロフェッショナルデザイン手法（デザイントークン・WCAG 2.1 AA・レスポンシブ・印刷対応）を適用し CHG-024 に記録。利用可能になった場合の適用候補として本欄を更新する |
+| wrangler（Cloudflare Workers CLI スキル） | ✅ 使用 | 2026-08-16 CTO完了監査セッションで使用。secret put/list（BOOTSTRAP_PASSWORD をファイル入力で設定・値非表示）、d1 list/export/deployments list、deploy --dry-run の事前検証方針を適用。CIに `wrangler types --check` を追加済み |
+| GitHub 系プラグインスキル（github / gh-address-comments / gh-fix-ci / yeet） | ⚪ 参照のみ | 本プロジェクトの Runbook・既存運用が `gh` CLI 直実行を標準化しているため CLI を採用。スキル手順はブランチ保護・CI確認・PR運用の参考として確認 |
+| memory://knowledge-graph（MCP） | 🔴 未使用 | コンテンツが空（利用価値なし）。将来 claude-mem 系スキルと併用する場合に再評価 |
+| その他カタログスキル（imagegen / openai-docs / plugin-creator / skill-creator / skill-installer / cloudflare / cloudflare-one / durable-objects / sandbox-sdk / sites / slack / outlook / google系 / templates / web-perf / turnstile-spin 等） | 🔴 未使用 | 本タスク（監査アプリのコード・CI/CD・文書・デプロイ）に該当しない、または既存の gh/wrangler CLI 直運用が標準化されているため選択せず。Cloudflare 一般スキルは Worker/D1 の設定が安定し公式 Runbook が整備済みのため不要と判断 |
 
 ## 3. 本プロジェクト固有の検証手段
 

@@ -259,7 +259,7 @@ const RESULT_JA={success:"成功",denied:"拒否",failed:"失敗"};
 // ロール別UI表示権限（サーバ側の権限判定は変更しない。表示出し分け専用）
 const UI_PERM={
   auditor:["plan:view","plan:create","plan:update","engagement:view","engagement:create","request:view","request:create","request:send","workpaper:create","finding:create","remediation:create","auditlog:view","users:view"],
-  audit_committee:["plan:view","engagement:view","request:view","auditlog:view"],
+  audit_committee:["plan:view","engagement:view","request:view","auditlog:view","users:view"],
   general_affairs:["plan:view","engagement:view","engagement:update","request:view","request:create","request:send"],
   auditee:["engagement:view","request:view","request:submit","finding:respond"],
   admin:["auditlog:view","users:view","users:manage"],
@@ -514,7 +514,8 @@ function engagementHTML(id,tab){
   if(e.status==="review"&&role==="audit_committee") actions.push(`<button data-act="eng-status" data-id="${esc(e.id)}" data-status="reported">報告確定</button>`);
   if(e.status==="reported"&&role==="audit_committee") actions.push(`<button data-act="eng-status" data-id="${esc(e.id)}" data-status="closed">完了</button>`);
   if(canEdit) actions.push(`<button class="sec" data-act="eng-edit" data-id="${esc(e.id)}">編集</button>`);
-  const tabs=[["requests","証憑依頼"],["workpapers","監査調書"],["findings","指摘・是正"]]
+  // 被監査部門は監査調書（内部文書）を閲覧できない（サーバ側でも拒否）
+  const tabs=[["requests","証憑依頼"],...(role==="auditee"?[]:[["workpapers","監査調書"]]),["findings","指摘・是正"]]
     .map(([k,l])=>`<button class="sec ${(tab||"requests")===k?"on":""}" data-tab="${k}">${l}</button>`).join("");
   let body="";
   if((tab||"requests")==="workpapers") body=workpapersHTML(d.workpapers||[], e.id, role, state.me.user);
@@ -523,7 +524,7 @@ function engagementHTML(id,tab){
   return `<div class="card"><h2>${esc(e.engagement_no)} ${esc(e.title)}</h2>
     <p class="muted">対象部門: ${esc(e.department)} ｜ 機密: <span class="badge b-purple">${esc(e.classification)}</span> ｜
     状態: ${badge(e.status)}</p>
-    <p><strong>目的・範囲:</strong> ${esc(e.scope)||"—"}</p><p><strong>評価基準:</strong> ${esc(e.criteria)||"—"}</p>
+    ${role==="auditee"?"":`<p><strong>目的・範囲:</strong> ${esc(e.scope)||"—"}</p><p><strong>評価基準:</strong> ${esc(e.criteria)||"—"}</p>`}
     ${actions.length?`<div class="actions">${actions.join("")}</div>`:""}
     <div class="filterbar">${tabs}</div>${body}</div>`;
 }

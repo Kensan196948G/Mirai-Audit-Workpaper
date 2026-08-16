@@ -313,6 +313,41 @@ async function addMemberIfAuditor(ctx: AppContext, engagementId: string, userId:
   }
 }
 
+/** 被監査部門に開示する指摘状態（確定以降のみ。未確定所見・内部評価は開示しない） */
+const AUDITEE_VISIBLE_FINDING_STATUSES = new Set([
+  "confirmed",
+  "remediated",
+  "rechecked",
+  "completed",
+  "reissued",
+]);
+
+/** 指摘一覧（回答・是正履歴付き）を取得する共通ヘルパー */
+async function loadFindingsWithDetails(db: Db, engagementId: string): Promise<any[]> {
+  const rows = await getRows<any>(db, `SELECT * FROM findings WHERE engagement_id = ? ORDER BY created_at`, engagementId);
+  const result: any[] = [];
+  for (const f of rows) {
+    const responses = await getRows<any>(db, `SELECT * FROM finding_responses WHERE finding_id = ? ORDER BY created_at`, f.id);
+    const remediations = await getRows<any>(db, `SELECT * FROM remediations WHERE finding_id = ? ORDER BY created_at`, f.id);
+    result.push({ ...f, responses, remediations });
+  }
+  return result;
+}
+
+/** 被監査部門の監査調書（内部文書）閲覧を拒否し、拒否ログを残す */
+async function denyAuditeeInternalDocs(ctx: AppContext, engagementId: string): Promise<void> {
+  if (ctx.user?.role !== "auditee") return;
+  await writeAuditEvent(ctx.db, {
+    actorId: ctx.user.id,
+    action: "workpaper_access_denied",
+    objectType: "engagement",
+    objectId: engagementId,
+    result: "denied",
+    ip: ctx.ip,
+  });
+  throw new AppError(403, "FORBIDDEN", "この案件の内部文書（監査調書）へのアクセス権がありません");
+}
+
 // ---------- アプリ生成 ----------
 export function buildApp(deps: AppDeps) {
   const app = new Hono<{ Variables: { appCtx: AppContext } }>();
@@ -495,11 +530,13 @@ export function buildApp(deps: AppDeps) {
     return c.json({ ok: true });
   });
 
-  // ユーザー一覧（是正担当者選択・監査ログの操作者名解決用。指摘作成権限者または管理者のみ）
+  // ユーザー一覧（是正担当者選択・監査ログの操作者名解決用）
+  // 指摘作成権限者（監査役）または監査ログ閲覧権限者（監査役会・管理者）のみ
   app.get("/api/users", requireAuth(), async (c) => {
     const ctx = c.get(CTX_KEY) as AppContext;
     const role = ctx.user!.role;
-    if (!hasPermission(role, "finding:create") && role !== "admin") {
+    const canListUsers = hasPermission(role, "finding:create") || hasPermission(role, "auditlog:view");
+    if (!canListUsers) {
       throw new AppError(403, "FORBIDDEN", "この操作の権限がありません");
     }
     const users = await getRows<any>(
@@ -742,6 +779,10 @@ export function buildApp(deps: AppDeps) {
     } else {
       rows = []; // admin: 業務データ閲覧不可
     }
+    // 被監査部門には監査の内部評価（目的・範囲・基準）を一覧でも開示しない
+    if (user.role === "auditee") {
+      rows = rows.map((r) => ({ ...r, scope: null, criteria: null }));
+    }
     return c.json({ engagements: rows });
   });
 
@@ -774,27 +815,50 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const engagement = await loadEngagement(ctx, c.req.param("id"));
     await checkEngagementAccess(ctx, engagement);
-    const members = await getRows<any>(
-      ctx.db,
-      `SELECT m.id, m.role_in_engagement, m.conflict_flagged, u.name, u.email, u.role AS user_role FROM engagement_members m JOIN users u ON u.id = m.user_id WHERE m.engagement_id = ?`,
-      engagement.id
-    );
-    const reqRows = await getRows<any>(ctx.db, `SELECT * FROM evidence_requests WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
+    const isAuditee = ctx.user!.role === "auditee";
+    // 被監査部門にはメンバー情報（内部担当）を開示しない
+    const members = isAuditee
+      ? []
+      : await getRows<any>(
+          ctx.db,
+          `SELECT m.id, m.role_in_engagement, m.conflict_flagged, u.name, u.email, u.role AS user_role FROM engagement_members m JOIN users u ON u.id = m.user_id WHERE m.engagement_id = ?`,
+          engagement.id
+        );
+    // 被監査部門は自部門宛の依頼のみ
+    const reqRows = isAuditee
+      ? await getRows<any>(
+          ctx.db,
+          `SELECT * FROM evidence_requests WHERE engagement_id = ? AND recipient_department = ? ORDER BY created_at`,
+          engagement.id,
+          ctx.user!.department
+        )
+      : await getRows<any>(ctx.db, `SELECT * FROM evidence_requests WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
     // 依頼ごとに提出履歴（サブミッション）も含めて返す（WebUIの提出履歴表示に対応）
     const requests: any[] = [];
     for (const r of reqRows) {
       const subs = await getRows<any>(ctx.db, `SELECT * FROM submissions WHERE request_id = ? ORDER BY submitted_at`, r.id);
       requests.push({ ...r, submissions: subs });
     }
-    // 調書は版履歴も含めて返す（WebUIの版表示・正本管理に対応）
-    const wpRows = await getRows<any>(ctx.db, `SELECT * FROM workpapers WHERE engagement_id = ? ORDER BY code`, engagement.id);
-    const workpapers: any[] = [];
-    for (const w of wpRows) {
-      const versions = await getRows<any>(ctx.db, `SELECT * FROM workpaper_versions WHERE workpaper_id = ? ORDER BY version_no DESC`, w.id);
-      workpapers.push({ ...w, versions });
-    }
-    const findings = await getRows<any>(ctx.db, `SELECT * FROM findings WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
-    return c.json({ engagement, members, requests, workpapers, findings });
+    // 被監査部門には調書（内部文書）を返さない。監査側は版履歴を含めて返す
+    const workpapers = isAuditee
+      ? []
+      : await (async () => {
+          const wpRows = await getRows<any>(ctx.db, `SELECT * FROM workpapers WHERE engagement_id = ? ORDER BY code`, engagement.id);
+          const result: any[] = [];
+          for (const w of wpRows) {
+            const versions = await getRows<any>(ctx.db, `SELECT * FROM workpaper_versions WHERE workpaper_id = ? ORDER BY version_no DESC`, w.id);
+            result.push({ ...w, versions });
+          }
+          return result;
+        })();
+    // 指摘は回答・是正履歴付きで返す（被監査部門は確定以降のみ）
+    const allFindings = await loadFindingsWithDetails(ctx.db, engagement.id);
+    const findings = isAuditee
+      ? allFindings.filter((f) => AUDITEE_VISIBLE_FINDING_STATUSES.has(f.status))
+      : allFindings;
+    // 被監査部門には監査の内部評価（目的・範囲・基準）を開示しない
+    const responseEngagement = isAuditee ? { ...engagement, scope: null, criteria: null } : engagement;
+    return c.json({ engagement: responseEngagement, members, requests, workpapers, findings });
   });
 
   app.put("/api/engagements/:id", requireAuth(), requirePerm("engagement:update"), makeValidator(engagementUpdateSchema), async (c) => {
@@ -869,7 +933,15 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const engagement = await loadEngagement(ctx, c.req.param("id"));
     await checkEngagementAccess(ctx, engagement);
-    const requests = await getRows<any>(ctx.db, `SELECT * FROM evidence_requests WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
+    // 被監査部門は自部門宛の依頼のみ
+    const requests = ctx.user!.role === "auditee"
+      ? await getRows<any>(
+          ctx.db,
+          `SELECT * FROM evidence_requests WHERE engagement_id = ? AND recipient_department = ? ORDER BY created_at`,
+          engagement.id,
+          ctx.user!.department
+        )
+      : await getRows<any>(ctx.db, `SELECT * FROM evidence_requests WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
     const withSubs: any[] = [];
     for (const r of requests) {
       const subs = await getRows<any>(ctx.db, `SELECT * FROM submissions WHERE request_id = ? ORDER BY submitted_at`, r.id);
@@ -981,6 +1053,7 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const engagement = await loadEngagement(ctx, c.req.param("id"));
     await checkEngagementAccess(ctx, engagement);
+    await denyAuditeeInternalDocs(ctx, engagement.id);
     const wps = await getRows<any>(ctx.db, `SELECT * FROM workpapers WHERE engagement_id = ? ORDER BY code`, engagement.id);
     const result: any[] = [];
     for (const w of wps) {
@@ -1024,6 +1097,7 @@ export function buildApp(deps: AppDeps) {
     if (!w) throw new AppError(404, "NOT_FOUND", "調書が見つかりません");
     const engagement = await loadEngagement(ctx, w.engagement_id);
     await checkEngagementAccess(ctx, engagement);
+    await denyAuditeeInternalDocs(ctx, w.engagement_id);
     const versions = await getRows<any>(ctx.db, `SELECT * FROM workpaper_versions WHERE workpaper_id = ? ORDER BY version_no DESC`, w.id);
     return c.json({ workpaper: w, versions });
   });
@@ -1105,14 +1179,11 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const engagement = await loadEngagement(ctx, c.req.param("id"));
     await checkEngagementAccess(ctx, engagement);
-    const findings = await getRows<any>(ctx.db, `SELECT * FROM findings WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
-    const result: any[] = [];
-    for (const f of findings) {
-      const responses = await getRows<any>(ctx.db, `SELECT * FROM finding_responses WHERE finding_id = ? ORDER BY created_at`, f.id);
-      const remediations = await getRows<any>(ctx.db, `SELECT * FROM remediations WHERE finding_id = ? ORDER BY created_at`, f.id);
-      result.push({ ...f, responses, remediations });
-    }
-    return c.json({ findings: result });
+    const allFindings = await loadFindingsWithDetails(ctx.db, engagement.id);
+    const findings = ctx.user!.role === "auditee"
+      ? allFindings.filter((f) => AUDITEE_VISIBLE_FINDING_STATUSES.has(f.status))
+      : allFindings;
+    return c.json({ findings });
   });
 
   app.post("/api/engagements/:id/findings", requireAuth(), requirePerm("finding:create"), makeValidator(findingSchema), async (c) => {
@@ -1190,6 +1261,10 @@ export function buildApp(deps: AppDeps) {
     // 被監査部門は自部門の案件のみ是正計画を登録可能（監査役は全案件可）
     if (ctx.user!.role === "auditee" && engagement.department !== ctx.user!.department) {
       throw new AppError(403, "FORBIDDEN", "この指摘への是正登録権限がありません");
+    }
+    // 是正計画は指摘確定後（confirmed）のみ登録可能（未確定所見への対応登録を防止）
+    if (f.status !== "confirmed") {
+      throw new AppError(409, "INVALID_TRANSITION", "指摘確定後（confirmed）のみ是正計画を登録できます");
     }
     assertTransition(FINDING_TRANSITIONS, f.status, "remediated", "指摘");
     const body = bodyOf(c);
