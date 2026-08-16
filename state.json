@@ -26,7 +26,7 @@
     "same_error_limit": 2
   },
   "status": {
-    "current_phase": "improvement",
+    "current_phase": "acceptance",
     "stable": true,
     "verification": {
       "link_check": "PASS (MD 88 / HTML 20)",
@@ -37,9 +37,9 @@
       "app_lint": "PASS (0 warnings)",
       "app_test": "PASS (55/55: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering)",
       "app_build": "PASS (web -> embedded -> typecheck)",
-      "git": "作業branchでapp/実装・セキュリティ強化・CI/CD・文書整合をコミットしPR作成。main確定commitと検証済みcommitの一致確認後にpreview→productionデプロイ",
+      "git": "main にPR#1（実装・セキュリティ強化・CI/CD・文書整合）とPR#2（deployガード）をマージ済み。CI（app/docs）green。preview・production デプロイ済み・実機検証済み",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
-      "next_action": "①PR（#1）をレビュー後mainへマージ、②CI/CDデプロイ自動化のため CLOUDFLARE_API_TOKEN を GitHub Actions secrets に設定、③受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
+      "next_action": "①GitHub Actions secrets に CLOUDFLARE_API_TOKEN を設定してデプロイ自動化を有効化（CLOUDFLARE_ACCOUNT_ID は設定済み）、②受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
     }
   },
   "priority": {
