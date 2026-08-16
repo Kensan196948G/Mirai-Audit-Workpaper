@@ -11,7 +11,7 @@ import { hasPermission, canViewEngagement, canSubmitToRequest, type Permission }
 import { writeAuditEvent, queryAuditEvents } from "./audit.ts";
 import { newId, nowIso, engagementNo, requestNo, findingNo, fiscalYear } from "./ids.ts";
 import { ROLES, type User, type Role } from "./types.ts";
-import { EMBEDDED_INDEX_HTML } from "./embedded-assets.ts";
+import { EMBEDDED_INDEX_HTML, EMBEDDED_INDEX_PRODUCTION_HTML } from "./embedded-assets.ts";
 import {
   assertSameOrigin,
   createRateLimiter,
@@ -1372,15 +1372,20 @@ export function buildApp(deps: AppDeps) {
   });
 
   // SPA フォールバック（API以外は埋め込みHTMLを返す）
+  // 本番環境のみ本番用WebUI（index.production.html）を配信し、preview/MVPは通常UIを配信する
+  const indexHtml =
+    deps.environment === "production"
+      ? EMBEDDED_INDEX_PRODUCTION_HTML
+      : EMBEDDED_INDEX_HTML;
   app.get("/", async (c) => {
-    return c.html(EMBEDDED_INDEX_HTML);
+    return c.html(indexHtml);
   });
   app.all("/{path*}", async (c) => {
     const path = c.req.path;
     if (path.startsWith("/api/")) {
       throw new AppError(404, "NOT_FOUND", "APIが見つかりません");
     }
-    return c.html(EMBEDDED_INDEX_HTML);
+    return c.html(indexHtml);
   });
 
   return app;

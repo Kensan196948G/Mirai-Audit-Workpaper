@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#ffffff" />
+<meta name="description" content="監査業務・証跡管理（Mirai Audit Workpaper）— 監査計画・証憑・調書・指摘・改善確認を証跡とともに管理します。" />
+<meta name="robots" content="noindex,nofollow" />
+<meta name="maw-ui" content="production" />
+<title>監査業務・証跡管理 | Mirai Audit Workpaper</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1b18'/%3E%3Ctext x='16' y='23' font-size='17' text-anchor='middle' fill='white' font-family='sans-serif'%3E%E7%9B%A3%3C/text%3E%3C/svg%3E" />
+<style>
+/* ═══════════ デザイントークン（WebUI v2 改編：明るくモダン / modern-minimal） ═══════════ */
+:root{
+  --bg:      oklch(99% 0.002 240);
+  --surface: oklch(100% 0 0);
+  --fg:      oklch(18% 0.012 250);
+  --muted:   oklch(54% 0.012 250);
+  --border:  oklch(92% 0.005 250);
+  --accent:  oklch(58% 0.18 255);
+
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* 派生トーン（生のhexはここ以外で使わない） */
+  --accent-soft:  color-mix(in oklch, var(--accent) 12%, transparent);
+  --accent-faint: color-mix(in oklch, var(--accent) 6%, transparent);
+  --fg-soft:      color-mix(in oklch, var(--fg) 6%, transparent);
+  --fg-faint:     color-mix(in oklch, var(--fg) 3%, transparent);
+  --surface-2:    color-mix(in oklch, var(--bg) 55%, var(--surface));
+  --ring:         color-mix(in oklch, var(--accent) 30%, transparent);
+
+  /* セマンティック状態色 */
+  --ok:     oklch(50% 0.12 158);  --ok-bg:     color-mix(in oklch, var(--ok) 12%, var(--surface));
+  --warn:   oklch(56% 0.13 70);   --warn-bg:   color-mix(in oklch, var(--warn) 14%, var(--surface));
+  --err:    oklch(52% 0.17 27);   --err-bg:    color-mix(in oklch, var(--err) 12%, var(--surface));
+  --info:   oklch(52% 0.11 235);  --info-bg:   color-mix(in oklch, var(--info) 12%, var(--surface));
+  --purple: oklch(48% 0.15 295);  --purple-bg: color-mix(in oklch, var(--purple) 12%, var(--surface));
+
+  /* 寸法 */
+  --radius: 10px; --radius-lg: 14px; --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px oklch(18% 0.012 250 / 0.06);
+  --shadow-md: 0 14px 36px oklch(18% 0.012 250 / 0.14);
+  --topbar-h: 62px; --sidebar-w: 236px;
+}
+
+/* ═══════════ リセット・ベース ═══════════ */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.6;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+p{text-wrap:pretty}
+h1,h2,h3,h4{text-wrap:balance}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.mono{font-family:var(--font-mono)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.ic{width:18px;height:18px;flex:0 0 auto}
+
+/* ═══════════ アプリシェル ═══════════ */
+.app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;height:var(--topbar-h);display:flex;align-items:center;gap:14px;padding:0 20px;background:color-mix(in oklch, var(--surface) 88%, transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:var(--fg);color:var(--surface);display:grid;place-items:center;font-size:15px;font-weight:700;flex:0 0 auto}
+.brand-name{font-family:var(--font-display);font-size:16.5px;font-weight:650;letter-spacing:-0.02em;white-space:nowrap}
+.brand-sub{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.hamburger{display:none;width:42px;height:42px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);align-items:center;justify-content:center}
+.top-search{flex:1;max-width:420px;margin-left:8px;position:relative}
+.top-search input{width:100%;padding:9px 14px 9px 36px;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--bg);font-size:13.5px}
+.top-search input::placeholder{color:var(--muted)}
+.top-search .ic{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.top-spacer{flex:1}
+.env-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--fg-faint);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;font-weight:600}
+.env-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.userchip{display:flex;align-items:center;gap:9px;padding:4px 6px 4px 4px;border-radius:var(--radius-pill)}
+.userchip .ava{width:30px;height:30px;border-radius:50%;background:var(--fg-soft);color:var(--fg);display:grid;place-items:center;font-size:12px;font-weight:700}
+.userchip .uc-name{font-size:13px;font-weight:600;line-height:1.25}
+.userchip .uc-role{font-size:11px;color:var(--muted);line-height:1.25}
+.icon-btn{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--muted);transition:background .15s,color .15s,border-color .15s}
+.icon-btn:hover{color:var(--fg);border-color:var(--muted)}
+
+.layout{flex:1;display:flex;align-items:stretch;min-height:0}
+.sidebar{width:var(--sidebar-w);flex:0 0 var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);padding:14px 12px 16px;display:flex;flex-direction:column;gap:2px;position:sticky;top:var(--topbar-h);height:calc(100vh - var(--topbar-h));overflow-y:auto;z-index:30}
+.side-group{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:16px 10px 6px}
+.side-group:first-child{margin-top:4px}
+.side-link{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--radius);color:var(--fg);font-size:14px;font-weight:500;cursor:pointer;transition:background .15s;white-space:nowrap}
+.side-link .ic{flex:0 0 auto;color:var(--muted);transition:color .15s}
+.side-link:hover{background:var(--fg-faint)}
+.side-link:hover .ic{color:var(--fg)}
+.side-link.active{background:var(--fg-soft);font-weight:600}
+.side-link.active .ic{color:var(--fg)}
+.side-link .cnt{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--muted);background:var(--fg-faint);border-radius:var(--radius-pill);padding:1px 8px}
+.side-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.side-summary{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
+.side-summary .ss-title{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.ss-row{display:flex;justify-content:space-between;font-size:12px;padding:2.5px 0}
+.ss-row b{font-family:var(--font-mono);font-weight:600}
+.side-toggle{display:flex;align-items:center;gap:8px;padding:8px 10px;border:0;border-radius:var(--radius);background:transparent;color:var(--muted);font-size:12.5px;transition:background .15s}
+.side-toggle:hover{background:var(--fg-faint);color:var(--fg)}
+.sidebar.collapsed{width:64px;flex-basis:64px}
+.sidebar.collapsed .side-link{justify-content:center;padding:10px 0}
+.sidebar.collapsed .lbl,.sidebar.collapsed .side-group,.sidebar.collapsed .side-toggle span,.sidebar.collapsed .cnt,.sidebar.collapsed .side-summary{display:none}
+.main{flex:1;min-width:0;padding:26px clamp(16px,3vw,36px) 60px;max-width:1320px;margin:0 auto;width:100%}
+.breadcrumb{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap}
+.breadcrumb a{cursor:pointer;color:var(--muted);transition:color .15s}
+.breadcrumb a:hover{color:var(--accent)}
+.breadcrumb .sep{color:var(--border);font-family:var(--font-mono)}
+.breadcrumb .cur{color:var(--fg);font-weight:600}
+
+/* ═══════════ 見出し・ボタン・カード ═══════════ */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.page-title{font-family:var(--font-display);font-size:clamp(24px,2.6vw,30px);font-weight:700;letter-spacing:-0.02em;line-height:1.25;margin:0}
+.page-desc{margin:4px 0 0;color:var(--muted);font-size:13.5px;max-width:64ch}
+.page-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.card-title{font-family:var(--font-display);font-size:16.5px;font-weight:650;letter-spacing:-0.01em;margin:0}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:600;letter-spacing:-0.005em;transition:background .15s,border-color .15s,transform .06s;min-height:40px}
+.btn:active{transform:translateY(1px)}
+.btn:hover{border-color:color-mix(in oklch, var(--muted) 50%, var(--border))}
+.btn .ic{width:16px;height:16px}
+.btn-primary{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.btn-primary:hover{background:color-mix(in oklch, var(--accent) 86%, var(--fg))}
+.btn-secondary{background:var(--surface);color:var(--fg);border-color:var(--border)}
+.btn-secondary:hover{border-color:color-mix(in oklch, var(--muted) 55%, var(--border))}
+.btn-ghost{background:transparent;color:var(--muted);border-color:transparent;padding-inline:10px}
+.btn-ghost:hover{color:var(--fg)}
+.btn-danger{background:color-mix(in oklch, var(--err) 10%, var(--surface));color:var(--err);border-color:color-mix(in oklch, var(--err) 28%, var(--border))}
+.btn-danger:hover{background:color-mix(in oklch, var(--err) 16%, var(--surface))}
+.btn-sm{padding:6px 12px;font-size:12.5px;min-height:32px;border-radius:8px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 22px;margin-bottom:18px;box-shadow:var(--shadow-sm)}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.card-sub{font-size:12.5px;color:var(--muted)}
+.rule{border:0;border-top:1px solid var(--border);margin:0}
+
+/* ═══════════ KPI ═══════════ */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-sm)}
+.kpi-label{font-size:12px;color:var(--muted);margin-bottom:8px}
+.kpi-num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:30px;font-weight:650;letter-spacing:-0.03em;line-height:1}
+.kpi-num small{font-size:14px;font-weight:600;color:var(--muted);margin-left:2px}
+.kpi-foot{font-size:11.5px;color:var(--muted);margin-top:9px}
+.kpi.tone-ok .kpi-num{color:var(--ok)}
+.kpi.tone-warn .kpi-num{color:var(--warn)}
+.kpi.tone-err .kpi-num{color:var(--err)}
+
+/* ═══════════ パイプライン ═══════════ */
+.pipeline{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 22px;margin-bottom:18px;box-shadow:var(--shadow-sm)}
+.pipeline-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.pipeline-pct{font-family:var(--font-mono);font-size:26px;font-weight:650;letter-spacing:-0.02em}
+.pipeline-pct small{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0}
+.rail{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.stage{position:relative;padding-top:22px}
+.stage .track{height:7px;border-radius:var(--radius-pill);background:var(--fg-faint);overflow:hidden}
+.stage .fill{height:100%;border-radius:var(--radius-pill);background:var(--accent)}
+.stage .st-label{position:absolute;top:0;left:0;font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.stage .st-cnt{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:6px}
+.stage.now .st-label{color:var(--accent)}
+.stage.now .track{background:var(--accent-faint)}
+.stage.now .st-cnt{color:var(--accent);font-weight:600}
+.stage.done .st-label{color:var(--fg)}
+.st-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:1px;animation:stPulse 2.2s ease-in-out infinite}
+@keyframes stPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.rail-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:11.5px;color:var(--muted)}
+.rail-legend b{font-family:var(--font-mono);font-weight:600;color:var(--fg)}
+.milestone{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);font-size:13px;color:var(--fg)}
+.ms-dot{width:8px;height:8px;border-radius:50%;background:var(--info);flex:0 0 auto}
+
+/* ═══════════ グリッド・テーブル・バッジ ═══════════ */
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.grid-2-1{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:start}
+.grid-1-2{display:grid;grid-template-columns:1fr 2fr;gap:18px;align-items:start}
+.stack>*+*{margin-top:14px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{padding:10px 12px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--border)}
+th{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;white-space:nowrap;background:var(--bg)}
+tbody tr{transition:background .12s}
+tbody tr.clickable{cursor:pointer}
+tbody tr.clickable:hover td{background:var(--fg-faint)}
+tbody tr:last-child td{border-bottom:0}
+td .sub{font-size:12px;color:var(--muted)}
+.empty{padding:34px 0;text-align:center;color:var(--muted);font-size:13.5px}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:var(--radius-pill);padding:2.5px 10px;font-size:11px;font-weight:700;letter-spacing:.02em;line-height:1.6;white-space:nowrap}
+.badge::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.b-gray{background:color-mix(in oklch, var(--muted) 11%, var(--surface));color:var(--muted)}
+.b-green{background:var(--ok-bg);color:var(--ok)}
+.b-amber{background:var(--warn-bg);color:var(--warn)}
+.b-red{background:var(--err-bg);color:var(--err)}
+.b-blue{background:var(--info-bg);color:var(--info)}
+.b-purple{background:var(--purple-bg);color:var(--purple)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:600;color:var(--muted);transition:background .15s,border-color .15s,color .15s;min-height:34px}
+.chip:hover{border-color:color-mix(in oklch, var(--muted) 45%, var(--border));color:var(--fg)}
+.chip.on{background:var(--fg);border-color:var(--fg);color:var(--surface)}
+.chip .cnt{font-family:var(--font-mono);font-size:11px;background:color-mix(in oklch, currentColor 14%, transparent);border-radius:var(--radius-pill);padding:0 7px}
+.chip.on .cnt{background:color-mix(in oklch, var(--surface) 20%, transparent)}
+.chipbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+
+/* ═══════════ フォーム・プログレス・アイテム ═══════════ */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:12.5px;font-weight:600;color:var(--muted)}
+.input,.select,.textarea{width:100%;padding:10px 13px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font-size:14px;transition:border-color .15s,box-shadow .15s}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--ring);outline:none}
+.textarea{min-height:84px;resize:vertical;line-height:1.6}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.form-hint{font-size:12px;color:var(--muted);margin:4px 0 0}
+.form-err{font-size:12.5px;color:var(--err);font-weight:600;margin:6px 0 0}
+.pbar{height:6px;border-radius:var(--radius-pill);background:var(--fg-faint);overflow:hidden;min-width:60px}
+.pbar i{display:block;height:100%;border-radius:var(--radius-pill);background:var(--info)}
+.pbar i.ok{background:var(--ok)}
+.pbar i.warn{background:var(--warn)}
+.pbar i.err{background:var(--err)}
+.item{border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:12px;background:var(--surface);transition:border-color .15s}
+.item:hover{border-color:color-mix(in oklch, var(--muted) 30%, var(--border))}
+.item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.item-title{font-size:14.5px;font-weight:650;letter-spacing:-0.005em}
+.item-meta{font-size:12.5px;color:var(--muted);margin:3px 0}
+.item-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sub-list{margin-top:10px;border-top:1px dashed var(--border);padding-top:9px}
+.sub-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);padding:3px 0;flex-wrap:wrap}
+.detail-list{margin-top:8px;border-top:1px dashed var(--border);padding-top:8px}
+.detail-row{font-size:12.5px;color:var(--muted);padding:3.5px 0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.detail-row b{font-family:var(--font-mono);font-weight:600;color:var(--fg);font-size:12px;min-width:92px}
+.meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.meta-cell{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 16px}
+.meta-cell .k{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.meta-cell .v{font-size:14px;font-weight:600;line-height:1.4}
+.tabbar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}
+.tab{padding:10px 16px;border:0;background:transparent;font-size:14px;font-weight:600;color:var(--muted);border-bottom:2.5px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;min-height:44px}
+.tab:hover{color:var(--fg)}
+.tab.on{color:var(--fg);border-bottom-color:var(--accent)}
+.tab .cnt{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);margin-left:5px}
+.tab.on .cnt{color:var(--accent)}
+.log-row{display:grid;grid-template-columns:150px 1fr 120px;gap:16px;padding:13px 0;border-top:1px solid var(--border);align-items:baseline}
+.log-row .when{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.log-row .what{font-size:13.5px}
+.log-row .who{font-size:12px;color:var(--muted);text-align:right}
+
+/* ═══════════ ログイン ═══════════ */
+.login-wrap{min-height:100vh;display:grid;grid-template-columns:1.05fr 1fr}
+.login-side{position:relative;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:clamp(32px,6vw,72px);display:flex;flex-direction:column;justify-content:center}
+.login-form{display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,64px)}
+.login-form-inner{width:100%;max-width:400px}
+.login-title{font-family:var(--font-display);font-size:clamp(26px,3vw,34px);font-weight:700;letter-spacing:-0.02em;line-height:1.3;margin:0 0 12px}
+.login-lead{color:var(--muted);font-size:14.5px;margin:0 0 26px}
+.role-list{margin:34px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+.role-list li{display:flex;gap:13px;align-items:flex-start}
+.role-list .rl-ic{width:34px;height:34px;border-radius:10px;background:var(--fg-soft);color:var(--fg);display:grid;place-items:center;flex:0 0 auto}
+.role-list .rl-ic .ic{width:17px;height:17px}
+.role-list b{display:block;font-size:14px}
+.role-list span{font-size:12.5px;color:var(--muted);line-height:1.5}
+.login-foot{margin-top:auto;padding-top:40px;font-size:12px;color:var(--muted)}
+
+/* ═══════════ モーダル・トースト・フッター ═══════════ */
+.modal-backdrop{position:fixed;inset:0;background:oklch(18% 0.012 250 / 0.45);display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px 32px;z-index:100;overflow-y:auto}
+.modal{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-md);width:100%;max-width:540px;animation:modalIn .18s cubic-bezier(0.23,1,0.32,1)}
+.modal.wide{max-width:720px}
+@keyframes modalIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px 14px;border-bottom:1px solid var(--border)}
+.modal-head h3{margin:0;font-family:var(--font-display);font-size:17px;font-weight:650;letter-spacing:-0.01em}
+.modal-x{width:36px;height:36px;border:0;background:transparent;border-radius:var(--radius);display:grid;place-items:center;color:var(--muted)}
+.modal-x:hover{background:var(--fg-faint);color:var(--fg)}
+.modal-body{padding:18px 22px;max-height:62vh;overflow-y:auto}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px 18px;border-top:1px solid var(--border)}
+#toast-root{position:fixed;right:18px;bottom:18px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:10px;background:var(--fg);color:var(--surface);padding:12px 18px;border-radius:12px;box-shadow:var(--shadow-md);font-size:13.5px;animation:toastIn .2s cubic-bezier(0.23,1,0.32,1);max-width:420px}
+.toast.t-ok{background:var(--ok)}
+.toast.t-err{background:var(--err)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pagefoot{padding:22px clamp(16px,3vw,36px) 34px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+/* ═══════════ レスポンシブ・アクセシビリティ ═══════════ */
+@media(max-width:1180px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.meta-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:980px){
+  .hamburger{display:inline-flex}
+  .sidebar{position:fixed;left:0;top:var(--topbar-h);bottom:0;transform:translateX(-105%);transition:transform .22s cubic-bezier(0.23,1,0.32,1);width:var(--sidebar-w);flex-basis:auto;height:auto;box-shadow:var(--shadow-md)}
+  .sidebar.open{transform:translateX(0)}
+  .side-backdrop{position:fixed;inset:0;background:oklch(18% 0.012 250 / 0.32);z-index:25;display:none}
+  .side-backdrop.show{display:block}
+  .grid-2,.grid-2-1,.grid-1-2{grid-template-columns:1fr}
+  .rail{grid-template-columns:repeat(3,1fr);row-gap:18px}
+  .login-wrap{grid-template-columns:1fr}
+  .login-side{display:none}
+  .top-search{display:none}
+}
+@media(max-width:720px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .userchip .uc-name,.userchip .uc-role{display:none}
+  .env-pill{display:none}
+  .page-head{align-items:flex-start;flex-direction:column}
+  .row-2,.row-3{grid-template-columns:1fr}
+  .log-row{grid-template-columns:1fr;gap:2px}
+  .log-row .who{text-align:left}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media print{
+  .topbar,.sidebar,.breadcrumb,.page-actions,.tabbar,.chipbar,.modal-backdrop{display:none!important}
+  body{background:var(--surface)}
+  .card,.kpi,.pipeline,.item,.meta-cell{border:1px solid var(--border);box-shadow:none;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<div id="modal-root"></div>
+<div id="toast-root" role="status" aria-live="polite"></div>
+<script>
+// ===================== API クライアント（変更なし） =====================
+async function api(path, opts={}){
+  const res = await fetch(path, {...opts, headers:{"Content-Type":"application/json", ...(opts.headers||{})}, credentials:"same-origin"});
+  if(!res.ok){ let m=`エラー (${res.status})`; try{const b=await res.json(); if(b.error?.message)m=b.error.message;}catch{} throw new Error(m); }
+  if(res.status===204) return null; return res.json();
+}
+const A = {
+  login:(e,p)=>api("/api/auth/login",{method:"POST",body:JSON.stringify({email:e,password:p})}),
+  logout:()=>api("/api/auth/logout",{method:"POST"}),
+  changePassword:(cur,next)=>api("/api/auth/password",{method:"POST",body:JSON.stringify({current_password:cur,new_password:next})}),
+  health:()=>api("/api/health"),
+  me:()=>api("/api/me"),
+  users:()=>api("/api/users"),
+  adminUsers:()=>api("/api/admin/users"),
+  createAdminUser:(d)=>api("/api/admin/users",{method:"POST",body:JSON.stringify(d)}),
+  updateAdminUser:(id,d)=>api(`/api/admin/users/${id}`,{method:"PUT",body:JSON.stringify(d)}),
+  deactivateUser:(id)=>api(`/api/admin/users/${id}/deactivate`,{method:"POST"}),
+  activateUser:(id)=>api(`/api/admin/users/${id}/activate`,{method:"POST"}),
+  resetUserPassword:(id,d)=>api(`/api/admin/users/${id}/password`,{method:"POST",body:JSON.stringify(d)}),
+  plans:()=>api("/api/plans"),
+  createPlan:(d)=>api("/api/plans",{method:"POST",body:JSON.stringify(d)}),
+  plan:(id)=>api(`/api/plans/${id}`),
+  updatePlan:(id,d)=>api(`/api/plans/${id}`,{method:"PUT",body:JSON.stringify(d)}),
+  submitPlan:(id)=>api(`/api/plans/${id}/submit`,{method:"POST"}),
+  approvePlan:(id)=>api(`/api/plans/${id}/approve`,{method:"POST"}),
+  rejectPlan:(id)=>api(`/api/plans/${id}/reject`,{method:"POST"}),
+  engagements:()=>api("/api/engagements"),
+  createEngagement:(d)=>api("/api/engagements",{method:"POST",body:JSON.stringify(d)}),
+  engagement:(id)=>api(`/api/engagements/${id}`),
+  updateEngagement:(id,d)=>api(`/api/engagements/${id}`,{method:"PUT",body:JSON.stringify(d)}),
+  setEngStatus:(id,s)=>api(`/api/engagements/${id}/status`,{method:"POST",body:JSON.stringify({status:s})}),
+  requests:(q="")=>api(`/api/requests${q}`),
+  createRequest:(eid,d)=>api(`/api/engagements/${eid}/requests`,{method:"POST",body:JSON.stringify(d)}),
+  sendRequest:(id)=>api(`/api/requests/${id}/send`,{method:"POST"}),
+  receiveRequest:(id)=>api(`/api/requests/${id}/receive`,{method:"POST"}),
+  returnRequest:(id)=>api(`/api/requests/${id}/return`,{method:"POST"}),
+  closeRequest:(id)=>api(`/api/requests/${id}/close`,{method:"POST"}),
+  submitEvidence:(rid,d)=>api(`/api/requests/${rid}/submissions`,{method:"POST",body:JSON.stringify(d)}),
+  workpapers:(eid)=>api(`/api/engagements/${eid}/workpapers`),
+  createWorkpaper:(eid,d)=>api(`/api/engagements/${eid}/workpapers`,{method:"POST",body:JSON.stringify(d)}),
+  updateWorkpaper:(id,d)=>api(`/api/workpapers/${id}`,{method:"PUT",body:JSON.stringify(d)}),
+  reqReview:(id)=>api(`/api/workpapers/${id}/review`,{method:"POST"}),
+  approveWorkpaper:(id)=>api(`/api/workpapers/${id}/approve`,{method:"POST"}),
+  returnWorkpaper:(id)=>api(`/api/workpapers/${id}/return`,{method:"POST"}),
+  findings:(eid)=>api(`/api/engagements/${eid}/findings`),
+  createFinding:(eid,d)=>api(`/api/engagements/${eid}/findings`,{method:"POST",body:JSON.stringify(d)}),
+  respondFinding:(id,d)=>api(`/api/findings/${id}/responses`,{method:"POST",body:JSON.stringify(d)}),
+  confirmFinding:(id,d)=>api(`/api/findings/${id}/confirm`,{method:"POST",body:JSON.stringify(d)}),
+  createRemediation:(fid,d)=>api(`/api/findings/${fid}/remediations`,{method:"POST",body:JSON.stringify(d)}),
+  remStatus:(id,s)=>api(`/api/remediations/${id}/status`,{method:"POST",body:JSON.stringify({status:s})}),
+  verifyRemediation:(id,d)=>api(`/api/remediations/${id}/verify`,{method:"POST",body:JSON.stringify(d)}),
+  auditEvents:(q="")=>api(`/api/audit-events?${q}`),
+};
+
+// ===================== 定数・表示辞書（変更なし） =====================
+const ROLE={auditor:"監査役",audit_committee:"監査役会",general_affairs:"総務部",auditee:"被監査部門",admin:"システム管理者"};
+const BADGE={draft:"b-gray",pending_approval:"b-amber",approved:"b-green",rejected:"b-red",in_progress:"b-blue",review:"b-purple",reported:"b-blue",closed:"b-green",sent:"b-blue",partial:"b-amber",received:"b-green",returned:"b-red",review_requested:"b-amber",final:"b-green",fact_check:"b-amber",confirmed:"b-blue",remediated:"b-purple",rechecked:"b-amber",completed:"b-green",planned:"b-gray",submitted:"b-blue",verified:"b-green"};
+const ST={ // 状態の日本語ラベル（F-10 対応）
+  draft:"下書き",pending_approval:"承認申請中",approved:"承認済み",rejected:"却下",
+  in_progress:"実施中",review:"レビュー中",reported:"報告済み",closed:"締切・完了",
+  sent:"送付済",partial:"一部受領",received:"受領済",returned:"差戻し",
+  review_requested:"レビュー依頼中",final:"確定",fact_check:"事実確認中",confirmed:"確定",
+  remediated:"是正中",rechecked:"再確認中",completed:"完了",reissued:"再指摘",
+  planned:"計画",submitted:"提出済",verified:"検証済",accepted:"受領",
+};
+const TASK_TYPE={engagement:"案件",request:"依頼",workpaper:"調書",finding:"指摘",remediation:"是正"};
+const ACTION_JA={ // 監査ログの操作名（F-06 対応）
+  login:"ログイン",logout:"ログアウト",login_failed:"ログイン失敗",
+  password_changed:"パスワード変更",password_change_failed:"パスワード変更失敗",
+  plan_created:"計画作成",plan_updated:"計画更新",plan_submitted:"承認申請",plan_approved:"計画承認",plan_rejected:"計画却下",
+  engagement_created:"案件作成",engagement_updated:"案件更新",engagement_status:"案件状態変更",engagement_access_denied:"案件アクセス拒否",
+  request_created:"依頼作成",request_sent:"依頼送付",request_received:"依頼受領",request_returned:"依頼差戻し",request_closed:"依頼締切",
+  submission_created:"証憑提出",submission_denied:"提出拒否",
+  workpaper_created:"調書作成",workpaper_updated:"調書更新",workpaper_review_requested:"レビュー依頼",workpaper_approved:"調書確定",workpaper_returned:"調書差戻し",
+  finding_created:"指摘作成",finding_response:"指摘回答",finding_confirmed:"指摘確定",
+  remediation_created:"是正登録",remediation_status:"是正進捗更新",remediation_verified:"是正確認",
+  user_created:"ユーザー作成",user_updated:"ユーザー更新",user_deactivated:"ユーザー無効化",user_activated:"ユーザー再有効化",user_password_reset:"パスワード再設定",
+  permission_denied:"権限拒否",
+};
+const OBJ_JA={auth:"認証",permission:"権限",user:"ユーザー",audit_plan:"監査計画",engagement:"案件",evidence_request:"証憑依頼",submission:"証憑提出",workpaper:"調書",finding:"指摘",remediation:"是正"};
+const RESULT_JA={success:"成功",denied:"拒否",failed:"失敗"};
+// ロール別UI表示権限（サーバ側の権限判定は変更しない。表示出し分け専用）
+const UI_PERM={
+  auditor:["plan:view","plan:create","plan:update","engagement:view","engagement:create","request:view","request:create","request:send","workpaper:create","finding:create","remediation:create","auditlog:view","users:view"],
+  audit_committee:["plan:view","engagement:view","request:view","auditlog:view","users:view"],
+  general_affairs:["plan:view","engagement:view","engagement:update","request:view","request:create","request:send"],
+  auditee:["engagement:view","request:view","request:submit","finding:respond"],
+  admin:["auditlog:view","users:view","users:manage"],
+};
+const uiCan=(role,perm)=>(UI_PERM[role]||[]).includes(perm);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dateFmt=s=>s?new Date(s).toLocaleString("ja-JP"):"—";
+const dateOnly=s=>s?new Date(s).toLocaleDateString("ja-JP"):"—";
+const pad=n=>String(n).padStart(2,"0");
+const todayStr=()=>{ const x=new Date(); return `${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`; };
+const isOverdue=d=>!!d && String(d).slice(0,10) < todayStr();
+const stLabel=s=>ST[s]||s;
+const badge=s=>`<span class="badge ${BADGE[s]||"b-gray"}">${esc(stLabel(s))}</span>`;
+const sevLabel=s=>s==="high"?"高":s==="medium"?"中":s==="low"?"低":s;
+const sevColor=s=>s==="high"?"var(--err)":s==="medium"?"var(--warn)":"var(--info)";
+const fmtDue=d=>{ if(!d) return '<span class="muted">—</span>'; const ov=isOverdue(d); return `<span class="num" style="${ov?"color:var(--err);font-weight:700;":""}">${dateOnly(d)}</span>${ov?' <span class="badge b-red">期限超過</span>':""}`; };
+const TASK_TYPE_JA=t=>TASK_TYPE[t]||t;
+const pbar=(pct,tone)=>{ const t=tone?` ${tone}`:""; return `<span class="pbar"><i class="${t}" style="width:${Math.max(0,Math.min(100,pct))}%"></i></span>`; };
+
+// ===================== アイコン（モノラインSVG・絵文字不使用） =====================
+const IC={
+  home:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 11 8.5-7.5L20.5 11"/><path d="M5.5 9.5V20h13V9.5"/></svg>',
+  plan:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="m9 15 2 2 4-4"/></svg>',
+  eng:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5A2.5 2.5 0 0 1 6 5h3.5l2 2.5H18A2.5 2.5 0 0 1 20.5 10v7A2.5 2.5 0 0 1 18 19.5H6A2.5 2.5 0 0 1 3.5 17Z"/></svg>',
+  req:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="m3.5 7.5 8.5 6 8.5-6"/></svg>',
+  log:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2.5"/></svg>',
+  users:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M3 20c0-3.4 2.7-5.5 6-5.5s6 2.1 6 5.5"/><circle cx="16.5" cy="9.5" r="2.6"/><path d="M16 14.8c2.4.2 4.5 1.9 4.5 4.2"/></svg>',
+  search:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.8-3.8"/></svg>',
+  plus:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  x:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+  menu:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+  out:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5.5A1.5 1.5 0 0 1 4 19.5v-15A1.5 1.5 0 0 1 5.5 3H9"/><path d="m15.5 16.5 4.5-4.5-4.5-4.5"/><path d="M20 12H9.5"/></svg>',
+  key:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m11 12.5 8.5-8.5M17 6l2 2M13.5 9.5l2 2"/></svg>',
+  doc:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h8.5L19 8v12.5H6Z"/><path d="M14 3.5V8h4.5"/><path d="M9.5 13h5M9.5 16.5h5"/></svg>',
+  alert:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.8 19.5h18.4Z"/><path d="M12 10v4M12 16.8h.01"/></svg>',
+  shield:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v6c0 5 3.2 8.2 7.5 9 4.3-.8 7.5-4 7.5-9V6Z"/><path d="m9 12 2 2 4-4.5"/></svg>',
+  chev:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  arrow:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  filter:'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16l-6.5 7.5V18l-3 2v-6.5Z"/></svg>',
+};
+const ic=name=>IC[name]||"";
+
+// ===================== 状態・ルーティング =====================
+let state={me:null, query:"", envLabel:"本番"};
+const cache={plans:[],planDetail:null,engs:[],engDetail:null,engDetails:{},requests:[],events:[],users:[],adminUsers:[],engFilter:null};
+let renderSeq=0;
+const app=document.getElementById("app");
+const modalRoot=document.getElementById("modal-root");
+const toastRoot=document.getElementById("toast-root");
+let modalState=null;
+
+function parseHash(){
+  const raw=(location.hash||"").replace(/^#\/?/,"");
+  const parts=raw.split("/").filter(Boolean);
+  const r={view:"home",id:null,tab:null,extra:null};
+  if(parts[0]==="plans"){r.view="plans";r.id=parts[1]||null;}
+  else if(parts[0]==="engagements"){r.view="engagements";r.id=parts[1]||null;r.tab=parts[2]||null;}
+  else if(parts[0]==="requests"){r.view="requests";r.extra=parts[1]||null;}
+  else if(parts[0]==="auditlog"){r.view="auditlog";}
+  else if(parts[0]==="users"){r.view="users";}
+  return r;
+}
+function buildHash(view,id,tab,extra){let h="#/"+view;if(id)h+="/"+id;if(tab)h+="/"+tab;if(extra&&!id&&!tab)h+="/"+extra;return h;}
+function navigate(view,id,tab,extra){
+  closeModal(); // 画面遷移時のみモーダルを閉じる（データ再描画では閉じない）
+  // モバイルでは遷移時にメニューを自動クローズ
+  const sb=document.getElementById("sidebar"), bd=document.getElementById("side-backdrop");
+  sb?.classList.remove("open"); bd?.classList.remove("show");
+  const h=buildHash(view,id,tab,extra);
+  if(location.hash===h){render();}else{location.hash=h;}
+  try{window.scrollTo(0,0);}catch{}
+}
+function scrollTop(){ try{window.scrollTo({top:0,behavior:"auto"});}catch{window.scrollTo(0,0);} }
+
+function toast(msg,type="ok"){const el=document.createElement("div");el.className=`toast t-${type}`;el.textContent=msg;toastRoot.appendChild(el);setTimeout(()=>{el.remove();},4200);}
+
+// ===================== モーダル =====================
+function openModal({title,body,okLabel="実行",okClass="btn-primary",onOk=null,wide=false}){
+  modalState={onOk};
+  modalRoot.innerHTML=`
+    <div class="modal-backdrop" data-modal="close">
+      <div class="modal ${wide?"wide":""}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <div class="modal-head"><h3>${esc(title)}</h3><button class="modal-x" data-modal="close" aria-label="閉じる">${ic("x")}</button></div>
+        <div class="modal-body">${body}<p class="form-err" id="modal-err" style="display:none"></p></div>
+        <div class="modal-foot">
+          <button class="btn btn-secondary" data-modal="close">キャンセル</button>
+          <button class="btn ${okClass}" id="modal-ok">${esc(okLabel)}</button>
+        </div>
+      </div>
+    </div>`;
+  const okBtn=document.getElementById("modal-ok");
+  okBtn.onclick=()=>{ if(modalState?.onOk) modalState.onOk(okBtn); };
+  const bodyEl=modalRoot.querySelector(".modal-body");
+  bodyEl.addEventListener("keydown",ev=>{
+    if(ev.key==="Enter" && ev.target.tagName!=="TEXTAREA" && !ev.target.matches("button")){ev.preventDefault();okBtn.click();}
+  });
+  const first=bodyEl.querySelector("input,select,textarea"); if(first) setTimeout(()=>first.focus(),60);
+  const onKey=ev=>{ if(ev.key==="Escape") closeModal(); };
+  document.addEventListener("keydown",onKey);
+  modalState.onKey=onKey;
+}
+function closeModal(){ if(modalState?.onKey) document.removeEventListener("keydown",modalState.onKey); modalRoot.innerHTML=""; modalState=null; }
+function modalErr(msg){const el=document.getElementById("modal-err");if(el){el.style.display="";el.textContent=msg||"";}}
+function confirmModal(message,onYes,yesLabel="実行する",danger=true){
+  openModal({title:"確認",body:`<p style="margin:2px 0;font-size:14px">${esc(message)}</p>`,okLabel:yesLabel,okClass:danger?"btn-danger":"btn-primary",onOk:()=>{closeModal();onYes();}});
+}
+function val(sel){ const el=document.querySelector(sel); return el?.value?.trim?.() ?? ""; }
+
+// ===================== トップバー・サイドバー・パンくず =====================
+function topbarHTML(me){
+  const u=me.user, name=esc(u.name), role=ROLE[u.role]||u.role, dept=esc(u.department);
+  const route=parseHash();
+  const showSearch=["plans","engagements","requests","users"].includes(route.view)&&!route.id;
+  return `
+  <header class="topbar" data-od-id="topbar">
+    <button class="hamburger icon-btn" data-act="hamburger" aria-label="メニューを開く">${ic("menu")}</button>
+    <div class="brand" data-od-id="brand"><span class="brand-mark">監</span>
+      <span><span class="brand-name">監査業務・証跡管理</span><br><span class="brand-sub">Mirai Audit Workpaper</span></span>
+    </div>
+    ${showSearch?`<div class="top-search">${ic("search")}<input id="global-q" placeholder="一覧を絞り込む（名称・部門・依頼内容など）" value="${esc(state.query)}" aria-label="一覧を絞り込む"></div>`:""}
+    <div class="top-spacer"></div>
+    <span class="env-pill" title="環境">${esc(state.envLabel)}</span>
+    <div class="userchip" title="${name}（${esc(role)} / ${dept}）">
+      <span class="ava">${esc(u.name.slice(0,1))}</span>
+      <span><span class="uc-name">${name}</span><br><span class="uc-role">${esc(role)} ・ ${dept}</span></span>
+    </div>
+    <button class="icon-btn" data-act="password" aria-label="パスワード変更" title="パスワード変更">${ic("key")}</button>
+    <button class="btn btn-secondary" data-act="logout">ログアウト</button>
+  </header>`;
+}
+function sidebarHTML(role,route){
+  const lnk=(v,l,cond)=>{ if(!cond) return ""; const active=route.view===v?"active":""; const cnt=v==="requests"?(cache.requests||[]).filter(r=>r.status==="sent"||r.status==="partial").length:""; return `<a class="side-link ${active}" data-nav="${v}" data-od-id="nav-${v}"><span class="ic">${ic(v==="home"?"home":v==="plans"?"plan":v==="engagements"?"eng":v==="requests"?"req":v==="auditlog"?"log":"users")}</span><span class="lbl">${l}</span>${cnt?`<span class="cnt">${cnt}</span>`:""}</a>`; };
+  const collapsed=localStorage.getItem("maw.sidebar.collapsed")==="1"?"collapsed":"";
+  const hasSummary=(cache.plans.length||cache.engs.length);
+  const summary=hasSummary?`
+    <div class="side-summary" data-od-id="sidebar-summary">
+      <div class="ss-title">監査サマリ</div>
+      <div class="ss-row"><span>計画</span><b class="num">${cache.plans.length}件</b></div>
+      <div class="ss-row"><span>案件</span><b class="num">${cache.engs.length}件</b></div>
+      <div class="ss-row"><span>実施中</span><b class="num">${cache.engs.filter(e=>["in_progress","review"].includes(e.status)).length}件</b></div>
+      <div class="ss-row"><span>完了</span><b class="num">${cache.engs.filter(e=>e.status==="closed").length}件</b></div>
+    </div>`:"";
+  return `
+  <aside class="sidebar ${collapsed}" id="sidebar" aria-label="メインメニュー">
+    <div class="side-group">業務</div>
+    ${lnk("home","ダッシュボード",true)}
+    ${lnk("plans","監査計画",uiCan(role,"plan:view"))}
+    ${lnk("engagements","監査案件",uiCan(role,"engagement:view"))}
+    ${lnk("requests","証憑依頼",uiCan(role,"request:view"))}
+    <div class="side-group">管理</div>
+    ${lnk("auditlog","監査ログ",uiCan(role,"auditlog:view"))}
+    ${lnk("users","ユーザー管理",uiCan(role,"users:manage"))}
+    <div class="side-foot">
+      ${summary}
+      <button class="side-toggle" data-act="collapse-sidebar" aria-label="サイドバーを折りたたむ">${ic("chev")}<span>折りたたむ</span></button>
+    </div>
+  </aside>
+  <div class="side-backdrop" id="side-backdrop" data-act="hamburger"></div>`;
+}
+function breadcrumbHTML(route){
+  const parts=[`<a data-nav="home">ダッシュボード</a>`];
+  const add=(label,nav,id)=>{parts.push(`<span class="sep">/</span><a data-nav="${nav}" ${id?`data-id="${esc(id)}"`:""}>${esc(label)}</a>`);};
+  const addCur=label=>{parts.push(`<span class="sep">/</span><span class="cur">${esc(label)}</span>`);};
+  const tabJA={requests:"証憑依頼",workpapers:"監査調書",findings:"指摘・是正"};
+  if(route.view==="plans"){add("監査計画","plans"); if(route.id) addCur(cache.planDetail?.plan?.title||"計画詳細");}
+  else if(route.view==="engagements"){add("監査案件","engagements"); if(route.id){ addCur(cache.engDetail?.engagement?.engagement_no||"案件"); if(route.tab) addCur(tabJA[route.tab]||route.tab);}}
+  else if(route.view==="requests"){add("証憑依頼","requests"); if(route.extra) addCur(stLabel(route.extra));}
+  else if(route.view==="auditlog"){add("監査ログ","auditlog");}
+  else if(route.view==="users"){add("ユーザー管理","users");}
+  return `<div class="breadcrumb">${parts.join("")}</div>`;
+}
+
+// ===================== 描画 =====================
+async function refreshMe(){
+  try{ state.me=await A.me(); render(); }
+  catch{ state.me=null; render(); }
+}
+function render(skipLoad=false){
+  renderSeq++;
+  if(!state.me){ closeModal(); renderLogin(); return; }
+  const me=state.me, role=me.user.role;
+  const route=parseHash();
+  app.innerHTML=`${topbarHTML(me)}
+    <div class="layout">${sidebarHTML(role,route)}
+    <main class="main" id="main">${breadcrumbHTML(route)}${viewHTML(route)}</main>
+    </div>
+    <footer class="pagefoot" data-od-id="footer">
+      <span>監査業務・証跡管理 / Mirai Audit Workpaper</span>
+      <span class="mono small">${esc(state.envLabel)} 環境 ・ 追記専用監査ログ</span>
+    </footer>`;
+  // データ取得後の再描画（skipLoad=true）では再取得せず、無限ループを防ぐ
+  if(!skipLoad) loadViewData(route);
+  const q=document.getElementById("global-q");
+  if(q){
+    if(state.searchFocus){ q.focus(); q.setSelectionRange(q.value.length,q.value.length); state.searchFocus=false; }
+    q.oninput=()=>{ state.searchFocus=true; state.query=q.value; render(true); };
+  }
+}
+function viewHTML(route){
+  const r=route;
+  if(r.view==="plans" && r.id) return planHTML(r.id);
+  if(r.view==="plans") return plansHTML();
+  if(r.view==="engagements" && r.id) return engagementHTML(r.id, r.tab);
+  if(r.view==="engagements") return engagementsHTML();
+  if(r.view==="requests") return requestsHTML(r.extra);
+  if(r.view==="auditlog") return auditLogHTML();
+  if(r.view==="users") return usersHTML();
+  return homeHTML();
+}
+// 各ビューのデータ取得（取得後に再描画）
+function loadViewData(route){
+  const seq=renderSeq;
+  const done=()=>{ if(seq===renderSeq) render(true); };
+  const role=state.me.user.role;
+  try{
+    if(route.view==="home"){
+      // ダッシュボード: 計画・案件・依頼・ログを並列取得し、実施中案件の詳細(調書・指摘)を限定的に取得
+      Promise.all([
+        uiCan(role,"plan:view")?A.plans().catch(()=>null):Promise.resolve(null),
+        uiCan(role,"engagement:view")?A.engagements().catch(()=>null):Promise.resolve(null),
+        uiCan(role,"request:view")?A.requests().catch(()=>null):Promise.resolve(null),
+        uiCan(role,"auditlog:view")?A.auditEvents("?limit=6").catch(()=>null):Promise.resolve(null),
+      ]).then(([pl,en,rq,ev])=>{
+        if(pl) cache.plans=pl.plans; if(en) cache.engs=en.engagements; if(rq) cache.requests=rq.requests; if(ev) cache.events=ev.events;
+        const ids=(en?.engagements||[]).filter(e=>["in_progress","review","pending_approval"].includes(e.status)).map(e=>e.id);
+        return Promise.all(ids.map(id=>A.engagement(id).catch(()=>null))).then(details=>{
+          const map={}; for(const d of details){ if(d?.engagement) map[d.engagement.id]=d; }
+          cache.engDetails=map; done();
+        });
+      }).catch(()=>done());
+    }
+    else if(route.view==="plans" && route.id) A.plan(route.id).then(x=>{cache.planDetail=x;done();}).catch(e=>{toast(e.message,"err");});
+    else if(route.view==="plans") {
+      // 計画一覧: 案件数表示のため、権限がある場合は案件も並列取得
+      const engReq = uiCan(role,"engagement:view") ? A.engagements().catch(()=>null) : Promise.resolve(null);
+      Promise.all([A.plans(), engReq]).then(([pl,en])=>{ cache.plans=pl.plans; if(en) cache.engs=en.engagements; done(); }).catch(e=>toast(e.message,"err"));
+    }
+    else if(route.view==="engagements" && !route.id) {
+      // 案件一覧と作成フォーム用の計画一覧を1回の更新でまとめて取得（重複描画・無限ループ防止）
+      const planReq = uiCan(role,"plan:view") ? A.plans().catch(()=>null) : Promise.resolve(null);
+      Promise.all([A.engagements(), planReq])
+        .then(([engRes, planRes])=>{ cache.engs=engRes.engagements; if(planRes) cache.plans=planRes.plans; done(); })
+        .catch(e=>{toast(e.message,"err");});
+    }
+    else if(route.view==="engagements" && route.id) A.engagement(route.id).then(x=>{cache.engDetail=x;done();}).catch(e=>{toast(e.message,"err");});
+    else if(route.view==="requests") A.requests(route.extra?`?status=${encodeURIComponent(route.extra)}`:"").then(x=>{cache.requests=x.requests;done();}).catch(e=>toast(e.message,"err"));
+    else if(route.view==="auditlog"){
+      Promise.all([A.auditEvents(), uiCan(role,"users:view")?A.users():Promise.resolve(null)])
+        .then(([ev,us])=>{cache.events=ev.events; if(us) cache.users=us.users; done();})
+        .catch(e=>toast(e.message,"err"));
+    }
+    else if(route.view==="users") A.adminUsers().then(x=>{cache.adminUsers=x.users;done();}).catch(e=>toast(e.message,"err"));
+  }catch(e){ toast(e.message,"err"); }
+}
+function loadingCard(){ return `<div class="card"><div class="card-head"><h2 class="card-title">読み込み中…</h2></div><p class="muted">データを取得しています。</p></div>`; }
+function engDetailOf(id){ return cache.engDetails[id] || (cache.engDetail?.engagement?.id===id ? cache.engDetail : null); }
+
+// ===================== ホーム（ダッシュボード） =====================
+function kpiHTML(){
+  const engs=cache.engs||[], reqs=cache.requests||[];
+  const doing=engs.filter(e=>["in_progress","review"].includes(e.status)).length;
+  const recv=reqs.filter(r=>["received","partial","closed"].includes(r.status)).length;
+  const rate=reqs.length?Math.round(recv/reqs.length*100):0;
+  const overdue=reqs.filter(r=>isOverdue(r.due_at)&&!["received","closed"].includes(r.status)).length;
+  const details=Object.values(cache.engDetails||{});
+  const fnds=details.flatMap(d=>d.findings||[]);
+  const wps=details.flatMap(d=>d.workpapers||[]);
+  const rems=details.flatMap(d=>(d.findings||[]).flatMap(f=>f.remediations||[]));
+  const openFnds=fnds.filter(f=>!["completed"].includes(f.status)).length;
+  const highOpen=fnds.filter(f=>f.severity==="high"&&!["completed"].includes(f.status)).length;
+  const finalWps=wps.filter(w=>w.status==="final").length;
+  const wpsRate=wps.length?Math.round(finalWps/wps.length*100):0;
+  const remDone=rems.filter(r=>r.status==="completed").length;
+  const remRate=rems.length?Math.round(remDone/rems.length*100):0;
+  const k=(id,label,val,unit,foot,tone)=>`<div class="kpi ${tone||""}" data-od-id="${id}">
+    <div class="kpi-label">${esc(label)}</div>
+    <div class="kpi-num num">${val}${unit?`<small>${esc(unit)}</small>`:""}</div>
+    <div class="kpi-foot">${esc(foot)}</div></div>`;
+  return `<div class="kpi-grid">
+    ${k("kpi-ongoing","実施中案件",doing,"件","関与案件のうち", "tone-ok")}
+    ${k("kpi-submission","証憑提出率",rate,"%","依頼"+reqs.length+"件・受領済"+recv+"件","")}
+    ${k("kpi-overdue","期限超過",overdue,"件","早急な対応が必要です","tone-err")}
+    ${k("kpi-findings","未完了指摘",openFnds,"件","重要度高 "+highOpen+"件","tone-warn")}
+    ${k("kpi-workpaper","調書確定率",wpsRate,"%","確定"+finalWps+"件 / "+wps.length+"件","")}
+    ${k("kpi-remediation","是正完了率",remRate,"%","完了"+remDone+"件 / "+rems.length+"件","")}
+  </div>`;
+}
+function pipelineHTML(){
+  const engs=cache.engs||[];
+  const details=Object.values(cache.engDetails||{});
+  const hasWp=eid=>details.some(d=>d.engagement?.id===eid&&(d.workpapers||[]).length>0);
+  const hasReviewedWp=eid=>details.some(d=>d.engagement?.id===eid&&(d.workpapers||[]).some(w=>w.status==="final"||w.status==="review_requested"));
+  const hasFinding=eid=>details.some(d=>d.engagement?.id===eid&&(d.findings||[]).some(f=>["confirmed","remediated","completed"].includes(f.status)));
+  const atOrBeyond=(statuses)=>engs.filter(e=>statuses.includes(e.status)).length;
+  const total=engs.length||1;
+  const fills=[
+    Math.round((cache.plans.filter(p=>p.status==="approved").length/(cache.plans.length||1))*100), /* 計画: 承認済み計画 */
+    Math.round(atOrBeyond(["in_progress","review","reported","closed"])/total*100),               /* 実施: 実施段階以降 */
+    Math.round(engs.filter(e=>hasWp(e.id)).length/total*100),                                     /* 調書: 調書あり案件 */
+    Math.round(engs.filter(e=>hasReviewedWp(e.id)).length/total*100),                             /* レビュー: 依頼中+確定 */
+    Math.round(engs.filter(e=>hasFinding(e.id)).length/total*100),                                /* 指摘: 確定以降 */
+    Math.round(atOrBeyond(["closed"])/total*100),                                                 /* 完了: 締切案件 */
+  ];
+  const names=["計画","実施","調書","レビュー","指摘","完了"];
+  const nowIdx=fills.findIndex(f=>f<100);
+  const cells=names.map((n,i)=>{
+    const cls=i===nowIdx?"now":i<nowIdx?"done":"";
+    const fill=i<nowIdx?100:i===nowIdx?fills[i]:0;
+    const cnt=i>nowIdx?"—":(i<nowIdx?100:fills[i])+"%";
+    return `<div class="stage ${cls}" data-od-id="pipeline-stage-${i}">
+      <div class="st-label">${i===nowIdx?'<span class="st-dot"></span>':""}${n}</div>
+      <div class="track"><div class="fill" style="width:${fill}%"></div></div>
+      <div class="st-cnt num">${cnt}</div></div>`;
+  }).join("");
+  const pendEng=engs.find(e=>e.status==="pending_approval");
+  const overdueN=(cache.requests||[]).filter(r=>isOverdue(r.due_at)&&!["received","closed"].includes(r.status)).length;
+  const milestone=pendEng?`次のマイルストーン: ${esc(pendEng.engagement_no)} ${esc(pendEng.title)}（${stLabel(pendEng.status)}）`:overdueN?`期限超過の依頼が ${overdueN}件 — 督促とフォローが必要です`:`全案件が計画どおり進行中です`;
+  const doing=engs.filter(e=>["in_progress","review"].includes(e.status)).length;
+  return `<section class="pipeline" data-od-id="dashboard-pipeline">
+    <div class="pipeline-head">
+      <div><p class="eyebrow" style="color:var(--muted)">監査パイプライン</p><h2 class="card-title" style="font-size:18px">監査の全体進捗</h2></div>
+      <div class="pipeline-pct num">${Math.round(fills.reduce((a,b)=>a+b,0)/fills.length)}<small>%</small></div>
+    </div>
+    <div class="rail">${cells}</div>
+    <div class="rail-legend">案件 <b class="num">${engs.length}件</b> ・ 実施中 <b class="num">${doing}件</b> ・ 完了 <b class="num">${engs.filter(e=>e.status==="closed").length}件</b></div>
+    <div class="milestone"><span class="ms-dot"></span>${milestone}</div>
+  </section>`;
+}
+function donutHTML(){
+  const reqs=cache.requests||[];
+  const segs=[["送付済",reqs.filter(r=>r.status==="sent").length,"var(--info)"],["一部受領",reqs.filter(r=>r.status==="partial").length,"var(--warn)"],["受領済",reqs.filter(r=>r.status==="received").length,"var(--ok)"],["差戻し",reqs.filter(r=>r.status==="returned").length,"var(--err)"],["下書き・締切",reqs.filter(r=>["draft","closed"].includes(r.status)).length,"var(--muted)"]];
+  const total=reqs.length||1;
+  const R=42, C=2*Math.PI*R;
+  let acc=0;
+  const arcs=segs.map(s=>{
+    const frac=s[1]/total, len=frac*C;
+    const off=acc*C; acc+=frac;
+    return `<circle r="${R}" cx="60" cy="60" fill="none" style="stroke:${s[2]}" stroke-width="15" stroke-dasharray="${len.toFixed(1)} ${(C-len).toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 60 60)"/>`;
+  }).join("");
+  const legend=segs.map(s=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:8px"><span style="width:9px;height:9px;border-radius:3px;background:${s[2]};flex:0 0 auto"></span>${s[0]}<b class="num" style="margin-left:auto;color:var(--fg)">${s[1]}</b></div>`).join("");
+  return `<div class="card" data-od-id="dashboard-requests-donut">
+    <div class="card-head"><h2 class="card-title">証憑依頼の状況</h2><span class="card-sub">全${reqs.length}件</span></div>
+    <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap">
+      <div style="position:relative;width:120px;height:120px;flex:0 0 auto">
+        <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="依頼ステータス分布">${arcs}</svg>
+        <div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center"><div><div class="num" style="font-size:26px;font-weight:650;line-height:1">${reqs.length}</div><div style="font-size:10.5px;color:var(--muted)">依頼</div></div></div>
+      </div>
+      <div style="flex:1;min-width:170px">${legend}</div>
+    </div>
+  </div>`;
+}
+function sevBarsHTML(){
+  const details=Object.values(cache.engDetails||{});
+  const fnds=details.flatMap(d=>d.findings||[]);
+  const rows=[["高",fnds.filter(f=>f.severity==="high").length,"var(--err)"],["中",fnds.filter(f=>f.severity==="medium").length,"var(--warn)"],["低",fnds.filter(f=>f.severity==="low").length,"var(--info)"]];
+  const max=Math.max(...rows.map(r=>r[1]),1);
+  const bars=rows.map(r=>`
+    <div style="margin-bottom:13px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px"><span>重要度 ${r[0]}</span><b class="num">${r[1]}件</b></div>
+      <div class="pbar" style="height:9px"><i style="width:${(r[1]/max*100).toFixed(0)}%;background:${r[2]}"></i></div>
+    </div>`).join("");
+  const engs=cache.engs||[];
+  const depts=[...new Set(engs.map(e=>e.department))].map(dep=>{
+    const list=engs.filter(e=>e.department===dep);
+    const closed=list.filter(e=>e.status==="closed").length;
+    return {dep, total:list.length, closed, pct:Math.round(closed/list.length*100)};
+  });
+  const dBars=depts.map(d=>`
+    <div style="margin-bottom:13px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px"><span>${esc(d.dep)}</span><b class="num">${d.closed}/${d.total}件</b></div>
+      <div class="pbar" style="height:9px"><i style="width:${d.pct}%;background:${d.pct===100?"var(--ok)":"var(--info)"}"></i></div>
+    </div>`).join("");
+  return `<div class="grid-2" style="margin-bottom:18px">
+    <div class="card" data-od-id="dashboard-severity">
+      <div class="card-head"><h2 class="card-title">指摘の重要度分布</h2><span class="card-sub">未完了 ${fnds.filter(f=>!["completed"].includes(f.status)).length}件</span></div>
+      ${bars||`<p class="muted small">指摘データはまだありません</p>`}
+    </div>
+    <div class="card" data-od-id="dashboard-department">
+      <div class="card-head"><h2 class="card-title">部門別・案件完了状況</h2><span class="card-sub">完了/全案件</span></div>
+      ${dBars||`<p class="muted small">案件データはまだありません</p>`}
+    </div>
+  </div>`;
+}
+function homeHTML(){
+  const me=state.me, role=me.user.role, u=me.user;
+  const hh=new Date().getHours();
+  const greet=hh<11?"おはようございます":hh<18?"こんにちは":"こんばんは";
+  const tasks=me.tasks||[];
+  const taskRows=tasks.map(t=>{
+    const nav=t.engagement_id?` data-nav="engagements" data-id="${esc(t.engagement_id)}" data-tab="requests"`:"";
+    const rowCls=t.engagement_id?"clickable":"";
+    return `<tr class="${rowCls}"${nav}><td><span class="badge b-gray">${TASK_TYPE_JA(t.type)}</span></td><td>${esc(t.title)}</td><td>${badge(t.status)}</td><td>${fmtDue(t.due_at)}</td></tr>`;
+  }).join("");
+  const riskRows=(cache.requests||[]).filter(r=>{
+    if(!r.due_at) return false;
+    if(["received","closed"].includes(r.status)) return false;
+    if(isOverdue(r.due_at)) return true;
+    return (new Date(r.due_at).getTime()-Date.now())/86400000<=7;
+  }).slice(0,6).map(r=>{
+    const days=Math.round((new Date(r.due_at).getTime()-Date.now())/86400000);
+    return `<tr class="clickable" data-nav="engagements" data-id="${esc(r.engagement_id)}" data-tab="requests">
+      <td class="num">${esc(r.request_no)}</td><td>${esc(r.item)}</td><td>${esc(r.recipient_department)}</td>
+      <td>${days<0?`<span class="badge b-red">${-days}日超過</span>`:days===0?`<span class="badge b-amber">今日〆</span>`:`<span class="badge b-amber">あと${days}日</span>`}</td>
+      <td>${badge(r.status)}</td></tr>`;
+  }).join("");
+  const acts=(cache.events||[]).slice(0,6).map(ev=>{
+    const actor=(cache.users||[]).find(x=>x.id===ev.actor_id);
+    return `<div class="log-row" data-od-id="activity-${esc(ev.object_id)}">
+      <span class="when num">${dateFmt(ev.occurred_at)}</span>
+      <div><div class="what">${esc(ACTION_JA[ev.action]||ev.action)}<span class="muted small"> ・ ${esc(OBJ_JA[ev.object_type]||ev.object_type)} ${esc(ev.object_id.slice(0,16))}</span></div><div class="small muted">${esc(ev.detail)}</div></div>
+      <span class="who">${esc(actor?actor.name:"—")}<br><span class="small muted">${esc(ev.ip)}</span></span>
+    </div>`;
+  }).join("");
+  const pendN=(cache.engs||[]).filter(e=>e.status==="pending_approval").length;
+  const alertCard=role==="audit_committee"&&pendN>0?
+    `<div class="card" data-od-id="approval-alert" style="border-color:color-mix(in oklch, var(--warn) 40%, var(--border));background:var(--warn-bg)">
+      <div class="card-head"><h2 class="card-title">承認待ち</h2><span class="card-sub">監査役会</span></div>
+      <p style="margin:0 0 12px;font-size:13.5px">承認申請中の案件が <b class="num">${pendN}件</b> あります。</p>
+      <button class="btn btn-primary btn-sm" data-nav="engagements" data-od-id="cta-approval-review">審議する ${ic("arrow")}</button>
+    </div>`:"";
+  const myReqs=(cache.requests||[]).filter(r=>r.recipient_department===u.department&&!["received","closed"].includes(r.status)).length;
+  const auditeeBanner=role==="auditee"&&myReqs>0?
+    `<div class="card" data-od-id="auditee-banner" style="border-color:color-mix(in oklch, var(--info) 35%, var(--border));background:var(--info-bg)">
+      <div class="card-head"><h2 class="card-title">${esc(u.department)}宛の依頼</h2><span class="card-sub">提出待ち</span></div>
+      <p style="margin:0;font-size:13.5px">自部門宛の証憑依頼が <b class="num">${myReqs}件</b> あります。</p>
+    </div>`:"";
+  return `<section data-od-id="screen-home">
+    <div class="page-head">
+      <div><h1 class="page-title">${greet}、${esc(u.name.split(" ")[0])}さん</h1>
+      <p class="page-desc">${new Intl.DateTimeFormat("ja-JP",{year:"numeric",month:"long",day:"numeric",weekday:"long"}).format(new Date())} ・ ${ROLES[role]}としての監査の全体状況です。</p></div>
+      <div class="page-actions">
+        ${uiCan(role,"engagement:create")?`<button class="btn btn-primary" data-act="eng-create" data-od-id="cta-new-engagement">${ic("plus")}新規案件</button>`:""}
+        ${uiCan(role,"plan:create")?`<button class="btn btn-secondary" data-act="plan-create">${ic("plus")}新規計画</button>`:""}
+      </div>
+    </div>
+    ${alertCard}
+    ${auditeeBanner}
+    ${kpiHTML()}
+    ${uiCan(role,"plan:view")&&uiCan(role,"engagement:view")?pipelineHTML():""}
+    ${sevBarsHTML()}
+    <div class="grid-2-1">
+      <div class="card" data-od-id="my-tasks">
+        <div class="card-head"><h2 class="card-title">自分のタスク・期限</h2><span class="card-sub">${tasks.length}件</span></div>
+        <div class="table-wrap"><table><thead><tr><th>種別</th><th>内容</th><th>状態</th><th>期限</th></tr></thead>
+        <tbody>${taskRows||`<tr><td colspan="4" class="empty">現在、割り当てられたタスクはありません</td></tr>`}</tbody></table></div>
+      </div>
+      ${donutHTML()}
+    </div>
+    <div class="card" data-od-id="deadline-risk" style="margin-top:18px">
+      <div class="card-head"><h2 class="card-title">期限リスク一覧</h2><span class="card-sub">超過・7日以内の依頼</span></div>
+      <div class="table-wrap"><table><thead><tr><th>依頼番号</th><th>依頼内容</th><th>依頼先</th><th>残り</th><th>状態</th></tr></thead>
+      <tbody>${riskRows||`<tr><td colspan="5" class="empty">リスクのある依頼はありません</td></tr>`}</tbody></table></div>
+    </div>
+    <div class="card" data-od-id="recent-activity">
+      <div class="card-head"><h2 class="card-title">直近の監査ログ</h2>${uiCan(role,"auditlog:view")?`<a class="btn btn-ghost btn-sm" data-nav="auditlog">すべて見る ${ic("chev")}</a>`:""}</div>
+      ${acts||`<p class="muted small">ログはまだありません</p>`}
+    </div>
+  </section>`;
+}
+
+// ===================== 監査計画 =====================
+function plansHTML(){
+  const role=state.me.user.role;
+  const q=(state.query||"").toLowerCase();
+  const shown=cache.plans.filter(p=>!q||(String(p.fiscal_year)+p.title+(p.policy||"")).toLowerCase().includes(q));
+  const rows=shown.map(p=>{
+    const engs=cache.engs.filter(e=>e.plan_id===p.id);
+    return `<tr class="clickable" data-nav="plans" data-id="${esc(p.id)}" data-od-id="plan-row-${esc(p.fiscal_year)}">
+      <td class="num">${esc(p.fiscal_year)}</td><td><strong>${esc(p.title)}</strong></td>
+      <td class="num">${engs.length}件</td>
+      <td>${badge(p.status)}</td>
+      <td class="num">v${esc(p.version)}</td>
+      <td class="num">${dateFmt(p.updated_at)}</td>
+      <td>${esc(p.approved_by||"—")}</td></tr>`;
+  }).join("");
+  return `<section data-od-id="screen-plans">
+    <div class="page-head">
+      <div><h1 class="page-title">監査計画</h1><p class="page-desc">年度監査計画の策定・承認・案件展開を管理します。承認済みの計画は案件の母体となります。</p></div>
+      <div class="page-actions">${uiCan(role,"plan:create")?`<button class="btn btn-primary" data-act="plan-create" data-od-id="cta-plan-create">${ic("plus")}新規計画</button>`:""}</div>
+    </div>
+    <div class="chipbar">
+      <span class="chip on">すべて<span class="cnt num">${cache.plans.length}</span></span>
+      <span class="chip">承認済み<span class="cnt num">${cache.plans.filter(p=>p.status==="approved").length}</span></span>
+      <span class="chip">下書き<span class="cnt num">${cache.plans.filter(p=>p.status==="draft").length}</span></span>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>年度</th><th>計画名</th><th>案件数</th><th>状態</th><th>版</th><th>更新日</th><th>承認者</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="7" class="empty">該当する計画がありません</td></tr>`}</tbody></table></div></div>
+  </section>`;
+}
+function planHTML(id){
+  const p=cache.planDetail?.plan; if(!p) return loadingCard();
+  const role=state.me.user.role;
+  const engs=cache.planDetail.engagements||[];
+  const doneEngs=engs.filter(e=>e.status==="closed").length;
+  const actions=[];
+  if(p.status==="draft"&&uiCan(role,"plan:create")) actions.push(`<button class="btn btn-primary" data-act="plan-submit" data-id="${esc(p.id)}">承認申請</button>`);
+  if(p.status==="pending_approval"&&role==="audit_committee"){
+    actions.push(`<button class="btn btn-primary" data-act="plan-approve" data-id="${esc(p.id)}">承認</button>`);
+    actions.push(`<button class="btn btn-danger" data-act="plan-reject" data-id="${esc(p.id)}">却下</button>`);
+  }
+  if(p.status==="rejected"&&uiCan(role,"plan:create")) actions.push(`<button class="btn btn-primary" data-act="plan-submit" data-id="${esc(p.id)}">再申請</button>`);
+  if(uiCan(role,"plan:update")&&p.status!=="approved") actions.push(`<button class="btn btn-secondary" data-act="plan-edit" data-id="${esc(p.id)}">編集</button>`);
+  if(p.status==="approved") actions.push(`<p class="muted small" style="margin:.2rem 0">承認済みのため編集できません。次年度版として新規作成してください。</p>`);
+  const engRows=engs.map(e=>`<tr class="clickable" data-nav="engagements" data-id="${esc(e.id)}">
+    <td class="num">${esc(e.engagement_no)}</td><td><strong>${esc(e.title)}</strong></td>
+    <td>${esc(e.department)}</td><td><span class="badge b-purple">${esc(e.classification)}</span></td>
+    <td>${badge(e.status)}</td></tr>`).join("");
+  return `<section data-od-id="screen-plan-detail">
+    <div class="page-head">
+      <div><h1 class="page-title">${p.fiscal_year}年度 ${esc(p.title)}</h1>
+      <p class="page-desc">状態 ${badge(p.status)} ・ 版 <span class="num">v${p.version}</span> ・ 更新 ${dateFmt(p.updated_at)} ・ 承認者 ${esc(p.approved_by||"—")}</p></div>
+      <div class="page-actions">${actions.join("")}</div>
+    </div>
+    <div class="meta-grid">
+      <div class="meta-cell"><div class="k">対象年度</div><div class="v num">${p.fiscal_year}</div></div>
+      <div class="meta-cell"><div class="k">案件数</div><div class="v num">${engs.length}件</div></div>
+      <div class="meta-cell"><div class="k">実施中</div><div class="v num">${engs.filter(e=>["in_progress","review"].includes(e.status)).length}件</div></div>
+      <div class="meta-cell"><div class="k">完了</div><div class="v num">${doneEngs}件</div></div>
+    </div>
+    <div class="grid-2-1">
+      <div class="card" data-od-id="plan-policy">
+        <div class="card-head"><h2 class="card-title">方針・重点領域</h2></div>
+        <p style="margin:0;font-size:14px;line-height:1.75">${esc(p.policy)||"（方針未記載）"}</p>
+      </div>
+      <div class="card" data-od-id="plan-engagements">
+        <div class="card-head"><h2 class="card-title">関連案件</h2><span class="card-sub">${engs.length}件</span></div>
+        <div class="table-wrap"><table><thead><tr><th>案件番号</th><th>名称</th><th>対象部門</th><th>機密</th><th>状態</th></tr></thead>
+        <tbody>${engRows||`<tr><td colspan="5" class="empty">案件がありません</td></tr>`}</tbody></table></div>
+      </div>
+    </div>
+  </section>`;
+}
+
+// ===================== 監査案件 =====================
+function engagementsHTML(){
+  const role=state.me.user.role;
+  const engs=cache.engs||[];
+  const statuses=["all","draft","pending_approval","in_progress","review","reported","closed"];
+  const cur=cache.engFilter||"all";
+  const chips=statuses.map(s=>`<button class="chip ${cur===s?"on":""}" data-act="eng-filter" data-status="${s}">${s==="all"?"すべて":stLabel(s)}<span class="cnt num">${s==="all"?engs.length:engs.filter(e=>e.status===s).length}</span></button>`).join("");
+  const q=(state.query||"").toLowerCase();
+  const shown=engs.filter(e=>(cur==="all"||e.status===cur)&&(!q||(e.title+e.department+e.engagement_no).toLowerCase().includes(q)));
+  const rows=shown.map(e=>`<tr class="clickable" data-nav="engagements" data-id="${esc(e.id)}" data-od-id="eng-row-${esc(e.engagement_no)}">
+    <td class="num">${esc(e.engagement_no)}</td><td><strong>${esc(e.title)}</strong></td>
+    <td>${esc(e.department)}</td><td><span class="badge b-purple">${esc(e.classification)}</span></td>
+    <td>${badge(e.status)}</td></tr>`).join("");
+  const stat=(l,n)=>`<div class="meta-cell" style="margin:0"><div class="k">${l}</div><div class="v num">${n}</div></div>`;
+  return `<section data-od-id="screen-engagements">
+    <div class="page-head">
+      <div><h1 class="page-title">監査案件</h1><p class="page-desc">個別監査案件の計画・実施・レビュー・報告・完了を一覧で追跡します。</p></div>
+      <div class="page-actions">${uiCan(role,"engagement:create")?`<button class="btn btn-primary" data-act="eng-create" data-od-id="cta-eng-create">${ic("plus")}新規案件</button>`:""}</div>
+    </div>
+    <div class="meta-grid" style="grid-template-columns:repeat(4,1fr)">
+      ${stat("全案件",engs.length+"件")}${stat("実施中",engs.filter(e=>["in_progress","review"].includes(e.status)).length+"件")}${stat("報告済",engs.filter(e=>e.status==="reported").length+"件")}${stat("完了",engs.filter(e=>e.status==="closed").length+"件")}
+    </div>
+    <div class="chipbar">${chips}</div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>案件番号</th><th>名称</th><th>対象部門</th><th>機密</th><th>状態</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="5" class="empty">該当する案件がありません</td></tr>`}</tbody></table></div></div>
+  </section>`;
+}
+function engagementHTML(id,tab){
+  const d=cache.engDetail; if(!d) return loadingCard();
+  const e=d.engagement, role=state.me.user.role, me=state.me.user;
+  const canEdit=role==="auditor"||role==="general_affairs";
+  const actions=[];
+  if(e.status==="draft"&&role==="auditor") actions.push(`<button class="btn btn-primary" data-act="eng-status" data-id="${esc(e.id)}" data-status="pending_approval">承認申請</button>`);
+  if(e.status==="pending_approval"&&role==="audit_committee") actions.push(`<button class="btn btn-primary" data-act="eng-status" data-id="${esc(e.id)}" data-status="in_progress">監査を開始</button>`);
+  if(e.status==="in_progress"&&canEdit) actions.push(`<button class="btn btn-secondary" data-act="eng-status" data-id="${esc(e.id)}" data-status="review">レビューへ</button>`);
+  if(e.status==="review"&&role==="audit_committee") actions.push(`<button class="btn btn-primary" data-act="eng-status" data-id="${esc(e.id)}" data-status="reported">報告確定</button>`);
+  if(e.status==="reported"&&role==="audit_committee") actions.push(`<button class="btn btn-primary" data-act="eng-status" data-id="${esc(e.id)}" data-status="closed">完了</button>`);
+  if(canEdit) actions.push(`<button class="btn btn-secondary" data-act="eng-edit" data-id="${esc(e.id)}">編集</button>`);
+  // 被監査部門は監査調書（内部文書）を閲覧できない（サーバ側でも拒否）
+  const tabs=[["overview","概要"],["requests","証憑依頼",(d.requests||[]).length],...(role==="auditee"?[]:[["workpapers","監査調書",(d.workpapers||[]).length]]),["findings","指摘・是正",(d.findings||[]).length]]
+    .map(([k,l,c])=>`<button class="tab ${(tab||"overview")===k?"on":""}" data-tab="${k}">${l}${c?`<span class="cnt num">${c}</span>`:""}</button>`).join("");
+  const t=(tab||"overview");
+  let body="";
+  if(t==="requests") body=reqsBlockHTML(d.requests||[], e.id, role, me);
+  else if(t==="workpapers") body=wpsBlockHTML(d.workpapers||[], e.id, role, me);
+  else if(t==="findings") body=fndsBlockHTML(d.findings||[], e.id, role, me);
+  else body=overviewHTML(e,d,role);
+  return `<section data-od-id="screen-engagement-detail">
+    <div class="page-head">
+      <div><h1 class="page-title"><span class="num" style="font-size:.7em;color:var(--muted);font-weight:600">${esc(e.engagement_no)}</span> ${esc(e.title)}</h1>
+      <p class="page-desc">対象部門 ${esc(e.department)} ・ 機密 <span class="badge b-purple">${esc(e.classification)}</span> ・ 状態 ${badge(e.status)}</p></div>
+      <div class="page-actions">${actions.join("")}</div>
+    </div>
+    <div class="meta-grid">
+      <div class="meta-cell"><div class="k">対象部門</div><div class="v">${esc(e.department)}</div></div>
+      <div class="meta-cell"><div class="k">関連計画</div><div class="v">${esc((cache.plans.find(p=>p.id===e.plan_id)||{}).fiscal_year||"—")}年度</div></div>
+      <div class="meta-cell"><div class="k">依頼</div><div class="v num">${(d.requests||[]).length}件</div></div>
+      <div class="meta-cell"><div class="k">指摘</div><div class="v num">${(d.findings||[]).length}件</div></div>
+    </div>
+    <div class="tabbar">${tabs}</div>
+    ${body}
+  </section>`;
+}
+function overviewHTML(e,d,role){
+  const reqs=d.requests||[], wps=d.workpapers||[], fnds=d.findings||[];
+  const isAuditee=role==="auditee";
+  const subRate=reqs.length?Math.round(reqs.filter(r=>["received","partial","closed"].includes(r.status)).length/reqs.length*100):0;
+  const finalWps=wps.filter(w=>w.status==="final").length;
+  const highOpen=fnds.filter(f=>f.severity==="high"&&!["completed"].includes(f.status)).length;
+  const doneRems=fnds.flatMap(f=>f.remediations||[]).filter(r=>r.status==="completed").length;
+  const mini=(k,v,tone)=>`<div class="meta-cell"><div class="k">${k}</div><div class="v num" style="color:${tone}">${v}</div></div>`;
+  const leftCol=isAuditee
+    ? `<div class="card" data-od-id="eng-auditee-note" style="border-color:color-mix(in oklch, var(--info) 35%, var(--border));background:var(--info-bg)">
+        <div class="card-head"><h2 class="card-title">被監査部門向け表示</h2></div>
+        <p style="margin:0;font-size:13.5px">この案件では、監査役側の検討情報（目的・範囲、評価基準、調書、活動記録）は表示されません。表示対象は自部門宛の<b>証憑依頼</b>と、確定後の<b>指摘・是正</b>のみです。</p>
+      </div>`
+    : `<div class="card" data-od-id="eng-scope">
+        <div class="card-head"><h2 class="card-title">目的・範囲</h2></div>
+        <p style="margin:0;font-size:14px">${esc(e.scope)||"—"}</p>
+        <hr class="rule" style="margin:16px 0">
+        <div class="card-head" style="margin-bottom:6px"><h2 class="card-title">評価基準</h2></div>
+        <p class="muted" style="margin:0;font-size:13.5px">${esc(e.criteria)||"—"}</p>
+      </div>`;
+  const summaryCells=isAuditee
+    ? `${mini("証憑提出率",subRate+"%","var(--info)")}
+       ${mini("重要度高の指摘",highOpen+"件",highOpen?"var(--err)":"var(--ok)")}`
+    : `${mini("証憑提出率",subRate+"%","var(--info)")}
+       ${mini("確定調書",finalWps+" / "+wps.length+"件","var(--purple)")}
+       ${mini("重要度高の指摘",highOpen+"件",highOpen?"var(--err)":"var(--ok)")}
+       ${mini("是正完了",doneRems+"件","var(--ok)")}`;
+  const linkedRows=isAuditee
+    ? `<div class="detail-row"><b>証憑依頼</b><span>${reqs.length}件（${subRate}%提出）</span></div>
+       <div class="detail-row"><b>指摘</b><span>${fnds.length}件（重要度高 ${fnds.filter(f=>f.severity==="high").length}件）</span></div>`
+    : `<div class="detail-row"><b>証憑依頼</b><span>${reqs.length}件（${subRate}%提出）</span></div>
+       <div class="detail-row"><b>監査調書</b><span>${wps.length}件（確定${finalWps}件）</span></div>
+       <div class="detail-row"><b>指摘</b><span>${fnds.length}件（重要度高 ${fnds.filter(f=>f.severity==="high").length}件）</span></div>
+       <div class="detail-row"><b>関連計画</b><span>${esc((cache.plans.find(p=>p.id===e.plan_id)||{}).title||"—")}</span></div>`;
+  return `<div class="grid-2-1">
+    <div class="stack">${leftCol}</div>
+    <div class="stack">
+      <div class="card" data-od-id="eng-summary">
+        <div class="card-head"><h2 class="card-title">案件サマリ</h2></div>
+        <div class="meta-grid" style="grid-template-columns:1fr 1fr;gap:10px;margin:0">${summaryCells}</div>
+      </div>
+      <div class="card" data-od-id="eng-linked">
+        <div class="card-head"><h2 class="card-title">関連情報</h2></div>
+        <div class="detail-list">${linkedRows}</div>
+      </div>
+    </div>
+  </div>`;
+}
+function reqsBlockHTML(requests,eid,role,me){
+  const isAuditee=role==="auditee", canCreate=role==="auditor"||role==="general_affairs";
+  const cards=requests.map(r=>{
+    const subs=r.submissions||[];
+    const btns=[];
+    if(r.status==="draft"&&canCreate&&!isAuditee) btns.push(`<button class="btn btn-sm" data-act="req-send" data-id="${esc(r.id)}">送付</button>`);
+    if(canCreate&&!isAuditee&&["sent","partial"].includes(r.status)) btns.push(`<button class="btn btn-secondary btn-sm" data-act="req-receive" data-id="${esc(r.id)}">全件受領</button>`);
+    if(canCreate&&!isAuditee&&["sent","partial","received"].includes(r.status)) btns.push(`<button class="btn btn-secondary btn-sm" data-act="req-return" data-id="${esc(r.id)}">差戻し</button>`);
+    if(canCreate&&!isAuditee&&["draft","sent","partial","received","returned"].includes(r.status)) btns.push(`<button class="btn btn-secondary btn-sm" data-act="req-close" data-id="${esc(r.id)}">締切</button>`);
+    if(isAuditee&&r.recipient_department===me.department&&["sent","partial","returned"].includes(r.status)) btns.push(`<button class="btn btn-sm" data-act="evidence-submit" data-id="${esc(r.id)}">証憑を提出</button>`);
+    const subsHTML=subs.map(s=>`<div class="sub-row" data-od-id="submission-${esc((s.file_name||"").slice(0,10))}">${ic("doc")}<span>${esc(s.file_name)}</span><span class="mono small">${esc((s.content_hash||"").slice(0,12))}…</span><span class="num small">${dateFmt(s.submitted_at)}</span></div>`).join("");
+    return `<div class="item" data-od-id="request-${esc(r.request_no)}">
+      <div class="item-top"><div><div class="item-title"><span class="num">${esc(r.request_no)}</span> — ${esc(r.item)}</div>
+      <div class="item-meta">依頼先 ${esc(r.recipient_department)} ・ 期限 ${fmtDue(r.due_at)} ・ 目的 ${esc(r.purpose)||"—"}</div></div>${badge(r.status)}</div>
+      ${subs.length?`<div class="sub-list"><div class="small muted" style="margin-bottom:4px">提出履歴（${subs.length}件）</div>${subsHTML}</div>`:""}
+      ${btns.length?`<div class="item-actions">${btns.join("")}</div>`:""}
+    </div>`;
+  }).join("");
+  return `<div>
+    ${canCreate&&!isAuditee?`<div class="page-actions" style="margin-bottom:14px"><button class="btn btn-primary btn-sm" data-act="req-create" data-id="${esc(eid)}">${ic("plus")}新規依頼</button></div>`:""}
+    ${cards||`<div class="card"><div class="empty">依頼がありません</div></div>`}
+  </div>`;
+}
+function wpsBlockHTML(wps,eid,role,me){
+  const cards=wps.map(w=>{
+    const v=w.versions||[];
+    const latest=v[0];
+    const canEdit=role==="auditor"&&w.owner_id===me.id&&["draft","returned"].includes(w.status);
+    const btns=[];
+    if(w.status!=="final"&&role==="auditor"&&w.owner_id===me.id) btns.push(`<button class="btn btn-sm" data-act="wp-review" data-id="${esc(w.id)}">レビュー依頼</button>`);
+    if(w.status==="review_requested"&&w.reviewer_id===me.id){
+      btns.push(`<button class="btn btn-sm" data-act="wp-approve" data-id="${esc(w.id)}">確定・署名</button>`);
+      btns.push(`<button class="btn btn-secondary btn-sm" data-act="wp-return" data-id="${esc(w.id)}">差戻し</button>`);
+    }
+    if(canEdit) btns.push(`<button class="btn btn-secondary btn-sm" data-act="wp-edit" data-id="${esc(w.id)}">編集（新版）</button>`);
+    const vers=v.map(x=>`<div class="detail-row"><b>v${x.version_no}</b><span>${dateFmt(x.created_at)} ・ ${x.is_final?"正本":"草稿"} ・ <span class="mono">${esc((x.content_hash||"").slice(0,12))||"hash未記録"}</span>…</span></div>`).join("");
+    return `<div class="item" data-od-id="workpaper-${esc(w.code)}">
+      <div class="item-top"><div><div class="item-title"><span class="num">${esc(w.code)}</span> — ${esc(w.title)}</div>
+      <div class="item-meta">更新 ${dateFmt(w.updated_at)}</div></div>${badge(w.status)}</div>
+      <p style="margin:8px 0 0;font-size:13.5px;line-height:1.65">${esc((latest?.body||"").slice(0,200))}${(latest?.body||"").length>200?"…":""}</p>
+      ${latest?.conclusion?`<p class="muted small" style="margin:6px 0 0"><b>結論:</b> ${esc(latest.conclusion)}</p>`:""}
+      ${btns.length?`<div class="item-actions">${btns.join("")}</div>`:""}
+      ${v.length?`<div class="detail-list"><div class="detail-row"><b>版履歴</b><span>${v.length}件</span></div>${vers}</div>`:""}
+    </div>`;
+  }).join("");
+  return `<div>
+    ${role==="auditor"?`<div class="page-actions" style="margin-bottom:14px"><button class="btn btn-primary btn-sm" data-act="wp-create" data-id="${esc(eid)}">${ic("plus")}新規調書</button></div>`:""}
+    ${cards||`<div class="card"><div class="empty">調書がありません</div></div>`}
+  </div>`;
+}
+function fndsBlockHTML(findings,eid,role,me){
+  const cards=findings.map(f=>{
+    const btns=[];
+    if(!["completed","confirmed"].includes(f.status)&&role==="auditor") btns.push(`<button class="btn btn-secondary btn-sm" data-act="fnd-confirm" data-id="${esc(f.id)}">事実確認（確定）</button>`);
+    if(f.status==="confirmed"&&role==="auditee") btns.push(`<button class="btn btn-sm" data-act="fnd-respond" data-id="${esc(f.id)}">回答する</button>`);
+    if(f.status==="confirmed"&&role==="auditor") btns.push(`<button class="btn btn-sm" data-act="rem-create" data-id="${esc(f.id)}">是正計画を登録</button>`);
+    const lastResp=f.responses?.[f.responses.length-1];
+    const rems=(f.remediations||[]).map(r=>{
+      const rb=[];
+      if(r.status==="planned"&&(r.owner_id===me.id||role==="auditor")) rb.push(`<button class="btn btn-sm" data-act="rem-status" data-id="${esc(r.id)}" data-status="in_progress">着手</button>`);
+      if(r.status==="in_progress"&&(r.owner_id===me.id||role==="auditor")) rb.push(`<button class="btn btn-sm" data-act="rem-status" data-id="${esc(r.id)}" data-status="submitted">提出</button>`);
+      if(r.status==="submitted"&&r.owner_id===me.id) rb.push(`<button class="btn btn-secondary btn-sm" data-act="rem-status" data-id="${esc(r.id)}" data-status="in_progress">差戻し</button>`);
+      if(r.status!=="completed"&&role==="auditor") rb.push(`<button class="btn btn-secondary btn-sm" data-act="rem-verify" data-id="${esc(r.id)}">再確認・完了判定</button>`);
+      return `<div style="border-top:1px dashed var(--border);margin-top:12px;padding-top:10px" data-od-id="remediation-${esc(r.id)}">
+        <div class="item-meta" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><span><b>是正:</b> ${esc(r.action)}</span><span>${badge(r.status)}</span></div>
+        <div class="item-meta">責任者 ${esc(ownerName(r.owner_id))} ・ 期限 ${fmtDue(r.due_at)}</div>
+        ${rb.length?`<div class="item-actions">${rb.join("")}</div>`:""}
+      </div>`;
+    }).join("");
+    return `<div class="item" data-od-id="finding-${esc(f.finding_no)}">
+      <div class="item-top"><div><div class="item-title"><span class="num">${esc(f.finding_no)}</span> — ${esc(f.fact.slice(0,64))}${f.fact.length>64?"…":""}</div>
+      <div class="item-meta">基準 ${esc(f.criterion)||"—"} ・ 原因 ${esc(f.cause)||"—"} ・ 影響 ${esc(f.impact)||"—"}</div></div>
+      <span style="display:flex;gap:8px;align-items:center"><span class="badge" style="background:color-mix(in oklch, ${sevColor(f.severity)} 12%, var(--surface));color:${sevColor(f.severity)}">重要度 ${sevLabel(f.severity)}</span>${badge(f.status)}</span></div>
+      ${lastResp?`<p class="muted small" style="margin:8px 0 0"><b>回答:</b> ${esc(lastResp.response)}${lastResp.disagreement?` <span style="color:var(--err)">（異議: ${esc(lastResp.disagreement)}）</span>`:""}</p>`:""}
+      ${btns.length?`<div class="item-actions">${btns.join("")}</div>`:""}
+      ${rems}
+    </div>`;
+  }).join("");
+  return `<div>
+    ${role==="auditor"?`<div class="page-actions" style="margin-bottom:14px"><button class="btn btn-primary btn-sm" data-act="fnd-create" data-id="${esc(eid)}">${ic("plus")}新規指摘</button></div>`:""}
+    ${cards||`<div class="card"><div class="empty">指摘がありません</div></div>`}
+  </div>`;
+}
+function ownerName(uid){ const u=cache.users.find(x=>x.id===uid); return u?`${u.name}（${u.department}）`:uid?uid.slice(0,12):"—"; }
+
+// ===================== 証憑依頼（横断一覧） =====================
+function requestsHTML(filter){
+  const reqs=cache.requests||[];
+  const statuses=["all","draft","sent","partial","received","returned","closed"];
+  const cur=filter||"all";
+  const chips=statuses.map(s=>`<button class="chip ${cur===s?"on":""}" data-nav="requests" ${s!=="all"?`data-extra="${s}"`:""} data-od-id="req-filter-${s}">${s==="all"?"すべて":stLabel(s)}<span class="cnt num">${s==="all"?reqs.length:reqs.filter(r=>r.status===s).length}</span></button>`).join("");
+  const q=(state.query||"").toLowerCase();
+  const shown=reqs.filter(r=>(cur==="all"||r.status===cur)&&(!q||(r.item+r.request_no+r.recipient_department+(r.engagement_no||"")).toLowerCase().includes(q)));
+  const rows=shown.map(r=>`<tr class="clickable" data-nav="engagements" data-id="${esc(r.engagement_id)}" data-tab="requests" data-od-id="req-row-${esc(r.request_no)}">
+    <td class="num">${esc(r.request_no)}</td>
+    <td><span class="num small">${esc(r.engagement_no||"—")}</span><div class="sub">${esc(r.engagement_title||"")}</div></td>
+    <td>${esc(r.item)}</td><td>${esc(r.recipient_department)}</td>
+    <td class="num">${(r.submissions||[]).length}件</td>
+    <td>${badge(r.status)}</td><td>${fmtDue(r.due_at)}</td></tr>`).join("");
+  const overdue=reqs.filter(r=>isOverdue(r.due_at)&&!["received","closed"].includes(r.status)).length;
+  return `<section data-od-id="screen-requests">
+    <div class="page-head">
+      <div><h1 class="page-title">証憑依頼</h1><p class="page-desc">被監査部門は自部門宛の依頼、監査側は関与案件の依頼を確認できます。期限超過は赤字で表示します。</p></div>
+    </div>
+    <div class="chipbar">${chips}</div>
+    ${overdue?`<div class="card" data-od-id="req-overdue-alert" style="border-color:color-mix(in oklch, var(--err) 35%, var(--border));background:var(--err-bg);padding:13px 18px"><b class="num">${overdue}件</b> の依頼が期限を超過しています。早急な対応が必要です。</div>`:""}
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>依頼番号</th><th>案件</th><th>依頼内容</th><th>依頼先</th><th>提出</th><th>状態</th><th>期限</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="7" class="empty">該当する依頼がありません</td></tr>`}</tbody></table></div></div>
+  </section>`;
+}
+
+// ===================== 監査ログ =====================
+function auditLogHTML(){
+  const events=cache.events||[];
+  const usersOpts=cache.users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)}（${esc(u.department)}）</option>`).join("");
+  const actionKeys=Object.keys(ACTION_JA);
+  const nSuccess=events.filter(ev=>ev.result==="success").length;
+  const nDenied=events.filter(ev=>ev.result==="denied").length;
+  const nFailed=events.filter(ev=>ev.result==="failed").length;
+  const rows=events.map(ev=>{
+    const actor=cache.users.find(u=>u.id===ev.actor_id);
+    const rawAction=ev.action.startsWith("permission_denied")?"permission_denied":ev.action;
+    return `<tr data-od-id="audit-event-${esc(ev.object_id)}">
+      <td class="num">${dateFmt(ev.occurred_at)}</td>
+      <td>${actor?`${esc(actor.name)}（${esc(actor.department)}）`:(ev.actor_id?esc(ev.actor_id.slice(0,14)):"—")}</td>
+      <td>${ACTION_JA[rawAction]||esc(ev.action)}${ev.action!==rawAction?` <span class="muted small">(${esc(ev.action.split(":")[1])})</span>`:""}</td>
+      <td><span class="mono small">${OBJ_JA[ev.object_type]||esc(ev.object_type)}/${esc(ev.object_id.slice(0,16))}</span></td>
+      <td>${RESULT_JA[ev.result]==="成功"?`<span class="badge b-green">成功</span>`:RESULT_JA[ev.result]==="拒否"?`<span class="badge b-red">拒否</span>`:`<span class="badge b-amber">${esc(RESULT_JA[ev.result]||ev.result)}</span>`}</td>
+      <td>${esc(ev.detail)}</td>
+      <td class="num small">${esc(ev.ip)}</td></tr>`;
+  }).join("");
+  return `<section data-od-id="screen-auditlog">
+    <div class="page-head">
+      <div><h1 class="page-title">監査ログ</h1><p class="page-desc">追記専用の操作履歴です。閲覧・変更・承認・出力のすべてが記録されます。</p></div>
+    </div>
+    <div class="meta-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="meta-cell"><div class="k">対象ログ</div><div class="v num">${events.length}件</div></div>
+      <div class="meta-cell"><div class="k">成功</div><div class="v num" style="color:var(--ok)">${nSuccess}件</div></div>
+      <div class="meta-cell"><div class="k">拒否</div><div class="v num" style="color:${nDenied?"var(--err)":"var(--muted)"}">${nDenied}件</div></div>
+      <div class="meta-cell"><div class="k">失敗</div><div class="v num" style="color:${nFailed?"var(--warn)":"var(--muted)"}">${nFailed}件</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2 class="card-title">操作履歴</h2><span class="card-sub">${events.length}件を表示</span></div>
+      <div class="chipbar" style="margin-top:0">
+        <select class="select" id="log-actor" style="width:auto;min-width:180px"><option value="">操作者（すべて）</option>${usersOpts}</select>
+        <select class="select" id="log-action" style="width:auto;min-width:170px"><option value="">操作（すべて）</option>${actionKeys.map(k=>`<option value="${esc(k)}">${ACTION_JA[k]}</option>`).join("")}</select>
+        <select class="select" id="log-obj" style="width:auto;min-width:140px"><option value="">対象（すべて）</option>${Object.entries(OBJ_JA).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
+        <select class="select" id="log-limit" style="width:auto;min-width:110px"><option value="100">100件</option><option value="200">200件</option><option value="500">500件</option></select>
+        <button class="btn btn-secondary btn-sm" data-act="log-apply">${ic("filter")}絞り込み</button>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>日時</th><th>操作者</th><th>操作</th><th>対象</th><th>結果</th><th>詳細</th><th>IP</th></tr></thead>
+        <tbody>${rows||`<tr><td colspan="7" class="empty">ログがありません</td></tr>`}</tbody></table></div>
+    </div>
+  </section>`;
+}
+
+// ===================== ユーザー管理（管理者のみ） =====================
+function usersHTML(){
+  const role=state.me.user.role;
+  if(!uiCan(role,"users:manage")) return `<section data-od-id="screen-users"><div class="card"><div class="card-head"><h2 class="card-title">ユーザー管理</h2></div><p class="muted">この操作の権限がありません。</p></div></section>`;
+  const q=(state.query||"").toLowerCase();
+  const shown=cache.adminUsers.filter(u=>!q||(u.name+u.email+u.department+(ROLE[u.role]||u.role)).toLowerCase().includes(q));
+  const rows=shown.map(u=>`
+    <tr data-od-id="user-row-${esc(u.email.split("@")[0])}">
+      <td><div style="display:flex;align-items:center;gap:10px"><span class="ava" style="width:28px;height:28px;border-radius:50%;background:var(--fg-soft);display:grid;place-items:center;font-size:11px;font-weight:700">${esc(u.name.slice(0,1))}</span><strong>${esc(u.name)}</strong></div></td>
+      <td class="mono small">${esc(u.email)}</td><td>${esc(u.department)}</td>
+      <td>${ROLE[u.role]||esc(u.role)}</td>
+      <td>${u.active===1?`<span class="badge b-green">有効</span>`:`<span class="badge b-red">無効</span>`}</td>
+      <td class="num small">${u.last_login?dateFmt(u.last_login):"—"}</td>
+      <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" data-act="user-edit" data-id="${esc(u.id)}">編集</button>
+        ${u.active===1?`<button class="btn btn-danger btn-sm" data-act="user-deactivate" data-id="${esc(u.id)}">無効化</button>`:`<button class="btn btn-secondary btn-sm" data-act="user-activate" data-id="${esc(u.id)}">再有効化</button>`}
+        <button class="btn btn-secondary btn-sm" data-act="user-password" data-id="${esc(u.id)}">パスワード再設定</button>
+      </div></td>
+    </tr>`).join("");
+  return `<section data-od-id="screen-users">
+    <div class="page-head">
+      <div><h1 class="page-title">ユーザー管理</h1><p class="page-desc">利用者のライフサイクル（作成・更新・無効化・パスワード再設定）を管理します。無効化は既存セッションにも即時反映されます。</p></div>
+      <div class="page-actions"><button class="btn btn-primary" data-act="user-create" data-od-id="cta-user-create">${ic("plus")}新規ユーザー</button></div>
+    </div>
+    <div class="meta-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="meta-cell"><div class="k">登録ユーザー</div><div class="v num">${cache.adminUsers.length}人</div></div>
+      <div class="meta-cell"><div class="k">有効</div><div class="v num" style="color:var(--ok)">${cache.adminUsers.filter(u=>u.active===1).length}人</div></div>
+      <div class="meta-cell"><div class="k">無効</div><div class="v num" style="color:var(--err)">${cache.adminUsers.filter(u=>u.active!==1).length}人</div></div>
+      <div class="meta-cell"><div class="k">ロール</div><div class="v">${Object.keys(ROLE).length}種</div></div>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>氏名</th><th>メール</th><th>部門</th><th>ロール</th><th>状態</th><th>最終ログイン</th><th>操作</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="7" class="empty">該当するユーザーがありません</td></tr>`}</tbody></table></div></div>
+  </section>`;
+}
+
+// ===================== ログイン =====================
+async function renderLogin(){
+  // 本番用UI: テスト用ID・デモ欄は一切表示しない（本番専用HTML）
+  try{ const h=await A.health(); if(h?.environment) state.envLabel={production:"本番",preview:"preview",mvp:"MVP"}[h.environment]||h.environment; }catch{ /* health失敗時は「本番」表記のまま */ }
+  app.innerHTML=`
+  <div class="login-wrap">
+    <aside class="login-side" data-od-id="login-brand">
+      <div class="brand" style="position:absolute;top:clamp(22px,4vw,40px);left:clamp(32px,6vw,72px)"><span class="brand-mark">監</span><span><span class="brand-name">監査業務・証跡管理</span><br><span class="brand-sub">Mirai Audit Workpaper</span></span></div>
+      <p class="eyebrow" style="color:var(--muted)">監査の全体像を、ひと目で。</p>
+      <h1 class="login-title">計画から是正確認まで、<br>証跡とともに迷わず進める。</h1>
+      <p class="login-lead">監査の進捗・期限リスク・指摘状況をダッシュボードで可視化し、必要な情報を必要な人に届けます。</p>
+      <ul class="role-list">
+        <li><span class="rl-ic">${ic("plan")}</span><span><b>年度監査パイプライン</b><span>計画〜完了までの進捗を全体像で把握</span></span></li>
+        <li><span class="rl-ic">${ic("alert")}</span><span><b>期限リスクの可視化</b><span>証憑依頼の超過・接近を検知し、督促漏れを防ぐ</span></span></li>
+        <li><span class="rl-ic">${ic("shield")}</span><span><b>ロール別の情報開示</b><span>被監査部門には自部門宛の情報だけを、安全に</span></span></li>
+      </ul>
+      <p class="login-foot">本画面は社内用アプリです。監査判断・評価は人が行います。</p>
+    </aside>
+    <div class="login-form">
+      <div class="login-form-inner">
+        <h1 class="login-title" style="font-size:26px">ログイン</h1>
+        <p class="login-lead" style="margin-bottom:22px">所属アカウントでログインしてください。</p>
+        <div class="field"><label for="le">メールアドレス</label><input class="input" id="le" type="email" autocomplete="username" placeholder="name@mirai.local"></div>
+        <div class="field"><label for="lp">パスワード</label><input class="input" id="lp" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+        <p class="form-err" id="lerr" style="display:none"></p>
+        <button class="btn btn-primary" id="login-btn" style="width:100%;justify-content:center;min-height:46px;margin-top:6px" data-od-id="login-submit">ログイン ${ic("arrow")}</button>
+      </div>
+    </div>
+  </div>`;
+  const doLogin=async()=>{
+    try{
+      await A.login(document.getElementById("le").value, document.getElementById("lp").value);
+      state.me=await A.me(); navigate("home"); render();
+    }catch(e){ const el=document.getElementById("lerr"); if(el){ el.style.display=""; el.textContent=e.message; } }
+  };
+  document.getElementById("login-btn").onclick=doLogin;
+  document.getElementById("lp").addEventListener("keydown",e=>{ if(e.key==="Enter") doLogin(); });
+}
+
+// ===================== アクション =====================
+function refreshRoute(){ render(); }
+
+async function runAction(act){
+  const a=act.dataset.act, id=act.dataset.id||null;
+  try{
+    switch(a){
+      case "hamburger": {
+        const sb=document.getElementById("sidebar"), bd=document.getElementById("side-backdrop");
+        sb?.classList.toggle("open"); bd?.classList.toggle("show"); break;
+      }
+      case "collapse-sidebar": {
+        const sb=document.getElementById("sidebar");
+        const collapsed=sb?.classList.toggle("collapsed");
+        localStorage.setItem("maw.sidebar.collapsed", collapsed?"1":"0"); break;
+      }
+      case "logout": await A.logout(); state.me=null; navigate("home"); render(); toast("ログアウトしました"); break;
+      case "password": openPasswordModal(); break;
+
+      // ---- 監査計画 ----
+      case "plan-create": openPlanForm(null); break;
+      case "plan-edit": { const p=cache.planDetail?.plan; if(p) openPlanForm(p); break; }
+      case "plan-submit": confirmModal("承認申請を提出します。よろしいですか？", async()=>{ await A.submitPlan(id); toast("承認申請しました"); refreshRoute(); },"申請する",false); break;
+      case "plan-approve": confirmModal("この計画を承認します。よろしいですか？", async()=>{ await A.approvePlan(id); toast("承認しました"); refreshRoute(); },"承認する",false); break;
+      case "plan-reject": confirmModal("この計画を却下します。よろしいですか？", async()=>{ await A.rejectPlan(id); toast("却下しました"); refreshRoute(); }); break;
+
+      // ---- 監査案件 ----
+      case "eng-create": openEngForm(null); break;
+      case "eng-edit": { const e=cache.engDetail?.engagement; if(e) openEngForm(e); break; }
+      case "eng-status": confirmModal(`案件状態を「${stLabel(act.dataset.status)}」へ変更します。よろしいですか？`, async()=>{ await A.setEngStatus(id, act.dataset.status); toast("状態を更新しました"); refreshRoute(); }); break;
+      case "eng-filter": cache.engFilter=act.dataset.status==="all"?null:act.dataset.status; render(); break;
+
+      // ---- 証憑依頼 ----
+      case "req-create": openReqForm(id); break;
+      case "req-send": confirmModal("依頼を被監査部門へ送付します。よろしいですか？", async()=>{ await A.sendRequest(id); toast("送付しました"); refreshRoute(); },"送付する",false); break;
+      case "req-receive": confirmModal("証憑を全件受領します。よろしいですか？", async()=>{ await A.receiveRequest(id); toast("受領しました"); refreshRoute(); },"受領する",false); break;
+      case "req-return": confirmModal("この依頼を差し戻します。よろしいですか？", async()=>{ await A.returnRequest(id); toast("差し戻しました"); refreshRoute(); }); break;
+      case "req-close": confirmModal("この依頼を締め切ります。よろしいですか？", async()=>{ await A.closeRequest(id); toast("締め切りました"); refreshRoute(); }); break;
+      case "evidence-submit": openEvidenceForm(id); break;
+
+      // ---- 監査調書 ----
+      case "wp-create": openWpForm(id,null); break;
+      case "wp-edit": { const w=(cache.engDetail?.workpapers||[]).find(x=>x.id===id); if(w) openWpForm(id,w); break; }
+      case "wp-review": confirmModal("レビューを依頼します。よろしいですか？", async()=>{ await A.reqReview(id); toast("レビューを依頼しました"); refreshRoute(); },"依頼する",false); break;
+      case "wp-approve": confirmModal("この調書を確定（正本）とします。よろしいですか？", async()=>{ await A.approveWorkpaper(id); toast("確定しました"); refreshRoute(); },"確定する",false); break;
+      case "wp-return": confirmModal("この調書を差し戻します。よろしいですか？", async()=>{ await A.returnWorkpaper(id); toast("差し戻しました"); refreshRoute(); }); break;
+
+      // ---- 指摘・是正 ----
+      case "fnd-create": openFndForm(id); break;
+      case "fnd-confirm": confirmModal("指摘の事実確認（確定）を行います。よろしいですか？", async()=>{ await A.confirmFinding(id,{}); toast("確定しました"); refreshRoute(); }); break;
+      case "fnd-respond": openRespForm(id); break;
+      case "rem-create": openRemForm(id); break;
+      case "rem-status": confirmModal(`是正計画を「${stLabel(act.dataset.status)}」へ更新します。よろしいですか？`, async()=>{ await A.remStatus(id, act.dataset.status); toast("進捗を更新しました"); refreshRoute(); }); break;
+      case "rem-verify": openVerifyForm(id); break;
+
+      // ---- 監査ログ ----
+      case "log-apply": {
+        const p=new URLSearchParams();
+        const actor=document.getElementById("log-actor")?.value, act2=document.getElementById("log-action")?.value,
+              obj=document.getElementById("log-obj")?.value, lim=document.getElementById("log-limit")?.value;
+        if(actor) p.set("actor_id",actor); if(act2) p.set("action",act2); if(obj) p.set("object_type",obj); if(lim) p.set("limit",lim);
+        const seq=renderSeq;
+        const ev=await A.auditEvents(p.toString()); if(seq===renderSeq){ cache.events=ev.events; render(); }
+        break;
+      }
+      // ---- ユーザー管理 ----
+      case "user-create": openUserForm(); break;
+      case "user-edit": { const u=cache.adminUsers.find(x=>x.id===id); if(u) openUserEditForm(u); break; }
+      case "user-deactivate": confirmModal("このユーザーを無効化します（ログイン不可・既存セッション無効）。よろしいですか？", async()=>{ await A.deactivateUser(id); toast("無効化しました"); refreshRoute(); }); break;
+      case "user-activate": confirmModal("このユーザーを再有効化します。よろしいですか？", async()=>{ await A.activateUser(id); toast("再有効化しました"); refreshRoute(); }); break;
+      case "user-password": openUserPasswordForm(id); break;
+      default: break;
+    }
+  }catch(e){ toast(e.message,"err"); }
+}
+
+// ===================== ユーザー管理フォーム =====================
+function openUserForm(){
+  openModal({title:"新規ユーザー作成",okLabel:"作成",wide:true,body:`
+    <div class="row-2">
+      <div class="field"><label>メールアドレス</label><input class="input" id="uemail" type="email" autocomplete="off"></div>
+      <div class="field"><label>氏名</label><input class="input" id="uname" autocomplete="off"></div>
+    </div>
+    <div class="row-2">
+      <div class="field"><label>ロール</label><select class="select" id="urole">
+        <option value="auditor">監査役</option><option value="audit_committee">監査役会</option>
+        <option value="general_affairs">総務部</option><option value="auditee">被監査部門</option>
+        <option value="admin">システム管理者</option>
+      </select></div>
+      <div class="field"><label>部門</label><input class="input" id="udept" autocomplete="off"></div>
+    </div>
+    <div class="field"><label>初期パスワード（8文字以上・英字と数字を含む）</label><input class="input" id="upass" type="password" autocomplete="new-password"></div>
+    <p class="form-hint">作成後の初回ログイン後、本人によるパスワード変更を推奨します。パスワードは画面・ログに表示されません。</p>`,
+    onOk:async(btn)=>{
+      const d={email:val("#uemail"),name:val("#uname"),
+        role:val("#urole"),department:val("#udept"),
+        password:val("#upass")};
+      if(!d.email||!d.name||!d.department||!d.password){modalErr("すべての項目を入力してください");return;}
+      if(!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(d.password)){modalErr("パスワードは8文字以上で英字と数字をそれぞれ1文字以上含めてください");return;}
+      btn.disabled=true;
+      try{ await A.createAdminUser(d); closeModal(); toast("ユーザーを作成しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openUserPasswordForm(uid){
+  const u=cache.adminUsers.find(x=>x.id===uid);
+  openModal({title:`パスワード再設定（${u?esc(u.name):""}）`,okLabel:"再設定",body:`
+    <div class="field"><label>新しいパスワード（8文字以上・英字と数字を含む）</label><input class="input" id="upass2" type="password" autocomplete="new-password"></div>
+    <p class="form-hint">再設定後、対象ユーザーの全セッションが無効になります。</p>`,
+    onOk:async(btn)=>{
+      const p=val("#upass2");
+      if(!p){modalErr("パスワードを入力してください");return;}
+      if(!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(p)){modalErr("パスワードは8文字以上で英字と数字をそれぞれ1文字以上含めてください");return;}
+      btn.disabled=true;
+      try{ await A.resetUserPassword(uid,{new_password:p}); closeModal(); toast("パスワードを再設定しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openUserEditForm(u){
+  openModal({title:`ユーザー編集（${esc(u.name)}）`,okLabel:"保存",wide:true,body:`
+    <div class="row-2">
+      <div class="field"><label>メールアドレス（変更不可）</label><input class="input" value="${esc(u.email)}" disabled></div>
+      <div class="field"><label>氏名</label><input class="input" id="ue-name" value="${esc(u.name)}" autocomplete="off"></div>
+    </div>
+    <div class="row-2">
+      <div class="field"><label>ロール</label><select class="select" id="ue-role">
+        ${Object.entries(ROLE).map(([k,v])=>`<option value="${k}" ${u.role===k?"selected":""}>${v}</option>`).join("")}
+      </select></div>
+      <div class="field"><label>部門</label><input class="input" id="ue-dept" value="${esc(u.department)}" autocomplete="off"></div>
+    </div>
+    <div class="field"><label>有効（ログイン可）</label><input id="ue-active" type="checkbox" ${u.active===1?"checked":""} style="width:auto"></div>
+    <div class="field"><label>パスワード再設定（変更する場合のみ入力）</label><input class="input" id="ue-pass" type="password" autocomplete="new-password"></div>
+    <p class="form-hint">自分自身の無効化・ロール変更・パスワード再設定はできません。無効化時は既存セッションが無効になります。</p>`,
+    onOk:async(btn)=>{
+      const d={name:val("#ue-name"),role:val("#ue-role"),
+        department:val("#ue-dept"),active:document.getElementById("ue-active").checked};
+      const p=val("#ue-pass");
+      if(!d.name){modalErr("氏名は必須です");return;}
+      if(p){ if(!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(p)){modalErr("パスワードは8文字以上で英字と数字をそれぞれ1文字以上含めてください");return;} d.new_password=p; }
+      btn.disabled=true;
+      try{ await A.updateAdminUser(u.id,d); closeModal(); toast("ユーザーを更新しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+
+// ===================== フォーム（モーダル） =====================
+function openPasswordModal(){
+  openModal({title:"パスワード変更",okLabel:"変更する",body:`
+    <div class="field"><label>現在のパスワード</label><input class="input" id="pw-cur" type="password" autocomplete="current-password"></div>
+    <div class="field"><label>新しいパスワード（8文字以上・英字と数字を含む）</label><input class="input" id="pw-new" type="password" autocomplete="new-password"></div>
+    <div class="field"><label>新しいパスワード（確認）</label><input class="input" id="pw-new2" type="password" autocomplete="new-password"></div>`,
+    onOk:async(btn)=>{
+      const cur=val("#pw-cur"), n1=val("#pw-new"), n2=val("#pw-new2");
+      if(!cur||!n1){modalErr("すべての項目を入力してください");return;}
+      if(n1!==n2){modalErr("新しいパスワードが一致しません");return;}
+      if(!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(n1)){modalErr("8文字以上で英字と数字をそれぞれ1文字以上含めてください");return;}
+      btn.disabled=true;
+      try{ await A.changePassword(cur,n1); closeModal(); toast("パスワードを変更しました"); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openPlanForm(p){
+  openModal({title:p?"計画の編集":"新規監査計画",okLabel:p?"保存":"作成",body:`
+    <div class="row-2"><div class="field"><label>年度（西暦4桁）</label><input class="input" id="pfy" value="${p?esc(p.fiscal_year):new Date().getFullYear()}" inputmode="numeric"></div>
+    <div class="field"><label>計画名</label><input class="input" id="ptitle" value="${p?esc(p.title):""}" placeholder="例: 2027年度監査計画"></div></div>
+    <div class="field"><label>方針・重点領域</label><textarea class="textarea" id="ppolicy" rows="3">${p?esc(p.policy):""}</textarea>`,
+    onOk:async(btn)=>{
+      const d={fiscal_year:val("#pfy"),title:val("#ptitle"),policy:val("#ppolicy")};
+      if(!/^\d{4}$/.test(d.fiscal_year)){modalErr("年度は西暦4桁で入力してください");return;}
+      if(!d.title){modalErr("計画名は必須です");return;}
+      btn.disabled=true;
+      try{ if(p) await A.updatePlan(p.id,d); else await A.createPlan(d); closeModal(); toast("保存しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+async function ensureUsers(){ if(cache.users.length) return; try{ const r=await A.users(); cache.users=r.users||[]; }catch{ /* 権限なし等は無視 */ } }
+function userOptions(roles){
+  const us=cache.users.filter(u=>!roles||roles.includes(u.role));
+  return us.map(u=>`<option value="${esc(u.id)}">${esc(u.name)}（${esc(u.department)} / ${ROLE[u.role]||esc(u.role)}）</option>`).join("");
+}
+function openEngForm(e){
+  const plansOpts=cache.plans.map(p=>`<option value="${esc(p.id)}" ${e&&e.plan_id===p.id?"selected":""}>${esc(p.fiscal_year)} ${esc(p.title)}</option>`).join("");
+  openModal({title:e?"案件の編集":"新規監査案件",okLabel:e?"保存":"作成",wide:true,body:`
+    ${e?"":`<div class="field"><label>対象計画</label><select class="select" id="eplan">${plansOpts}</select></div>`}
+    <div class="row-3">
+      <div class="field"><label>案件名</label><input class="input" id="etitle" value="${e?esc(e.title):""}"></div>
+      <div class="field"><label>対象部門</label><input class="input" id="edept" value="${e?esc(e.department):""}"></div>
+      <div class="field"><label>機密区分</label><select class="select" id="eclass"><option value="C1" ${e&&e.classification==="C1"?"selected":""}>C1 社内</option><option value="C2" ${!e||e.classification==="C2"?"selected":""}>C2 監査限定</option><option value="C3" ${e&&e.classification==="C3"?"selected":""}>C3 特別機密</option></select></div>
+    </div>
+    <div class="field"><label>目的・範囲</label><textarea class="textarea" id="escope" rows="2">${e?esc(e.scope):""}</textarea></div>
+    <div class="field"><label>評価基準</label><textarea class="textarea" id="ecrit" rows="2">${e?esc(e.criteria):""}</textarea></div>`,
+    onOk:async(btn)=>{
+      const title=val("#etitle"), dept=val("#edept");
+      if(!title||!dept){modalErr("案件名と対象部門は必須です");return;}
+      const d={title,department:dept,classification:val("#eclass"),scope:val("#escope"),criteria:val("#ecrit")};
+      btn.disabled=true;
+      try{
+        if(e){ await A.updateEngagement(e.id,d); }
+        else { const planId=val("#eplan"); if(!planId){modalErr("対象計画を選択してください");btn.disabled=false;return;} d.plan_id=planId; await A.createEngagement(d); }
+        closeModal(); toast("保存しました"); refreshRoute();
+      }catch(err){ modalErr(err.message); btn.disabled=false; }
+    }});
+}
+function openReqForm(eid){
+  openModal({title:"新規証憑依頼",okLabel:"作成",body:`
+    <div class="row-2"><div class="field"><label>依頼先部門</label><input class="input" id="rdept"></div>
+    <div class="field"><label>期限</label><input class="input" id="rdue" type="date"></div></div>
+    <div class="field"><label>依頼内容</label><textarea class="textarea" id="ritem" rows="2"></textarea></div>
+    <div class="field"><label>目的</label><input class="input" id="rpurpose"></div>
+    <p class="form-hint">依頼は記録と状態管理が対象です。被監査部門への通知（メール等）は社内の運用フローで対応します。</p>`,
+    onOk:async(btn)=>{
+      const item=val("#ritem"), dept=val("#rdept");
+      if(!item||!dept){modalErr("依頼内容と依頼先部門は必須です");return;}
+      btn.disabled=true;
+      try{ await A.createRequest(eid,{recipient_department:dept,item,purpose:val("#rpurpose"),due_at:document.getElementById("rdue").value||null}); closeModal(); toast("依頼を作成しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openEvidenceForm(rid){
+  openModal({title:"証憑を提出",okLabel:"提出する",body:`
+    <div class="field"><label>ファイル名</label><input class="input" id="sf"></div>
+    <div class="field"><label>補足</label><input class="input" id="sn"></div>
+    <p class="form-hint">提出された証憑は、ファイル名・記録ID（ハッシュ）・提出日時で記録されます。証憑原本の保存・検証は社内規程に基づいて別途運用します。</p>`,
+    onOk:async(btn)=>{
+      const fn=val("#sf");
+      if(!fn){modalErr("ファイル名は必須です");return;}
+      const note=val("#sn");
+      let hash;
+      try{ const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fn+note+Date.now())); hash=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join(""); }
+      catch{ hash="demo-"+Date.now().toString(16).padStart(32,"0"); }
+      btn.disabled=true;
+      try{ await A.submitEvidence(rid,{file_name:fn,content_hash:hash,note}); closeModal(); toast("提出しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+async function openWpForm(eid,w){
+  await ensureUsers();
+  openModal({title:w?"調書の編集（新版として保存）":"新規監査調書",okLabel:w?"新版を保存":"作成",wide:true,body:`
+    ${w?"":`<div class="row-2"><div class="field"><label>調書コード</label><input class="input" id="wcode"></div>
+    <div class="field"><label>調書名</label><input class="input" id="wtitle"></div></div>`}
+    <div class="field"><label>実施内容</label><textarea class="textarea" id="wbody" rows="5">${w?esc(w.versions?.[0]?.body||""):""}</textarea></div>
+    <div class="field"><label>結論</label><textarea class="textarea" id="wconc" rows="3">${w?esc(w.versions?.[0]?.conclusion||""):""}</textarea></div>
+    ${w?"":`<div class="field"><label>レビュー担当者（作成者と分離が必要）</label><select class="select" id="wrev"><option value="">未指定</option>${userOptions(["auditor","audit_committee"])}</select></div>`}`,
+    onOk:async(btn)=>{
+      btn.disabled=true;
+      try{
+        if(w){
+          await A.updateWorkpaper(w.id,{body:val("#wbody"),conclusion:val("#wconc")});
+        }else{
+          const code=val("#wcode"), title=val("#wtitle");
+          if(!code||!title){modalErr("調書コードと調書名は必須です");btn.disabled=false;return;}
+          const reviewer=document.getElementById("wrev")?.value||null;
+          if(reviewer===state.me.user.id){modalErr("作成者とレビュー者を分離してください");btn.disabled=false;return;}
+          await A.createWorkpaper(eid,{code,title,body:val("#wbody"),conclusion:val("#wconc"),reviewer_id:reviewer});
+        }
+        closeModal(); toast("保存しました"); refreshRoute();
+      }catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openFndForm(eid){
+  openModal({title:"新規指摘",okLabel:"作成",body:`
+    <div class="field"><label>事実</label><textarea class="textarea" id="ffact" rows="2"></textarea></div>
+    <div class="row-3"><div class="field"><label>評価基準</label><input class="input" id="fcrit"></div>
+    <div class="field"><label>重要度</label><select class="select" id="fsev"><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select></div>
+    <div class="field"><label>原因</label><input class="input" id="fcause"></div></div>
+    <div class="field"><label>影響</label><input class="input" id="fimpact"></div>`,
+    onOk:async(btn)=>{
+      const fact=val("#ffact");
+      if(!fact){modalErr("事実は必須です");return;}
+      btn.disabled=true;
+      try{ await A.createFinding(eid,{fact,criterion:val("#fcrit"),cause:val("#fcause"),impact:val("#fimpact"),severity:val("#fsev")}); closeModal(); toast("指摘を作成しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openRespForm(fid){
+  openModal({title:"指摘への回答",okLabel:"回答を提出",body:`
+    <div class="field"><label>回答・見解</label><textarea class="textarea" id="rr" rows="3"></textarea></div>
+    <div class="field"><label>異議（あれば）</label><input class="input" id="rd"></div>`,
+    onOk:async(btn)=>{
+      const response=val("#rr");
+      if(!response){modalErr("回答は必須です");return;}
+      btn.disabled=true;
+      try{ await A.respondFinding(fid,{response,disagreement:val("#rd")}); closeModal(); toast("回答を提出しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+async function openRemForm(fid){
+  await ensureUsers();
+  openModal({title:"是正計画を登録",okLabel:"登録",body:`
+    <div class="field"><label>是正内容</label><textarea class="textarea" id="ra" rows="3"></textarea></div>
+    <div class="row-2"><div class="field"><label>是正責任者（選択）</label><select class="select" id="ro">${userOptions()}</select></div>
+    <div class="field"><label>期限</label><input class="input" id="rd" type="date"></div></div>`,
+    onOk:async(btn)=>{
+      const action=val("#ra"), owner=val("#ro");
+      if(!action){modalErr("是正内容は必須です");return;}
+      if(!owner){modalErr("是正責任者を選択してください");return;}
+      btn.disabled=true;
+      try{ await A.createRemediation(fid,{action,owner_id:owner,due_at:document.getElementById("rd").value||null}); closeModal(); toast("是正計画を登録しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openVerifyForm(rid){
+  openModal({title:"再確認・完了判定",okLabel:"判定する",body:`
+    <div class="field"><label>再確認結果</label><input class="input" id="vr"></div>
+    <div class="field"><label>完了証憑</label><input class="input" id="ve"></div>
+    <p class="form-hint">完了・継続監視・再指摘の最終判断は監査役が行います（本操作は完了として記録します）。</p>`,
+    onOk:async(btn)=>{
+      const result=val("#vr");
+      if(!result){modalErr("再確認結果は必須です");return;}
+      btn.disabled=true;
+      try{ await A.verifyRemediation(rid,{result,evidence_note:val("#ve")}); closeModal(); toast("判定を記録しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+
+// ===================== イベント委譲（1箇所で全て処理） =====================
+document.addEventListener("click", e=>{
+  const navEl=e.target.closest("[data-nav]");
+  if(navEl){ e.preventDefault();
+    if(navEl.dataset.nav==="requests"&&navEl.dataset.extra) navigate("requests",null,null,navEl.dataset.extra);
+    else navigate(navEl.dataset.nav, navEl.dataset.id||null, navEl.dataset.tab||null);
+    return; }
+  const tabEl=e.target.closest("[data-tab]");
+  if(tabEl){ const r=parseHash(); if(r.id){ navigate("engagements", r.id, tabEl.dataset.tab); } return; }
+  const modalEl=e.target.closest("[data-modal]");
+  if(modalEl){ closeModal(); return; }
+  const actEl=e.target.closest("[data-act]");
+  if(actEl){ e.preventDefault(); runAction(actEl); return; }
+});
+window.addEventListener("hashchange", ()=>{ closeModal(); scrollTop(); render(); });
+
+// ===================== 起動 =====================
+refreshMe();
+</script>
+</body>
+</html>
