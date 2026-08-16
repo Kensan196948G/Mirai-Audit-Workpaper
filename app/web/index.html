@@ -66,7 +66,7 @@ h1,h2,h3,h4{text-wrap:balance}
 .topbar{position:sticky;top:0;z-index:40;height:var(--topbar-h);display:flex;align-items:center;gap:14px;padding:0 20px;background:color-mix(in oklch, var(--surface) 88%, transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand-mark{width:30px;height:30px;border-radius:8px;background:var(--fg);color:var(--surface);display:grid;place-items:center;font-size:15px;font-weight:700;flex:0 0 auto}
-.brand-name{font-family:var(--font-display);font-size:16.5px;font-weight:650;letter-spacing:-0.02em;white-space:nowrap}
+.brand-name{font-family:var(--font-display);font-size:16.5px;font-weight:650;white-space:nowrap}
 .brand-sub{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
 .hamburger{display:none;width:42px;height:42px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);align-items:center;justify-content:center}
 .top-search{flex:1;max-width:420px;margin-left:8px;position:relative}
@@ -113,10 +113,10 @@ h1,h2,h3,h4{text-wrap:balance}
 
 /* ═══════════ 見出し・ボタン・カード ═══════════ */
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
-.page-title{font-family:var(--font-display);font-size:clamp(24px,2.6vw,30px);font-weight:700;letter-spacing:-0.02em;line-height:1.25;margin:0}
+.page-title{font-family:var(--font-display);font-size:clamp(24px,2.6vw,30px);font-weight:700;line-height:1.35;margin:0}
 .page-desc{margin:4px 0 0;color:var(--muted);font-size:13.5px;max-width:64ch}
 .page-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.card-title{font-family:var(--font-display);font-size:16.5px;font-weight:650;letter-spacing:-0.01em;margin:0}
+.card-title{font-family:var(--font-display);font-size:16.5px;font-weight:650;margin:0}
 .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 6px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);font-size:14px;font-weight:600;letter-spacing:-0.005em;transition:background .15s,border-color .15s,transform .06s;min-height:40px}
 .btn:active{transform:translateY(1px)}
@@ -246,7 +246,7 @@ td .sub{font-size:12px;color:var(--muted)}
 .login-side{position:relative;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);padding:clamp(32px,6vw,72px);display:flex;flex-direction:column;justify-content:center}
 .login-form{display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,64px)}
 .login-form-inner{width:100%;max-width:400px}
-.login-title{font-family:var(--font-display);font-size:clamp(26px,3vw,34px);font-weight:700;letter-spacing:-0.02em;line-height:1.3;margin:0 0 12px}
+.login-title{font-family:var(--font-display);font-size:clamp(26px,3vw,34px);font-weight:700;line-height:1.35;margin:0 0 12px}
 .login-lead{color:var(--muted);font-size:14.5px;margin:0 0 26px}
 .demo-box{border:1px dashed color-mix(in oklch, var(--muted) 42%, var(--border));background:var(--fg-faint);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:22px}
 .demo-box .db-title{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:9px}
@@ -487,7 +487,7 @@ function openModal({title,body,okLabel="実行",okClass="btn-primary",onOk=null,
     <div class="modal-backdrop" data-modal="close">
       <div class="modal ${wide?"wide":""}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
         <div class="modal-head"><h3>${esc(title)}</h3><button class="modal-x" data-modal="close" aria-label="閉じる">${ic("x")}</button></div>
-        <div class="modal-body">${body}<p class="form-err" id="modal-err" style="display:none"></p></div>
+        <div class="modal-body">${body}<p class="form-err" id="modal-err" role="alert" style="display:none"></p></div>
         <div class="modal-foot">
           <button class="btn btn-secondary" data-modal="close">キャンセル</button>
           <button class="btn ${okClass}" id="modal-ok">${esc(okLabel)}</button>
@@ -1277,7 +1277,7 @@ async function renderLogin(){
         ${demoBox}
         <div class="field"><label for="le">メールアドレス</label><input class="input" id="le" type="email" autocomplete="username" placeholder="name@mirai.local"></div>
         <div class="field"><label for="lp">パスワード</label><input class="input" id="lp" type="password" autocomplete="current-password" placeholder="••••••••"></div>
-        <p class="form-err" id="lerr" style="display:none"></p>
+        <p class="form-err" id="lerr" role="alert" style="display:none"></p>
         <button class="btn btn-primary" id="login-btn" style="width:100%;justify-content:center;min-height:46px;margin-top:6px" data-od-id="login-submit">ログイン ${ic("arrow")}</button>
       </div>
     </div>
@@ -1376,18 +1376,18 @@ async function runAction(act){
 function openUserForm(){
   openModal({title:"新規ユーザー作成",okLabel:"作成",wide:true,body:`
     <div class="row-2">
-      <div class="field"><label>メールアドレス</label><input class="input" id="uemail" type="email" autocomplete="off"></div>
-      <div class="field"><label>氏名</label><input class="input" id="uname" autocomplete="off"></div>
+      <div class="field"><label for="uemail">メールアドレス</label><input class="input" id="uemail" type="email" autocomplete="off"></div>
+      <div class="field"><label for="uname">氏名</label><input class="input" id="uname" autocomplete="off"></div>
     </div>
     <div class="row-2">
-      <div class="field"><label>ロール</label><select class="select" id="urole">
+      <div class="field"><label for="urole">ロール</label><select class="select" id="urole">
         <option value="auditor">監査役</option><option value="audit_committee">監査役会</option>
         <option value="general_affairs">総務部</option><option value="auditee">被監査部門</option>
         <option value="admin">システム管理者</option>
       </select></div>
-      <div class="field"><label>部門</label><input class="input" id="udept" autocomplete="off"></div>
+      <div class="field"><label for="udept">部門</label><input class="input" id="udept" autocomplete="off"></div>
     </div>
-    <div class="field"><label>初期パスワード（8文字以上・英字と数字を含む）</label><input class="input" id="upass" type="password" autocomplete="new-password"></div>
+    <div class="field"><label for="upass">初期パスワード（8文字以上・英字と数字を含む）</label><input class="input" id="upass" type="password" autocomplete="new-password"></div>
     <p class="form-hint">作成後の初回ログイン後、本人によるパスワード変更を推奨します。パスワードは画面・ログに表示されません。</p>`,
     onOk:async(btn)=>{
       const d={email:val("#uemail"),name:val("#uname"),
@@ -1403,7 +1403,7 @@ function openUserForm(){
 function openUserPasswordForm(uid){
   const u=cache.adminUsers.find(x=>x.id===uid);
   openModal({title:`パスワード再設定（${u?esc(u.name):""}）`,okLabel:"再設定",body:`
-    <div class="field"><label>新しいパスワード（8文字以上・英字と数字を含む）</label><input class="input" id="upass2" type="password" autocomplete="new-password"></div>
+    <div class="field"><label for="upass2">新しいパスワード（8文字以上・英字と数字を含む）</label><input class="input" id="upass2" type="password" autocomplete="new-password"></div>
     <p class="form-hint">再設定後、対象ユーザーの全セッションが無効になります。</p>`,
     onOk:async(btn)=>{
       const p=val("#upass2");
@@ -1417,17 +1417,17 @@ function openUserPasswordForm(uid){
 function openUserEditForm(u){
   openModal({title:`ユーザー編集（${esc(u.name)}）`,okLabel:"保存",wide:true,body:`
     <div class="row-2">
-      <div class="field"><label>メールアドレス（変更不可）</label><input class="input" value="${esc(u.email)}" disabled></div>
-      <div class="field"><label>氏名</label><input class="input" id="ue-name" value="${esc(u.name)}" autocomplete="off"></div>
+      <div class="field"><label for="ue-email">メールアドレス（変更不可）</label><input class="input" id="ue-email" value="${esc(u.email)}" disabled></div>
+      <div class="field"><label for="ue-name">氏名</label><input class="input" id="ue-name" value="${esc(u.name)}" autocomplete="off"></div>
     </div>
     <div class="row-2">
-      <div class="field"><label>ロール</label><select class="select" id="ue-role">
+      <div class="field"><label for="ue-role">ロール</label><select class="select" id="ue-role">
         ${Object.entries(ROLE).map(([k,v])=>`<option value="${k}" ${u.role===k?"selected":""}>${v}</option>`).join("")}
       </select></div>
-      <div class="field"><label>部門</label><input class="input" id="ue-dept" value="${esc(u.department)}" autocomplete="off"></div>
+      <div class="field"><label for="ue-dept">部門</label><input class="input" id="ue-dept" value="${esc(u.department)}" autocomplete="off"></div>
     </div>
-    <div class="field"><label>有効（ログイン可）</label><input id="ue-active" type="checkbox" ${u.active===1?"checked":""} style="width:auto"></div>
-    <div class="field"><label>パスワード再設定（変更する場合のみ入力）</label><input class="input" id="ue-pass" type="password" autocomplete="new-password"></div>
+    <div class="field"><label for="ue-active">有効（ログイン可）</label><input id="ue-active" type="checkbox" ${u.active===1?"checked":""} style="width:auto"></div>
+    <div class="field"><label for="ue-pass">パスワード再設定（変更する場合のみ入力）</label><input class="input" id="ue-pass" type="password" autocomplete="new-password"></div>
     <p class="form-hint">自分自身の無効化・ロール変更・パスワード再設定はできません。無効化時は既存セッションが無効になります。</p>`,
     onOk:async(btn)=>{
       const d={name:val("#ue-name"),role:val("#ue-role"),
@@ -1444,9 +1444,9 @@ function openUserEditForm(u){
 // ===================== フォーム（モーダル） =====================
 function openPasswordModal(){
   openModal({title:"パスワード変更",okLabel:"変更する",body:`
-    <div class="field"><label>現在のパスワード</label><input class="input" id="pw-cur" type="password" autocomplete="current-password"></div>
-    <div class="field"><label>新しいパスワード（8文字以上・英字と数字を含む）</label><input class="input" id="pw-new" type="password" autocomplete="new-password"></div>
-    <div class="field"><label>新しいパスワード（確認）</label><input class="input" id="pw-new2" type="password" autocomplete="new-password"></div>`,
+    <div class="field"><label for="pw-cur">現在のパスワード</label><input class="input" id="pw-cur" type="password" autocomplete="current-password"></div>
+    <div class="field"><label for="pw-new">新しいパスワード（8文字以上・英字と数字を含む）</label><input class="input" id="pw-new" type="password" autocomplete="new-password"></div>
+    <div class="field"><label for="pw-new2">新しいパスワード（確認）</label><input class="input" id="pw-new2" type="password" autocomplete="new-password"></div>`,
     onOk:async(btn)=>{
       const cur=val("#pw-cur"), n1=val("#pw-new"), n2=val("#pw-new2");
       if(!cur||!n1){modalErr("すべての項目を入力してください");return;}
@@ -1459,9 +1459,9 @@ function openPasswordModal(){
 }
 function openPlanForm(p){
   openModal({title:p?"計画の編集":"新規監査計画",okLabel:p?"保存":"作成",body:`
-    <div class="row-2"><div class="field"><label>年度（西暦4桁）</label><input class="input" id="pfy" value="${p?esc(p.fiscal_year):new Date().getFullYear()}" inputmode="numeric"></div>
-    <div class="field"><label>計画名</label><input class="input" id="ptitle" value="${p?esc(p.title):""}" placeholder="例: 2027年度監査計画"></div></div>
-    <div class="field"><label>方針・重点領域</label><textarea class="textarea" id="ppolicy" rows="3">${p?esc(p.policy):""}</textarea>`,
+    <div class="row-2"><div class="field"><label for="pfy">年度（西暦4桁）</label><input class="input" id="pfy" value="${p?esc(p.fiscal_year):new Date().getFullYear()}" inputmode="numeric"></div>
+    <div class="field"><label for="ptitle">計画名</label><input class="input" id="ptitle" value="${p?esc(p.title):""}" placeholder="例: 2027年度監査計画"></div></div>
+    <div class="field"><label for="ppolicy">方針・重点領域</label><textarea class="textarea" id="ppolicy" rows="3">${p?esc(p.policy):""}</textarea>`,
     onOk:async(btn)=>{
       const d={fiscal_year:val("#pfy"),title:val("#ptitle"),policy:val("#ppolicy")};
       if(!/^\d{4}$/.test(d.fiscal_year)){modalErr("年度は西暦4桁で入力してください");return;}
@@ -1479,14 +1479,14 @@ function userOptions(roles){
 function openEngForm(e){
   const plansOpts=cache.plans.map(p=>`<option value="${esc(p.id)}" ${e&&e.plan_id===p.id?"selected":""}>${esc(p.fiscal_year)} ${esc(p.title)}</option>`).join("");
   openModal({title:e?"案件の編集":"新規監査案件",okLabel:e?"保存":"作成",wide:true,body:`
-    ${e?"":`<div class="field"><label>対象計画</label><select class="select" id="eplan">${plansOpts}</select></div>`}
+    ${e?"":`<div class="field"><label for="eplan">対象計画</label><select class="select" id="eplan">${plansOpts}</select></div>`}
     <div class="row-3">
-      <div class="field"><label>案件名</label><input class="input" id="etitle" value="${e?esc(e.title):""}"></div>
-      <div class="field"><label>対象部門</label><input class="input" id="edept" value="${e?esc(e.department):""}"></div>
-      <div class="field"><label>機密区分</label><select class="select" id="eclass"><option value="C1" ${e&&e.classification==="C1"?"selected":""}>C1 社内</option><option value="C2" ${!e||e.classification==="C2"?"selected":""}>C2 監査限定</option><option value="C3" ${e&&e.classification==="C3"?"selected":""}>C3 特別機密</option></select></div>
+      <div class="field"><label for="etitle">案件名</label><input class="input" id="etitle" value="${e?esc(e.title):""}"></div>
+      <div class="field"><label for="edept">対象部門</label><input class="input" id="edept" value="${e?esc(e.department):""}"></div>
+      <div class="field"><label for="eclass">機密区分</label><select class="select" id="eclass"><option value="C1" ${e&&e.classification==="C1"?"selected":""}>C1 社内</option><option value="C2" ${!e||e.classification==="C2"?"selected":""}>C2 監査限定</option><option value="C3" ${e&&e.classification==="C3"?"selected":""}>C3 特別機密</option></select></div>
     </div>
-    <div class="field"><label>目的・範囲</label><textarea class="textarea" id="escope" rows="2">${e?esc(e.scope):""}</textarea></div>
-    <div class="field"><label>評価基準</label><textarea class="textarea" id="ecrit" rows="2">${e?esc(e.criteria):""}</textarea></div>`,
+    <div class="field"><label for="escope">目的・範囲</label><textarea class="textarea" id="escope" rows="2">${e?esc(e.scope):""}</textarea></div>
+    <div class="field"><label for="ecrit">評価基準</label><textarea class="textarea" id="ecrit" rows="2">${e?esc(e.criteria):""}</textarea></div>`,
     onOk:async(btn)=>{
       const title=val("#etitle"), dept=val("#edept");
       if(!title||!dept){modalErr("案件名と対象部門は必須です");return;}
@@ -1501,10 +1501,10 @@ function openEngForm(e){
 }
 function openReqForm(eid){
   openModal({title:"新規証憑依頼",okLabel:"作成",body:`
-    <div class="row-2"><div class="field"><label>依頼先部門</label><input class="input" id="rdept"></div>
-    <div class="field"><label>期限</label><input class="input" id="rdue" type="date"></div></div>
-    <div class="field"><label>依頼内容</label><textarea class="textarea" id="ritem" rows="2"></textarea></div>
-    <div class="field"><label>目的</label><input class="input" id="rpurpose"></div>
+    <div class="row-2"><div class="field"><label for="rdept">依頼先部門</label><input class="input" id="rdept"></div>
+    <div class="field"><label for="rdue">期限</label><input class="input" id="rdue" type="date"></div></div>
+    <div class="field"><label for="ritem">依頼内容</label><textarea class="textarea" id="ritem" rows="2"></textarea></div>
+    <div class="field"><label for="rpurpose">目的</label><input class="input" id="rpurpose"></div>
     <p class="form-hint">現時点では依頼の記録と状態管理のみです（メール等の通知は未実装。受入試験前に通知機能の実装を推奨）。</p>`,
     onOk:async(btn)=>{
       const item=val("#ritem"), dept=val("#rdept");
@@ -1516,8 +1516,8 @@ function openReqForm(eid){
 }
 function openEvidenceForm(rid){
   openModal({title:"証憑を提出",okLabel:"提出する",body:`
-    <div class="field"><label>ファイル名</label><input class="input" id="sf"></div>
-    <div class="field"><label>補足</label><input class="input" id="sn"></div>
+    <div class="field"><label for="sf">ファイル名</label><input class="input" id="sf"></div>
+    <div class="field"><label for="sn">補足</label><input class="input" id="sn"></div>
     <p class="form-hint">現行MVPはファイルの実アップロード未対応のため、ファイル名と記録ID（ハッシュ）を記録します。実ファイル保存・検証（R2 + SHA-256）は受入試験前に実装予定です（評価レポート F-05）。</p>`,
     onOk:async(btn)=>{
       const fn=val("#sf");
@@ -1534,11 +1534,11 @@ function openEvidenceForm(rid){
 async function openWpForm(eid,w){
   await ensureUsers();
   openModal({title:w?"調書の編集（新版として保存）":"新規監査調書",okLabel:w?"新版を保存":"作成",wide:true,body:`
-    ${w?"":`<div class="row-2"><div class="field"><label>調書コード</label><input class="input" id="wcode"></div>
-    <div class="field"><label>調書名</label><input class="input" id="wtitle"></div></div>`}
-    <div class="field"><label>実施内容</label><textarea class="textarea" id="wbody" rows="5">${w?esc(w.versions?.[0]?.body||""):""}</textarea></div>
-    <div class="field"><label>結論</label><textarea class="textarea" id="wconc" rows="3">${w?esc(w.versions?.[0]?.conclusion||""):""}</textarea></div>
-    ${w?"":`<div class="field"><label>レビュー担当者（作成者と分離が必要）</label><select class="select" id="wrev"><option value="">未指定</option>${userOptions(["auditor","audit_committee"])}</select></div>`}`,
+    ${w?"":`<div class="row-2"><div class="field"><label for="wcode">調書コード</label><input class="input" id="wcode"></div>
+    <div class="field"><label for="wtitle">調書名</label><input class="input" id="wtitle"></div></div>`}
+    <div class="field"><label for="wbody">実施内容</label><textarea class="textarea" id="wbody" rows="5">${w?esc(w.versions?.[0]?.body||""):""}</textarea></div>
+    <div class="field"><label for="wconc">結論</label><textarea class="textarea" id="wconc" rows="3">${w?esc(w.versions?.[0]?.conclusion||""):""}</textarea></div>
+    ${w?"":`<div class="field"><label for="wrev">レビュー担当者（作成者と分離が必要）</label><select class="select" id="wrev"><option value="">未指定</option>${userOptions(["auditor","audit_committee"])}</select></div>`}`,
     onOk:async(btn)=>{
       btn.disabled=true;
       try{
@@ -1557,11 +1557,11 @@ async function openWpForm(eid,w){
 }
 function openFndForm(eid){
   openModal({title:"新規指摘",okLabel:"作成",body:`
-    <div class="field"><label>事実</label><textarea class="textarea" id="ffact" rows="2"></textarea></div>
-    <div class="row-3"><div class="field"><label>評価基準</label><input class="input" id="fcrit"></div>
-    <div class="field"><label>重要度</label><select class="select" id="fsev"><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select></div>
-    <div class="field"><label>原因</label><input class="input" id="fcause"></div></div>
-    <div class="field"><label>影響</label><input class="input" id="fimpact"></div>`,
+    <div class="field"><label for="ffact">事実</label><textarea class="textarea" id="ffact" rows="2"></textarea></div>
+    <div class="row-3"><div class="field"><label for="fcrit">評価基準</label><input class="input" id="fcrit"></div>
+    <div class="field"><label for="fsev">重要度</label><select class="select" id="fsev"><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select></div>
+    <div class="field"><label for="fcause">原因</label><input class="input" id="fcause"></div></div>
+    <div class="field"><label for="fimpact">影響</label><input class="input" id="fimpact"></div>`,
     onOk:async(btn)=>{
       const fact=val("#ffact");
       if(!fact){modalErr("事実は必須です");return;}
@@ -1572,8 +1572,8 @@ function openFndForm(eid){
 }
 function openRespForm(fid){
   openModal({title:"指摘への回答",okLabel:"回答を提出",body:`
-    <div class="field"><label>回答・見解</label><textarea class="textarea" id="rr" rows="3"></textarea></div>
-    <div class="field"><label>異議（あれば）</label><input class="input" id="rd"></div>`,
+    <div class="field"><label for="rr">回答・見解</label><textarea class="textarea" id="rr" rows="3"></textarea></div>
+    <div class="field"><label for="rd">異議（あれば）</label><input class="input" id="rd"></div>`,
     onOk:async(btn)=>{
       const response=val("#rr");
       if(!response){modalErr("回答は必須です");return;}
@@ -1585,9 +1585,9 @@ function openRespForm(fid){
 async function openRemForm(fid){
   await ensureUsers();
   openModal({title:"是正計画を登録",okLabel:"登録",body:`
-    <div class="field"><label>是正内容</label><textarea class="textarea" id="ra" rows="3"></textarea></div>
-    <div class="row-2"><div class="field"><label>是正責任者（選択）</label><select class="select" id="ro">${userOptions()}</select></div>
-    <div class="field"><label>期限</label><input class="input" id="rd" type="date"></div></div>`,
+    <div class="field"><label for="ra">是正内容</label><textarea class="textarea" id="ra" rows="3"></textarea></div>
+    <div class="row-2"><div class="field"><label for="ro">是正責任者（選択）</label><select class="select" id="ro">${userOptions()}</select></div>
+    <div class="field"><label for="rd">期限</label><input class="input" id="rd" type="date"></div></div>`,
     onOk:async(btn)=>{
       const action=val("#ra"), owner=val("#ro");
       if(!action){modalErr("是正内容は必須です");return;}
@@ -1599,8 +1599,8 @@ async function openRemForm(fid){
 }
 function openVerifyForm(rid){
   openModal({title:"再確認・完了判定",okLabel:"判定する",body:`
-    <div class="field"><label>再確認結果</label><input class="input" id="vr"></div>
-    <div class="field"><label>完了証憑</label><input class="input" id="ve"></div>
+    <div class="field"><label for="vr">再確認結果</label><input class="input" id="vr"></div>
+    <div class="field"><label for="ve">完了証憑</label><input class="input" id="ve"></div>
     <p class="form-hint">完了・継続監視・再指摘の最終判断は監査役が行います（本操作は完了として記録します）。</p>`,
     onOk:async(btn)=>{
       const result=val("#vr");
