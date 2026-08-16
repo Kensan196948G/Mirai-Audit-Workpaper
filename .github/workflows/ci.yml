@@ -17,6 +17,19 @@ jobs:
       - name: リンク検証 (check-links.py)
         run: python3 scripts/check-links.py
 
+  # シークレットスキャン（秘密情報・資格情報のコミット防止）
+  secretscan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Secret スキャン (gitleaks CLI)
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks dir . --no-banner --redact
+
   # アプリ実装（Cloudflare Workers + D1）
   app:
     runs-on: ubuntu-latest

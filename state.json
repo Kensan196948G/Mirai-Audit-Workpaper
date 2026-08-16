@@ -15,12 +15,12 @@
     "review_blocker_count": 0,
     "security_issue_count": 0,
     "broken_link_count": 0,
-    "app_tests": 57,
-    "app_tests_pass": 57
+    "app_tests": 62,
+    "app_tests_pass": 62
   },
   "execution": {
     "max_duration_minutes": 300,
-    "loop_count": 2,
+    "loop_count": 3,
     "max_loops": 5,
     "ci_retry_limit": 5,
     "same_error_limit": 2
@@ -29,17 +29,17 @@
     "current_phase": "acceptance",
     "stable": true,
     "verification": {
-      "link_check": "PASS (MD 88 / HTML 20)",
+      "link_check": "PASS (MD 92 / HTML 20)",
       "html_structure": "PASS (5 files)",
       "mermaid_blocks": "PASS",
-      "secret_scan": "PASS (0 hits)",
+      "secret_scan": "PASS (0 hits・CIにgitleaks追加)",
       "app_typecheck": "PASS",
       "app_lint": "PASS (0 warnings)",
-      "app_test": "PASS (57/57: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format)",
+      "app_test": "PASS (62/62: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format/health-readiness)",
       "app_build": "PASS (web -> embedded -> typecheck)",
-      "git": "main にPR#1〜4 マージ済み。CI green。カスタムドメイン設定済み（maw=本番 / maw-mvp=MVP）・WebUIデザイン刷新（デザインシステム）",
+      "git": "main にPR#1〜5 マージ済み。CI green。CLOUDFLARE_API_TOKEN を GitHub Actions secrets に設定しデプロイ自動化を有効化。default branch を main に修正。WebUI改修（CHG-026）を preview・MVP にデプロイ済み・実機確認済み。本番（maw.mirai-dx-platform.com）は受入基準クリア後（target=production）にデプロイ",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
-      "next_action": "①CLOUDFLARE_API_TOKEN を GitHub Actions secrets に設定してデプロイ自動化を有効化、②受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
+      "next_action": "①受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て、本番へ target=production でデプロイ（CI/CDは有効済み）、②実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
     }
   },
   "priority": {
@@ -49,14 +49,17 @@
     "failure_patterns": [
       "旧構成ではpreviewとproductionが同一D1（main-DB）・同一Worker名を参照し、上書きと環境混同のリスクがあった（→ D1をmvp/mainで分離、Worker名も preview/production で分離）",
       "ビルド手順に埋め込みHTML（embedded-assets.ts）の再生成ステップがなく、web/index.html編集後に配信が古くなる恐れがあった（→ build:web→build:embedded→typecheck を統合しCIで検証）",
-      "package.jsonのJSONエスケープ崩れで npm install が失敗した（→ JSON.parse で検証してからインストール）"
+      "package.jsonのJSONエスケープ崩れで npm install が失敗した（→ JSON.parse で検証してからインストール）",
+      "GitHub の default branch が feature/production-hardening に誤設定され、PR のマージ先がズレる恐れがあった（→ main に修正）。CIのデプロイワークフローが CLOUDFLARE_API_TOKEN 未設定で全ジョブスキップ（失敗扱い）になっていた（→ secret 設定で有効化）",
+      "deploy.yml の workflow_dispatch が全環境（preview/mvp/production）を同時にデプロイする設計で、誤操作で本番へ触れる危険があった（→ target 入力で本番は明示指定のみに変更）"
     ],
     "success_patterns": [
       "実装済み・計画・人が行う判断を分離する（監査判断・重要度・完了は自動決定しない）",
       "ローカル検証（型/lint/テスト/ビルド/リンク/秘密スキャン）を全PASSしてからデプロイ・マージする",
       "CSRF・レート制限・Cookie Secure・セキュリティヘッダー・環境分離をコードとテストで担保する",
       "状態遷移を状態機械としてコード化し、不正遷移を409で拒否する",
-      "文書変更と判断を変更履歴台帳（docs/変更履歴.md）へ記録し、再開時の継続性を確保する"
+      "文書変更と判断を変更履歴台帳（docs/変更履歴.md）へ記録し、再開時の継続性を確保する",
+      "CI/CDは本番を明示入力の手動実行のみに限定し、push では preview/MVP のみデプロイする（誤操作・誤デプロイの防止）"
     ]
   }
 }
