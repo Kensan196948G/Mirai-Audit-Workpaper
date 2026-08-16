@@ -50,12 +50,39 @@ async function authedFetch(app: any, cookie: string, path: string, init: Request
 }
 
 describe("integration: auth", () => {
-  test("health endpoint works", async () => {
+  test("health endpoint works (liveness)", async () => {
     const app = await buildTestApp();
     const res = await app.fetch(new Request("http://localhost/api/health"));
     assert.equal(res.status, 200);
     const body = (await res.json()) as any;
     assert.equal(body.status, "ok");
+    assert.equal(body.environment, "test");
+  });
+
+  test("health endpoint reports DB readiness", async () => {
+    const app = await buildTestApp();
+    const res = await app.fetch(new Request("http://localhost/api/health"));
+    assert.equal(res.status, 200);
+    const body = (await res.json()) as any;
+    assert.equal(body.db, "ok");
+  });
+
+  test("health endpoint degrades (503) when DB is unavailable", async () => {
+    // DB が失敗するアプリを構築して 503 + db:error を確認する
+    const brokenDb = {
+      prepare: () => {
+        throw new Error("db connection refused");
+      },
+      exec: async () => {
+        throw new Error("db connection refused");
+      },
+    };
+    const app = buildApp({ db: brokenDb as any, environment: "test", getClientIp: () => "203.0.113.10" });
+    const res = await app.fetch(new Request("http://localhost/api/health"));
+    assert.equal(res.status, 503);
+    const body = (await res.json()) as any;
+    assert.equal(body.status, "degraded");
+    assert.equal(body.db, "error");
   });
 
   test("login valid / invalid / me", async () => {

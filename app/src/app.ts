@@ -335,9 +335,18 @@ export function buildApp(deps: AppDeps) {
     return c.json(errorBody(e), 404);
   });
 
-  // ---------- ヘルスチェック ----------
+  // ---------- ヘルスチェック（死活＋DB読取り確認） ----------
   app.get("/api/health", async (c) => {
-    return c.json({ status: "ok", environment: deps.environment, time: nowIso() });
+    try {
+      const row = await deps.db.prepare("SELECT 1 AS ok").first<{ ok: number }>();
+      if (!row || row.ok !== 1) {
+        throw new Error("db check returned no row");
+      }
+      return c.json({ status: "ok", environment: deps.environment, db: "ok", time: nowIso() });
+    } catch {
+      // DB 異常時は 503 を返し、デプロイスモーク・ロードバランサが検知できるようにする
+      return c.json({ status: "degraded", environment: deps.environment, db: "error", time: nowIso() }, 503);
+    }
   });
 
   // ---------- 認証 ----------

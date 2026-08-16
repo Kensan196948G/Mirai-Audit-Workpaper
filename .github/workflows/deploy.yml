@@ -4,12 +4,28 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'デプロイ対象（production は受入基準クリア後のみ明示指定で実行）'
+        type: choice
+        required: true
+        default: preview-mvp
+        options:
+          - preview-mvp
+          - preview
+          - mvp
+          - production
+
+# 同一ブランチの並行デプロイを防止（環境上書き・migration競合の回避）
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   deploy-preview:
     # main への push（CI通過後）と手動実行で preview へデプロイ
-    # CLOUDFLARE_API_TOKEN 未設定時はスキップ（初回はsecrets設定が必要）
-    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+    # CLOUDFLARE_API_TOKEN 未設定時はスキップ
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'push' || contains(fromJson('["preview-mvp", "preview"]'), github.event.inputs.target)) }}
     runs-on: ubuntu-latest
     environment: preview
     defaults:
@@ -34,13 +50,13 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - name: スモーク（health）
+      - name: スモーク（health・DB死活）
         run: |
-          curl -sf https://mirai-audit-workpaper-preview.kensan1969.workers.dev/api/health || exit 1
+          curl -sf https://mirai-audit-workpaper-preview.kensan1969.workers.dev/api/health | grep -q '"db":"ok"' || exit 1
 
   deploy-mvp:
     # main への push で MVP（maw-mvp.mirai-dx-platform.com）へデプロイ。トークン未設定時はスキップ
-    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && (github.event_name == 'push' || contains(fromJson('["preview-mvp", "mvp"]'), github.event.inputs.target)) }}
     runs-on: ubuntu-latest
     environment: mvp
     defaults:
@@ -65,13 +81,15 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - name: スモーク（health・ログイン）
+      - name: スモーク（health・DB死活）
         run: |
-          curl -sf https://maw-mvp.mirai-dx-platform.com/api/health || exit 1
+          curl -sf https://maw-mvp.mirai-dx-platform.com/api/health | grep -q '"db":"ok"' || exit 1
 
   deploy-production:
-    # 手動実行のみ（本番は受入基準クリア後に意図的に実行）。トークン未設定時はスキップ
-    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && github.event_name == 'workflow_dispatch' }}
+    # 本番は手動実行（workflow_dispatch）かつ target=production の明示指定のみ。
+    # 受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育の完了後に実行する。
+    # push では絶対に実行されない。トークン未設定時はスキップ
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'production' }}
     runs-on: ubuntu-latest
     environment: production
     defaults:
@@ -98,6 +116,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: スモーク（health・bootstrap無効確認）
         run: |
-          curl -sf https://mirai-audit-workpaper.kensan1969.workers.dev/api/health || exit 1
-          CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST https://mirai-audit-workpaper.kensan1969.workers.dev/api/admin/bootstrap)
+          curl -sf https://maw.mirai-dx-platform.com/api/health | grep -q '"db":"ok"' || exit 1
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST https://maw.mirai-dx-platform.com/api/admin/bootstrap)
           [ "$CODE" = "403" ] || exit 1

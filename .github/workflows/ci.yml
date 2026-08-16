@@ -17,6 +17,18 @@ jobs:
       - name: リンク検証 (check-links.py)
         run: python3 scripts/check-links.py
 
+  # シークレットスキャン（秘密情報・資格情報のコミット防止）
+  secretscan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Secret スキャン (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # アプリ実装（Cloudflare Workers + D1）
   app:
     runs-on: ubuntu-latest
