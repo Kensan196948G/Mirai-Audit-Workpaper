@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mirai-audit-workpaper-preview",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "ENVIRONMENT": "preview"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mirai-audit-workpaper-mvp-db",
+      "database_id": "b26ede33-f2ff-4297-ad0f-a6770e33db13",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

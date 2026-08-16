@@ -26,3 +26,12 @@ venv/
 *.key
 secrets/
 credentials*
+
+# Cloudflare Workers 実装（app/ の生成物・ローカル状態）
+app/node_modules/
+app/.wrangler/
+app/dist/
+app/dist-worker/
+app/dist-worker2/
+app/web/dist/
+app/scripts/seed-users.sql
