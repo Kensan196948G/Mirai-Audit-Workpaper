@@ -1,0 +1,92 @@
+# アプリ運用・障害対応Runbook（app/）
+
+> 対象: 要件定義書 MAW-RD-001 の実装アプリ（app/）の日次〜四半期運用手順。
+> 作成: 2026-08-16（CTO）／状態: 実装済み（app/ と連動）。正式な本番運用（実データ）は社内決定と受入試験の完了が前提。
+
+## 1. 構成と環境
+
+| 環境 | Worker名 | D1（DB） | 用途 | bootstrap |
+|---|---|---|---|---|
+| preview | mirai-audit-workpaper-preview | mirai-audit-workpaper-mvp-db | 検証・受入試験（ダミーデータのみ） | 可 |
+| production | mirai-audit-workpaper | mirai-audit-workpaper-db | 本番（実データ投入は社内決定後） | 不可（403） |
+
+- 技術: Cloudflare Workers（Hono・TypeScript）+ D1（SQLite）+ ネイティブHTML/JS SPA（worker内埋め込み）
+- ソース: app/（src/・migrations/・web/・tests/）。デプロイ設定: app/wrangler.jsonc（preview）、app/wrangler.production.jsonc（production）
+- 監査ログ: audit_events テーブル（追記専用）。全API操作が記録される
+
+## 2. デプロイ手順
+
+### 2.1 前提
+- main ブランチの確定 commit が CI（.github/workflows/ci.yml）の型チェック・lint・テスト・ビルド・リンク検証を通過していること
+- secrets: CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID が GitHub に設定されていること
+
+### 2.2 preview デプロイ（main への push で自動実行）
+- 手動実行: GitHub Actions > Deploy > Run workflow（preview job）または下記ローカル手順
+
+```bash
+cd app
+npm ci
+npx wrangler d1 migrations apply mirai-audit-workpaper-mvp-db -c wrangler.jsonc   # 冪等
+npm run deploy:preview                                                            # build + wrangler deploy -c wrangler.jsonc
+```
+
+- スモーク: `curl https://mirai-audit-workpaper-preview.kensan1969.workers.dev/api/health` で `{"status":"ok"}` を確認
+
+### 2.3 production デプロイ（手動実行のみ）
+- 受入条件（受入試験・権限棚卸し・復元試験・教育）クリア後に GitHub Actions > Deploy > Run workflow で実行
+- ローカル手順:
+
+```bash
+cd app
+npm ci
+npx wrangler d1 migrations apply mirai-audit-workpaper-db -c wrangler.production.jsonc  # 冪等
+npm run deploy:production
+```
+
+- スモーク:
+  - `curl https://mirai-audit-workpaper.kensan1969.workers.dev/api/health`
+  - `curl -s -o /dev/null -w '%{http_code}' -X POST https://mirai-audit-workpaper.kensan1969.workers.dev/api/admin/bootstrap` → `403` を確認（本番bootstrap無効）
+
+### 2.4 ロールバック
+- Cloudflare Dashboard > Workers > mirai-audit-workpaper > Deployments から直前のデプロイメントを Rollback（Workers の履歴ロールバック）
+- または旧 commit で production を再デプロイ
+- 注意: D1 migration は冪等だが、破壊的 migration を追加する場合は事前にバックアップ確認とレビューを行う
+
+## 3. DB（D1）
+
+- migration: app/migrations/0001_initial.sql（冪等: CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS）
+- シード（preview のみ）: `node scripts/seed.mjs --local` で scripts/seed-users.sql を生成し `npx wrangler d1 execute <db> --file scripts/seed-users.sql` で適用（ダミーパスワードハッシュのみ。本番へは適用しない）
+- バックアップ・復元: Cloudflare Dashboard > D1 > 対象DB > Backups で時点復元（RPO/RTO は社内決定後に SLI/SLO へ反映）
+- 監査ログ: audit_events は追記専用（UPDATE/DELETE のAPIなし）。必要に応じ export で保全
+
+## 4. 監視・アラート
+
+- オブザーバビリティ: wrangler 設定で有効（preview 1.0 / production 0.1 サンプリング）。Cloudflare Dashboard > Workers > 対象Worker > Logs / Metrics
+- ヘルスチェック: GET /api/health（status・environment・time）
+- アラート試験・SLI/SLO: 社内決定後に Uptime（Cloudflare）や外部監視で設定。初期安定化期間（1〜2週間）はエラー率・ログを日次確認
+
+## 5. 障害対応
+
+| 障害 | 検知 | 対応 |
+|---|---|---|
+| Worker 5xx | Logs・Uptime | ログ確認 → 原因特定 → 修正PR → preview確認 → production再デプロイ。急場は直前デプロイへ Rollback |
+| D1 エラー・データ不整合 | エラーレート・監査ログ欠落 | バックアップからの時点復元（復元試験後に実施）。原因をインシデント記録へ |
+| 認証不能・ログイン障害 | ログインエラー率 | セッション掃除（purgeExpiredSessions）・レート制限状態を確認。DB sessions の整合確認 |
+| セキュリティインシデント（漏えい・不正アクセス疑い） | 監査ログ・アラート | 直ちに production Worker を停止/ロールバックし、監査ログ保全、関係者へ報告。復旧後に再発防止策を実装 |
+
+## 6. 運用台帳（周期）
+
+| 周期 | 作業 | 担当 |
+|---|---|---|
+| 日次（初期安定化） | エラー率・監査ログ・メトリクス確認 | 運用担当 |
+| 週次 | バックアップ確認・未処理インシデント棚卸し | 運用担当 |
+| 月次 | 権限棚卸し（ユーザー・ロール）、依存関係/脆弱性スキャン、証明書・ドメイン確認 | システム管理者 |
+| 四半期 | 復元試験（RPO/RTO実測）、容量・レート・予算レビュー、Runbook更新 | 運用・CTO |
+| 年次 | ライセンス・EOL・保存年限レビュー、教育再実施 | 総務部・システム管理者 |
+
+## 7. 運用上の注意
+
+- 実データ（個人情報・会社データ）を preview やテストへ投入しない。シードはダミーのみ
+- 監査判断・重要度・完了判定は人が行う。システムは自動決定しない
+- .env・資格情報・トークンを Git・ログ・文書へ出力しない。ローテーションは Cloudflare Dashboard / 環境変数で実施
+- 本Runbookの変更は docs/変更履歴.md に記録する

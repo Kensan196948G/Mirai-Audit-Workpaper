@@ -1,0 +1,18 @@
+# Node
+node_modules/
+
+# Wrangler / ローカル状態
+.wrangler/
+
+# ビルド成果物（CI/ビルドで再生成）
+dist/
+dist-worker/
+dist-worker2/
+web/dist/
+
+# 生成物（seed.mjs で再生成可能・テスト用ダミーパスワードハッシュを含む）
+scripts/seed-users.sql
+
+# ログ・一時ファイル
+*.log
+*.tmp
