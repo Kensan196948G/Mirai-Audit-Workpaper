@@ -37,6 +37,8 @@ export async function verifyPassword(password: string, stored: string): Promise<
     const [scheme, iterStr, saltB64, hashB64] = stored.split("$");
     if (scheme !== "pbkdf2" || !iterStr || !saltB64 || !hashB64) return false;
     const iterations = Number(iterStr);
+    // 不正・過大な反復回数による DoS を防ぐため、安全な範囲のみ受け付ける
+    if (!Number.isInteger(iterations) || iterations < 10_000 || iterations > 200_000) return false;
     const salt = b64ToBuf(saltB64);
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
     const bits = await crypto.subtle.deriveBits(

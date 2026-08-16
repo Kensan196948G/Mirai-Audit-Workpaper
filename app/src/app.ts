@@ -10,7 +10,7 @@ import { getRow, getRows, run } from "./db/db.ts";
 import { hasPermission, canViewEngagement, canSubmitToRequest, type Permission } from "./permissions.ts";
 import { writeAuditEvent, queryAuditEvents } from "./audit.ts";
 import { newId, nowIso, engagementNo, requestNo, findingNo, fiscalYear } from "./ids.ts";
-import type { User, Role } from "./types.ts";
+import { ROLES, type User, type Role } from "./types.ts";
 import { EMBEDDED_INDEX_HTML } from "./embedded-assets.ts";
 import {
   assertSameOrigin,
@@ -22,6 +22,7 @@ import {
   REQUEST_TRANSITIONS,
   WORKPAPER_TRANSITIONS,
   FINDING_TRANSITIONS,
+  REMEDIATION_TRANSITIONS,
 } from "./security.ts";
 
 export interface AppDeps {
@@ -46,6 +47,7 @@ type Rule =
   | { type: "string"; required?: boolean; min?: number; pattern?: RegExp; default?: string }
   | { type: "email"; required?: boolean }
   | { type: "enum"; values: string[]; default?: string; required?: boolean }
+  | { type: "boolean"; required?: boolean }
   | { type: "string-or-null"; required?: boolean };
 
 type Schema = Record<string, Rule>;
@@ -87,6 +89,8 @@ function makeValidator(schema: Schema) {
           continue;
         }
         cleaned[key] = raw;
+      } else if (rule.type === "boolean") {
+        cleaned[key] = raw === true || raw === 1 || raw === "1" || raw === "true";
       } else if (rule.type === "string-or-null") {
         cleaned[key] = raw === null ? null : String(raw);
       } else {
@@ -186,6 +190,26 @@ const remediationVerifySchema: Schema = {
 const passwordChangeSchema: Schema = {
   current_password: { type: "string", required: true, min: 1 },
   // 最小8文字・英字と数字を各1文字以上（NFR パスワードポリシー案）
+  new_password: { type: "string", required: true, min: 8, pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/ },
+};
+const adminCreateUserSchema: Schema = {
+  email: { type: "email", required: true },
+  name: { type: "string", required: true, min: 1 },
+  role: { type: "enum", values: ROLES, required: true },
+  department: { type: "string", default: "" },
+  password: { type: "string", required: true, min: 8, pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/ },
+};
+const adminUpdateUserSchema: Schema = {
+  name: { type: "string", min: 1 },
+  role: { type: "enum", values: ROLES },
+  department: { type: "string" },
+  active: { type: "boolean" },
+  new_password: { type: "string", min: 8, pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/ },
+};
+const remediationStatusSchema: Schema = {
+  status: { type: "string", required: true, min: 1 },
+};
+const adminPasswordResetSchema: Schema = {
   new_password: { type: "string", required: true, min: 8, pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/ },
 };
 
@@ -300,6 +324,10 @@ export function buildApp(deps: AppDeps) {
     await next();
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
       c.header(k, v);
+    }
+    // API 応答は機密情報を含むためブラウザキャッシュさせない
+    if (c.req.path.startsWith("/api/")) {
+      c.header("Cache-Control", "no-store");
     }
   });
 
@@ -458,6 +486,11 @@ export function buildApp(deps: AppDeps) {
     }
     const hash = await hashPassword(body.new_password);
     await run(ctx.db, `UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?`, hash, nowIso(), ctx.user!.id);
+    // 他端末・過去セッションを無効化（現在のセッションは維持）
+    const currentToken = readSessionToken(c.req.header("cookie") ?? null);
+    if (currentToken) {
+      await run(ctx.db, `DELETE FROM sessions WHERE user_id = ? AND token != ?`, ctx.user!.id, currentToken);
+    }
     await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "password_changed", objectType: "auth", objectId: ctx.user!.id, ip: ctx.ip });
     return c.json({ ok: true });
   });
@@ -474,6 +507,109 @@ export function buildApp(deps: AppDeps) {
       `SELECT id, name, email, department, role FROM users WHERE active = 1 ORDER BY department, name LIMIT 500`
     );
     return c.json({ users });
+  });
+
+  // ---------- ユーザー管理（管理者のみ・BL-09 垂直スライス） ----------
+  app.get("/api/admin/users", requireAuth(), requirePerm("admin:manage"), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const users = await getRows<any>(
+      ctx.db,
+      `SELECT id, email, name, role, department, active, created_at, updated_at FROM users ORDER BY department, name LIMIT 500`
+    );
+    return c.json({ users });
+  });
+
+  app.post("/api/admin/users", requireAuth(), requirePerm("admin:manage"), makeValidator(adminCreateUserSchema), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const body = bodyOf(c);
+    const email = String(body.email).toLowerCase().trim();
+    const existing = await getRow<any>(ctx.db, `SELECT id FROM users WHERE email = ?`, email);
+    if (existing) throw new AppError(409, "CONFLICT", "このメールアドレスのユーザーは既に存在します");
+    const id = newId("usr");
+    const ts = nowIso();
+    const hash = await hashPassword(body.password);
+    await run(
+      ctx.db,
+      `INSERT INTO users (id, email, name, role, department, active, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+      id, email, body.name, body.role, body.department, hash, ts, ts
+    );
+    await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "user_created", objectType: "user", objectId: id, detail: email, ip: ctx.ip });
+    return c.json({ id }, 201);
+  });
+
+  app.put("/api/admin/users/:id", requireAuth(), requirePerm("admin:manage"), makeValidator(adminUpdateUserSchema), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const id = c.req.param("id");
+    const user = await getRow<any>(ctx.db, `SELECT id, email, name, role, department, active FROM users WHERE id = ?`, id);
+    if (!user) throw new AppError(404, "NOT_FOUND", "ユーザーが見つかりません");
+    const body = bodyOf(c);
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    if (body.name !== undefined) { sets.push("name = ?"); params.push(body.name); }
+    if (body.role !== undefined) { sets.push("role = ?"); params.push(body.role); }
+    if (body.department !== undefined) { sets.push("department = ?"); params.push(body.department); }
+    if (body.active !== undefined) { sets.push("active = ?"); params.push(body.active ? 1 : 0); }
+    if (sets.length === 0 && body.new_password === undefined) {
+      throw new AppError(400, "BAD_REQUEST", "更新項目がありません");
+    }
+    if (body.active === false && id === ctx.user!.id) {
+      throw new AppError(409, "CONFLICT", "自分自身を無効化することはできません");
+    }
+    if (body.role !== undefined && body.role !== user.role && id === ctx.user!.id) {
+      throw new AppError(409, "CONFLICT", "自分自身のロールは変更できません");
+    }
+    if (body.new_password !== undefined && id === ctx.user!.id) {
+      throw new AppError(409, "CONFLICT", "自分のパスワードは「パスワード変更」から変更してください");
+    }
+    if (body.new_password !== undefined) {
+      const hash = await hashPassword(body.new_password);
+      sets.push("password_hash = ?");
+      params.push(hash);
+    }
+    sets.push("updated_at = ?");
+    params.push(nowIso(), id);
+    await run(ctx.db, `UPDATE users SET ${sets.join(", ")} WHERE id = ?`, ...params);
+    // 無効化・パスワード変更時は対象ユーザーの全セッションを無効化
+    if (body.active === false || body.new_password !== undefined) {
+      await run(ctx.db, `DELETE FROM sessions WHERE user_id = ?`, id);
+    }
+    await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "user_updated", objectType: "user", objectId: id, detail: user.email, ip: ctx.ip });
+    return c.json({ ok: true });
+  });
+
+  app.post("/api/admin/users/:id/deactivate", requireAuth(), requirePerm("admin:manage"), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const id = c.req.param("id");
+    if (id === ctx.user!.id) throw new AppError(409, "CONFLICT", "自分自身を無効化することはできません");
+    const user = await getRow<any>(ctx.db, `SELECT id, email FROM users WHERE id = ?`, id);
+    if (!user) throw new AppError(404, "NOT_FOUND", "ユーザーが見つかりません");
+    await run(ctx.db, `UPDATE users SET active = 0, updated_at = ? WHERE id = ?`, nowIso(), id);
+    await run(ctx.db, `DELETE FROM sessions WHERE user_id = ?`, id);
+    await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "user_deactivated", objectType: "user", objectId: id, detail: user.email, ip: ctx.ip });
+    return c.json({ ok: true });
+  });
+
+  app.post("/api/admin/users/:id/activate", requireAuth(), requirePerm("admin:manage"), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const id = c.req.param("id");
+    const user = await getRow<any>(ctx.db, `SELECT id, email FROM users WHERE id = ?`, id);
+    if (!user) throw new AppError(404, "NOT_FOUND", "ユーザーが見つかりません");
+    await run(ctx.db, `UPDATE users SET active = 1, updated_at = ? WHERE id = ?`, nowIso(), id);
+    await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "user_activated", objectType: "user", objectId: id, detail: user.email, ip: ctx.ip });
+    return c.json({ ok: true });
+  });
+
+  app.post("/api/admin/users/:id/password", requireAuth(), requirePerm("admin:manage"), makeValidator(adminPasswordResetSchema), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const id = c.req.param("id");
+    const user = await getRow<any>(ctx.db, `SELECT id, email FROM users WHERE id = ?`, id);
+    if (!user) throw new AppError(404, "NOT_FOUND", "ユーザーが見つかりません");
+    const hash = await hashPassword(bodyOf(c).new_password);
+    await run(ctx.db, `UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?`, hash, nowIso(), id);
+    // パスワード再設定時は対象ユーザーの全セッションを無効化
+    await run(ctx.db, `DELETE FROM sessions WHERE user_id = ?`, id);
+    await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "user_password_reset", objectType: "user", objectId: id, detail: user.email, ip: ctx.ip });
+    return c.json({ ok: true });
   });
 
   // ---------- 年度監査計画 ----------
@@ -816,6 +952,8 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const r = await getRow<any>(ctx.db, `SELECT * FROM evidence_requests WHERE id = ?`, c.req.param("id"));
     if (!r) throw new AppError(404, "NOT_FOUND", "依頼が見つかりません");
+    // 監査側・被監査部門を問わず、案件アクセス権のない依頼への書き込みを防ぐ（他案件への提出防止）
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, r.engagement_id));
     if (!canSubmitToRequest(ctx.user!.role, ctx.user!.department, r.recipient_department)) {
       await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "submission_denied", objectType: "evidence_request", objectId: r.id, result: "denied", ip: ctx.ip });
       throw new AppError(403, "FORBIDDEN", "この依頼への提出権限がありません");
@@ -911,6 +1049,8 @@ export function buildApp(deps: AppDeps) {
       `INSERT INTO workpaper_versions (id, workpaper_id, version_no, body, conclusion, content_hash, is_final, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)`,
       vid, w.id, newVersionNo, newBody, newConclusion, hash, ctx.user!.id, nowIso()
     );
+    // 一覧・タスク表示の更新順に反映するため workpapers.updated_at も同期する
+    await run(ctx.db, `UPDATE workpapers SET updated_at = ? WHERE id = ?`, nowIso(), w.id);
     if (body.reviewer_id !== undefined) {
       if (body.reviewer_id === ctx.user!.id) throw new AppError(409, "CONFLICT", "作成者とレビュー者を分離する必要があります");
       await addMemberIfAuditor(ctx, w.engagement_id, body.reviewer_id);
@@ -1082,6 +1222,27 @@ export function buildApp(deps: AppDeps) {
     // 完了か継続監視か再指摘（人の判断）— ここでは完了として記録
     await run(ctx.db, `UPDATE findings SET status = 'completed', updated_at = ? WHERE id = ?`, ts, r.finding_id);
     await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "remediation_verified", objectType: "remediation", objectId: r.id, detail: body.result, ip: ctx.ip });
+    return c.json({ ok: true });
+  });
+
+  // 是正計画の状態遷移（計画→着手→提出 等。完了判定は verify で実施）
+  app.post("/api/remediations/:id/status", requireAuth(), requirePerm("remediation:create"), makeValidator(remediationStatusSchema), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const r = await getRow<any>(ctx.db, `SELECT * FROM remediations WHERE id = ?`, c.req.param("id"));
+    if (!r) throw new AppError(404, "NOT_FOUND", "是正計画が見つかりません");
+    const f = await getRow<any>(ctx.db, `SELECT * FROM findings WHERE id = ?`, r.finding_id);
+    if (!f) throw new AppError(404, "NOT_FOUND", "指摘が見つかりません");
+    const engagement = await loadEngagement(ctx, f.engagement_id);
+    await checkEngagementAccess(ctx, engagement);
+    // 被監査部門は是正計画の責任者本人のみ操作可能
+    if (ctx.user!.role === "auditee" && r.owner_id !== ctx.user!.id) {
+      throw new AppError(403, "FORBIDDEN", "この是正計画の操作権限がありません");
+    }
+    const next = bodyOf(c).status;
+    if (!(next in REMEDIATION_TRANSITIONS)) throw new AppError(400, "BAD_REQUEST", "不正な状態です");
+    assertTransition(REMEDIATION_TRANSITIONS, r.status, next, "是正計画");
+    await run(ctx.db, `UPDATE remediations SET status = ?, updated_at = ? WHERE id = ?`, next, nowIso(), r.id);
+    await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "remediation_status", objectType: "remediation", objectId: r.id, detail: `${r.status}->${next}`, ip: ctx.ip });
     return c.json({ ok: true });
   });
 

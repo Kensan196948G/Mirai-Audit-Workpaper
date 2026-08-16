@@ -12,6 +12,7 @@ import {
   ENGAGEMENT_TRANSITIONS,
   REQUEST_TRANSITIONS,
   WORKPAPER_TRANSITIONS,
+  REMEDIATION_TRANSITIONS,
 } from "../../src/security.ts";
 import { AppError } from "../../src/errors.ts";
 
@@ -106,6 +107,14 @@ describe("unit: assertTransition", () => {
     assert.doesNotThrow(() => assertTransition(WORKPAPER_TRANSITIONS, "review_requested", "returned", "調書"));
     assert.throws(() => assertTransition(WORKPAPER_TRANSITIONS, "final", "draft", "調書"));
   });
+
+  test("remediation transitions planned -> in_progress -> submitted", () => {
+    assert.doesNotThrow(() => assertTransition(REMEDIATION_TRANSITIONS, "planned", "in_progress", "是正"));
+    assert.doesNotThrow(() => assertTransition(REMEDIATION_TRANSITIONS, "in_progress", "submitted", "是正"));
+    assert.doesNotThrow(() => assertTransition(REMEDIATION_TRANSITIONS, "submitted", "in_progress", "是正"));
+    assert.throws(() => assertTransition(REMEDIATION_TRANSITIONS, "planned", "submitted", "是正"));
+    assert.throws(() => assertTransition(REMEDIATION_TRANSITIONS, "completed", "in_progress", "是正"));
+  });
 });
 
 describe("unit: SECURITY_HEADERS", () => {
@@ -114,5 +123,7 @@ describe("unit: SECURITY_HEADERS", () => {
     assert.ok(SECURITY_HEADERS["X-Frame-Options"] === "DENY");
     assert.ok(SECURITY_HEADERS["Referrer-Policy"] === "no-referrer");
     assert.ok(SECURITY_HEADERS["Content-Security-Policy"]!.includes("frame-ancestors 'none'"));
+    assert.ok(SECURITY_HEADERS["Strict-Transport-Security"]!.startsWith("max-age="));
+    assert.ok(SECURITY_HEADERS["Cache-Control"] === "no-store");
   });
 });

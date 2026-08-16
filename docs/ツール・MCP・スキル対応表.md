@@ -22,11 +22,23 @@
 
 ## 3. 本プロジェクト固有の検証手段
 
+> 2026-08-16 追記: 本セッションではサブエージェントの並列起動がスレッド上限で不可だったため、調査・実装・検証は主任エージェントが順次実施した。並列化の再開条件は環境側のエージェント枠復旧。
+
+### 2.1 使用したスキル（2026-08-16 追記）
+
+| スキル | 適用 | 判断 |
+|---|---|---|
+| cloudflare（Cloudflareプラットフォーム全般） | ✅ 使用 | Workers/D1 の開発・運用判断に使用。公式ドキュメント優先の方針に従い、稼働環境・設定・制限を確認した |
+| wrangler（Workers CLI） | ✅ 使用 | whoami・d1 list/execute/export・deployments list・types を実行し、環境・DB・デプロイ履歴・型定義を検証。`d1 backup create` は現行CLIに無いため、復元可能バックアップは `d1 export --remote`（完全SQL）で取得する運用とした |
+| github（GitHub App/gh） | ✅ 使用 | PR・Issue・branch protection・secrets有無・Actions履歴・環境を確認。PR作成・マージは gh と GitHub App のハイブリッド運用 |
+
 | 手段 | 用途 | 実施方法 |
 |---|---|---|
 | scripts/check-links.py | 全 Markdown／HTML 相対リンクの検証 | `python3 scripts/check-links.py`（PASS を確認） |
 | HTML構造検証 | タグ整合・閉じ忘れの確認 | セッション内で html.parser を使用 |
 | Secret スキャン（gitleaks） | 秘密情報・資格情報のコミット防止 | CI（.github/workflows/ci.yml）の secretscan ジョブで PR/push 毎に実行 |
+| 依存関係・脆弱性スキャン（npm audit） | 依存パッケージの既知脆弱性検出 | CI の app ジョブで `npm audit --audit-level=high` を実行（2026-08-16 時点 0件） |
+| Wrangler 型定義の整合確認 | バインディング変更の型ズレ防止 | CI で `npx wrangler types --check` を実行 |
 | レスポンシブ・印刷確認 | viewport・@media の有無 | 各HTMLのCSS確認 |
 
 ## 4. 記録・見直し

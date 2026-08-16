@@ -111,6 +111,19 @@ jobs:
       - name: 依存関係インストール
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
         run: npm ci
+      - name: D1 バックアップ（pre-migration・復元可能SQL）
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
+        run: |
+          mkdir -p backup
+          npx wrangler d1 export mirai-audit-workpaper-db --remote --output backup/pre-migration-production.sql
+          sha256sum backup/pre-migration-production.sql | tee backup/pre-migration-production.sha256
+      - name: バックアップをアーティファクトへ保存
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-migration-production-db
+          path: backup/pre-migration-production.sql
+          retention-days: 30
       - name: D1 migration（production / main DB・冪等）
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' }}
         run: npx wrangler d1 migrations apply mirai-audit-workpaper-db -c wrangler.production.jsonc

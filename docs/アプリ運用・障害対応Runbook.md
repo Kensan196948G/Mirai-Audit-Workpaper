@@ -7,14 +7,15 @@
 
 | 環境 | URL | Worker名 | D1（DB） | 用途 | bootstrap |
 |---|---|---|---|---|---|
-| preview | https://mirai-audit-workpaper-preview.kensan1969.workers.dev | mirai-audit-workpaper-preview | mirai-audit-workpaper-mvp-db | 内部検証（ダミーデータのみ） | 可 |
-| MVP | https://maw-mvp.mirai-dx-platform.com | mirai-audit-workpaper-mvp | mirai-audit-workpaper-mvp-db | 顧客向けMVP・受入試験（ダミーデータのみ） | 可 |
+| preview | https://mirai-audit-workpaper-preview.kensan1969.workers.dev | mirai-audit-workpaper-preview | mirai-audit-workpaper-mvp-db | 内部検証（ダミーデータのみ） | 可（BOOTSTRAP_PASSWORD は Cloudflare Secret・Git非管理） |
+| MVP | https://maw-mvp.mirai-dx-platform.com | mirai-audit-workpaper-mvp | mirai-audit-workpaper-mvp-db | 顧客向けMVP・受入試験（ダミーデータのみ） | 可（BOOTSTRAP_PASSWORD は Cloudflare Secret・Git非管理） |
 | production | https://maw.mirai-dx-platform.com | mirai-audit-workpaper | mirai-audit-workpaper-db | 本番（実データ投入は社内決定後） | 不可（403） |
 
 - 技術: Cloudflare Workers（Hono・TypeScript）+ D1（SQLite）+ ネイティブHTML/JS SPA（worker内埋め込み）
 - ソース: app/（src/・migrations/・web/・tests/）。デプロイ設定: app/wrangler.jsonc（preview）、app/wrangler.mvp.jsonc（MVP）、app/wrangler.production.jsonc（production）
 - カスタムドメイン: mirai-dx-platform.com ゾーン（本アカウント管理）上に maw / maw-mvp を Worker カスタムドメインとして設定済み
 - 監査ログ: audit_events テーブル（追記専用）。全API操作が記録される
+- テスト用パスワード: preview/MVP の BOOTSTRAP_PASSWORD とダミーユーザーパスワードは Cloudflare Secret で管理（値は Git・画面・ログに出力しない）。ローカル運用時は `MAW_SEED_PASSWORD` 環境変数で指定する
 
 ## 2. デプロイ手順
 
@@ -51,6 +52,7 @@ npm run deploy:production
 - スモーク:
   - `curl https://maw.mirai-dx-platform.com/api/health` で `"db":"ok"` を含む `{"status":"ok"}` を確認
   - `curl -s -o /dev/null -w '%{http_code}' -X POST https://maw.mirai-dx-platform.com/api/admin/bootstrap` → `403` を確認（本番bootstrap無効）
+- 安全化: production ジョブは migration 前に `wrangler d1 export` で SQL バックアップを作成し、GitHub Actions アーティファクト（30日保持）に保存する
 
 ### 2.4 ロールバック
 - Cloudflare Dashboard > Workers > mirai-audit-workpaper > Deployments から直前のデプロイメントを Rollback（Workers の履歴ロールバック）
@@ -60,9 +62,14 @@ npm run deploy:production
 ## 3. DB（D1）
 
 - migration: app/migrations/0001_initial.sql（冪等: CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS）
-- シード（preview のみ）: `node scripts/seed.mjs --local` で scripts/seed-users.sql を生成し `npx wrangler d1 execute <db> --file scripts/seed-users.sql` で適用（ダミーパスワードハッシュのみ。本番へは適用しない）
+- シード（preview/MVP のみ）: `MAW_SEED_PASSWORD=... node scripts/seed.mjs --remote` で scripts/seed-users.sql を生成し `npx wrangler d1 execute <db> --file scripts/seed-users.sql` で適用（ダミーパスワードハッシュのみ。本番へは適用しない。パスワード値はログ出力しない）
 - バックアップ・復元: Cloudflare Dashboard > D1 > 対象DB > Backups で時点復元（RPO/RTO は社内決定後に SLI/SLO へ反映）
 - 監査ログ: audit_events は追記専用（UPDATE/DELETE のAPIなし）。必要に応じ export で保全
+
+### 3.1 本番の初期管理者プロビジョニング（実データ運用開始時）
+- 本番は bootstrap が恒久的に無効のため、初回管理者は開発者・システム管理者がローカルで PBKDF2 ハッシュを生成し、D1 へ INSERT する運用手順とする（`app/scripts/seed.mjs` 相当の生成を `MAW_SEED_PASSWORD` 指定で実施し、SQL はローカル一時ファイルのみ・Git 非管理）。
+- 初回管理者の作成後は、アプリの「ユーザー管理」画面から追加ユーザーの作成・ロール設定・無効化を行う。
+- 初期パスワードは安全な経路（社内パスワード管理ツール等）で本人へ引き渡し、初回ログイン後の変更を必須とする。
 
 ## 4. 監視・アラート
 

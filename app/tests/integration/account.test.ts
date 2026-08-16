@@ -118,6 +118,26 @@ describe("integration: /api/auth/password", () => {
     const ev = (await events.json()) as { events: Array<{ action: string }> };
     assert.ok(ev.events.some((e) => e.action === "password_changed"));
   });
+
+  test("password change invalidates other sessions but keeps the current one", async () => {
+    const app = await buildTestApp();
+    const cookieA = await login(app, "auditor@test.local", "TestPass2026!");
+    const cookieB = await login(app, "auditor@test.local", "TestPass2026!");
+
+    // 別セッション（cookieB）は変更前は有効
+    assert.equal((await authedFetch(app, cookieB, "/api/me")).status, 200);
+
+    // cookieA でパスワード変更
+    const ok = await authedFetch(app, cookieA, "/api/auth/password", {
+      method: "POST",
+      body: JSON.stringify({ current_password: "TestPass2026!", new_password: "NewPass2026!" }),
+    });
+    assert.equal(ok.status, 200);
+
+    // 別セッションは無効化され、現在のセッションは維持される
+    assert.equal((await authedFetch(app, cookieB, "/api/me")).status, 401);
+    assert.equal((await authedFetch(app, cookieA, "/api/me")).status, 200);
+  });
 });
 
 describe("integration: /api/me task navigation info (F-02)", () => {

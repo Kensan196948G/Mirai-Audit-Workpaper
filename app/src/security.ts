@@ -43,6 +43,13 @@ export function createRateLimiter(): RateLimiter {
   const buckets = new Map<string, Bucket>();
   return (key: string, limit: number, windowMs: number): void => {
     const now = Date.now();
+    // メモリ肥大化防止: 一定数超の場合は1時間以上アクセスのないバケットを掃除する
+    if (buckets.size > 5_000) {
+      const cutoff = now - 3_600_000;
+      for (const [k, b] of buckets) {
+        if (!b.timestamps.some((t) => t >= cutoff)) buckets.delete(k);
+      }
+    }
     let bucket = buckets.get(key);
     if (!bucket) {
       bucket = { timestamps: [] };
@@ -63,6 +70,9 @@ export const SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "no-referrer",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  // API応答・動的HTMLのキャッシュ禁止（機微情報のブラウザ/プロキシキャッシュ抑止）
+  "Cache-Control": "no-store",
   "Content-Security-Policy":
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
@@ -116,6 +126,15 @@ export const FINDING_TRANSITIONS: Record<string, string[]> = {
   rechecked: ["completed", "remediated"],
   completed: [],
   reissued: [],
+};
+
+/** 是正計画: 計画→着手→提出。差戻し・完了判定は別操作（verify） */
+export const REMEDIATION_TRANSITIONS: Record<string, string[]> = {
+  planned: ["in_progress"],
+  in_progress: ["submitted", "planned"],
+  submitted: ["in_progress"],
+  verified: [],
+  completed: [],
 };
 
 /** 状態遷移を検証し、不正なら AppError(409) を投げる */
