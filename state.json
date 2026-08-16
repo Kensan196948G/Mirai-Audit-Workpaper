@@ -6,7 +6,7 @@
     "repo_started": "2026-08-16"
   },
   "phase": {
-    "current": "build",
+    "current": "production",
     "week": 1
   },
   "kpi": {
@@ -26,10 +26,10 @@
     "same_error_limit": 2
   },
   "status": {
-    "current_phase": "acceptance",
+    "current_phase": "production",
     "stable": true,
     "verification": {
-      "link_check": "PASS (MD 92 / HTML 20)",
+      "link_check": "PASS (MD 97 / HTML 20)",
       "html_structure": "PASS (5 files)",
       "mermaid_blocks": "PASS",
       "secret_scan": "PASS (0 hits・CIにgitleaks追加)",
@@ -37,10 +37,10 @@
       "app_lint": "PASS (0 warnings)",
       "app_test": "PASS (76/76: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format/health-readiness/admin-users/remediation-status/audit-limit/session-invalidation)",
       "app_build": "PASS (web -> embedded -> typecheck)",
-      "deploy": "GitHub Actions Deploy ワークフローが動作（deploy.ymlのsecretsをifで使用していた不具合を修正・CHG-029）。main push で deploy-preview/deploy-mvp 成功、deploy-production は正しくスキップ。WebUI改修（CHG-026）を preview・MVP へ反映・実機確認済み（health db:ok・/api/users 200・/api/me の engagement_id・hashルーティング・ログイン/ログアウト）",
-      "git": "main にPR#1〜9 マージ済み。CI green。CLOUDFLARE_API_TOKEN を GitHub Actions secrets に設定しデプロイ自動化を有効化。default branch を main に修正。main に branch protection 設定（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。本番（maw.mirai-dx-platform.com）は pre-rework コードのまま受入基準クリア後（target=production）にデプロイ予定",
+      "deploy": "main push で preview/MVP 自動デプロイ成功（CHG-031〜033 反映・ログイン新旧パスワード確認・HSTS/no-store・favicon・ユーザー管理UI）。本番は workflow_dispatch target=production でデプロイ成功（CHG-034: run 31933385390・deployment c0734b06・health db:ok・bootstrap 403・/api/me 401・DB 0ユーザー）。初回は D1 export の一時エラー（10001）で再実行により成功",
+      "git": "main にPR#1〜11 マージ済み（CHG-031〜033）。CI green（app/docs/secretscan）・npm audit 0件・gitleaks 0件。branch protection 有効（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。本番デプロイ済み",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
-      "next_action": "①受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て、本番へ target=production でデプロイ（CI/CDは動作確認済み）、②実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
+      "next_action": "①初期安定化監視（1〜2週間のエラー率・ログ・メトリクス日次確認）②実アカウントのプロビジョニング（BL-09: 初回管理者はRunbook §3.1のCLI手順、以降はユーザー管理UI）と受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育 ③正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
     }
   },
   "priority": {

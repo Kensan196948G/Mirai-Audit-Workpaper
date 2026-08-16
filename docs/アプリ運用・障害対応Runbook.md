@@ -40,6 +40,7 @@ npm run deploy:mvp                                                              
 
 ### 2.3 production デプロイ（手動実行のみ・target=production）
 - 受入条件（受入試験・権限棚卸し・復元試験・教育）クリア後に GitHub Actions > Deploy > Run workflow（target: production）で実行
+- 実施実績（2026-08-16）: CHG-034。main f86acd5、workflow run 31933385390、deployment c0734b06-9a98-4d20-90e1-f8aba2265aab。初回実行は D1 export の一時エラー（completeMultipartUpload 10001）でバックアップステップ失敗 → migration・デプロイ未実施を確認後、再実行で成功
 - ローカル手順:
 
 ```bash
