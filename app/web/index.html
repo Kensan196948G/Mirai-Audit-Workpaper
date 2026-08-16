@@ -44,6 +44,7 @@ async function api(path, opts={}){
 const A = {
   login:(e,p)=>api("/api/auth/login",{method:"POST",body:JSON.stringify({email:e,password:p})}),
   logout:()=>api("/api/auth/logout",{method:"POST"}),
+  health:()=>api("/api/health"),
   me:()=>api("/api/me"),
   plans:()=>api("/api/plans"),
   createPlan:(d)=>api("/api/plans",{method:"POST",body:JSON.stringify(d)}),
@@ -123,9 +124,11 @@ function renderLogin(){
     <label>パスワード</label><input id="lp" type="password" autocomplete="current-password">
     <p class="error" id="lerr"></p>
     <div class="actions"><button onclick="doLogin()">ログイン</button></div>
-    <p class="hint">テスト用: auditor@mirai.local / Mirai@2026pass（committee / ga / kensetsu / zaimu / admin も同様）</p>
+    <p class="hint" id="hint" style="display:none">テスト用: auditor@mirai.local / Mirai@2026pass（committee / ga / kensetsu / zaimu / admin も同様）</p>
   </div></main>`;
   document.getElementById("lp").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+  // テスト用ヒントは preview 環境のみ表示（本番にテスト認証情報を見せない）
+  A.health().then(h=>{ if(h?.environment!=="production"){ const el=document.getElementById("hint"); if(el) el.style.display=""; } }).catch(()=>{});
 }
 async function doLogin(){
   try{ await A.login(document.getElementById("le").value, document.getElementById("lp").value); state.me=await A.me(); render(); }
