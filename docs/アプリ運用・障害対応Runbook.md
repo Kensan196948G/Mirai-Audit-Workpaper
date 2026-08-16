@@ -5,13 +5,15 @@
 
 ## 1. 構成と環境
 
-| 環境 | Worker名 | D1（DB） | 用途 | bootstrap |
-|---|---|---|---|---|
-| preview | mirai-audit-workpaper-preview | mirai-audit-workpaper-mvp-db | 検証・受入試験（ダミーデータのみ） | 可 |
-| production | mirai-audit-workpaper | mirai-audit-workpaper-db | 本番（実データ投入は社内決定後） | 不可（403） |
+| 環境 | URL | Worker名 | D1（DB） | 用途 | bootstrap |
+|---|---|---|---|---|---|
+| preview | https://mirai-audit-workpaper-preview.kensan1969.workers.dev | mirai-audit-workpaper-preview | mirai-audit-workpaper-mvp-db | 内部検証（ダミーデータのみ） | 可 |
+| MVP | https://maw-mvp.mirai-dx-platform.com | mirai-audit-workpaper-mvp | mirai-audit-workpaper-mvp-db | 顧客向けMVP・受入試験（ダミーデータのみ） | 可 |
+| production | https://maw.mirai-dx-platform.com | mirai-audit-workpaper | mirai-audit-workpaper-db | 本番（実データ投入は社内決定後） | 不可（403） |
 
 - 技術: Cloudflare Workers（Hono・TypeScript）+ D1（SQLite）+ ネイティブHTML/JS SPA（worker内埋め込み）
-- ソース: app/（src/・migrations/・web/・tests/）。デプロイ設定: app/wrangler.jsonc（preview）、app/wrangler.production.jsonc（production）
+- ソース: app/（src/・migrations/・web/・tests/）。デプロイ設定: app/wrangler.jsonc（preview）、app/wrangler.mvp.jsonc（MVP）、app/wrangler.production.jsonc（production）
+- カスタムドメイン: mirai-dx-platform.com ゾーン（本アカウント管理）上に maw / maw-mvp を Worker カスタムドメインとして設定済み
 - 監査ログ: audit_events テーブル（追記専用）。全API操作が記録される
 
 ## 2. デプロイ手順

@@ -22,6 +22,7 @@
     "db:seed:local": "node scripts/seed.mjs --local",
     "types": "wrangler types",
     "deploy:preview": "npm run build && wrangler deploy -c wrangler.jsonc",
+    "deploy:mvp": "npm run build && wrangler deploy -c wrangler.mvp.jsonc",
     "deploy:production": "npm run build && wrangler deploy -c wrangler.production.jsonc"
   },
   "dependencies": {
