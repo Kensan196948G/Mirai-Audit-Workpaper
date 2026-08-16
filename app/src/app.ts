@@ -183,6 +183,11 @@ const remediationVerifySchema: Schema = {
   result: { type: "string", required: true, min: 1 },
   evidence_note: { type: "string", default: "" },
 };
+const passwordChangeSchema: Schema = {
+  current_password: { type: "string", required: true, min: 1 },
+  // 最小8文字・英字と数字を各1文字以上（NFR パスワードポリシー案）
+  new_password: { type: "string", required: true, min: 8, pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/ },
+};
 
 function bodyOf(c: any): Record<string, any> {
   return (c.get("validBody") ?? {}) as Record<string, any>;
@@ -393,41 +398,73 @@ export function buildApp(deps: AppDeps) {
         ...memberIds
       );
       for (const e of engagements) {
-        tasks.push({ type: "engagement", id: e.id, title: `${e.engagement_no} ${e.title}`, status: e.status, due_at: null });
+        tasks.push({ type: "engagement", id: e.id, engagement_id: e.id, title: `${e.engagement_no} ${e.title}`, status: e.status, due_at: null });
       }
       // 依頼（被監査部門は自部門宛）
       const requests = await getRows<any>(
         ctx.db,
-        `SELECT id, request_no, item, status, due_at FROM evidence_requests WHERE engagement_id IN (${ph}) ORDER BY created_at DESC LIMIT 20`,
+        `SELECT id, request_no, item, status, due_at, engagement_id FROM evidence_requests WHERE engagement_id IN (${ph}) ORDER BY created_at DESC LIMIT 20`,
         ...memberIds
       );
-      for (const r of requests) tasks.push({ type: "request", id: r.id, title: r.request_no, status: r.status, due_at: r.due_at });
+      for (const r of requests) tasks.push({ type: "request", id: r.id, engagement_id: r.engagement_id, title: r.request_no, status: r.status, due_at: r.due_at });
     }
     if (user.role === "auditee") {
       const requests = await getRows<any>(
         ctx.db,
-        `SELECT id, request_no, item, status, due_at FROM evidence_requests WHERE recipient_department = ? ORDER BY created_at DESC LIMIT 20`,
+        `SELECT id, request_no, item, status, due_at, engagement_id FROM evidence_requests WHERE recipient_department = ? ORDER BY created_at DESC LIMIT 20`,
         user.department
       );
-      for (const r of requests) tasks.push({ type: "request", id: r.id, title: r.request_no, status: r.status, due_at: r.due_at });
+      for (const r of requests) tasks.push({ type: "request", id: r.id, engagement_id: r.engagement_id, title: r.request_no, status: r.status, due_at: r.due_at });
     }
     // 調書（作成者・レビュー者）
     const wps = await getRows<any>(
       ctx.db,
-      `SELECT id, code, title, status FROM workpapers WHERE owner_id = ? OR reviewer_id = ? ORDER BY updated_at DESC LIMIT 20`,
+      `SELECT id, code, title, status, engagement_id FROM workpapers WHERE owner_id = ? OR reviewer_id = ? ORDER BY updated_at DESC LIMIT 20`,
       user.id,
       user.id
     );
-    for (const w of wps) tasks.push({ type: "workpaper", id: w.id, title: w.code, status: w.status, due_at: null });
+    for (const w of wps) tasks.push({ type: "workpaper", id: w.id, engagement_id: w.engagement_id, title: w.code, status: w.status, due_at: null });
     // 是正（責任者）
     const rems = await getRows<any>(
       ctx.db,
-      `SELECT id, action, status, due_at FROM remediations WHERE owner_id = ? ORDER BY created_at DESC LIMIT 20`,
+      `SELECT r.id, r.action, r.status, r.due_at, f.engagement_id FROM remediations r JOIN findings f ON f.id = r.finding_id WHERE r.owner_id = ? ORDER BY r.created_at DESC LIMIT 20`,
       user.id
     );
-    for (const r of rems) tasks.push({ type: "remediation", id: r.id, title: r.action, status: r.status, due_at: r.due_at });
+    for (const r of rems) tasks.push({ type: "remediation", id: r.id, engagement_id: r.engagement_id, title: r.action, status: r.status, due_at: r.due_at });
     tasks.sort((a, b) => (a.due_at ?? "9999").localeCompare(b.due_at ?? "9999"));
     return c.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role, department: user.department }, tasks: tasks.slice(0, 50) });
+  });
+
+  // パスワード変更（本人操作。NFR パスワードポリシー案に対応）
+  app.post("/api/auth/password", requireAuth(), makeValidator(passwordChangeSchema), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const body = bodyOf(c);
+    const ok = await verifyPassword(body.current_password, ctx.user!.password_hash);
+    if (!ok) {
+      await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "password_change_failed", objectType: "auth", objectId: ctx.user!.id, result: "denied", ip: ctx.ip });
+      throw new AppError(400, "BAD_REQUEST", "現在のパスワードが正しくありません");
+    }
+    if (await verifyPassword(body.new_password, ctx.user!.password_hash)) {
+      throw new AppError(400, "BAD_REQUEST", "新しいパスワードは現在のパスワードと異なるものを指定してください");
+    }
+    const hash = await hashPassword(body.new_password);
+    await run(ctx.db, `UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?`, hash, nowIso(), ctx.user!.id);
+    await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "password_changed", objectType: "auth", objectId: ctx.user!.id, ip: ctx.ip });
+    return c.json({ ok: true });
+  });
+
+  // ユーザー一覧（是正担当者選択・監査ログの操作者名解決用。指摘作成権限者または管理者のみ）
+  app.get("/api/users", requireAuth(), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const role = ctx.user!.role;
+    if (!hasPermission(role, "finding:create") && role !== "admin") {
+      throw new AppError(403, "FORBIDDEN", "この操作の権限がありません");
+    }
+    const users = await getRows<any>(
+      ctx.db,
+      `SELECT id, name, email, department, role FROM users WHERE active = 1 ORDER BY department, name LIMIT 500`
+    );
+    return c.json({ users });
   });
 
   // ---------- 年度監査計画 ----------
@@ -597,8 +634,20 @@ export function buildApp(deps: AppDeps) {
       `SELECT m.id, m.role_in_engagement, m.conflict_flagged, u.name, u.email, u.role AS user_role FROM engagement_members m JOIN users u ON u.id = m.user_id WHERE m.engagement_id = ?`,
       engagement.id
     );
-    const requests = await getRows<any>(ctx.db, `SELECT * FROM evidence_requests WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
-    const workpapers = await getRows<any>(ctx.db, `SELECT * FROM workpapers WHERE engagement_id = ? ORDER BY code`, engagement.id);
+    const reqRows = await getRows<any>(ctx.db, `SELECT * FROM evidence_requests WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
+    // 依頼ごとに提出履歴（サブミッション）も含めて返す（WebUIの提出履歴表示に対応）
+    const requests: any[] = [];
+    for (const r of reqRows) {
+      const subs = await getRows<any>(ctx.db, `SELECT * FROM submissions WHERE request_id = ? ORDER BY submitted_at`, r.id);
+      requests.push({ ...r, submissions: subs });
+    }
+    // 調書は版履歴も含めて返す（WebUIの版表示・正本管理に対応）
+    const wpRows = await getRows<any>(ctx.db, `SELECT * FROM workpapers WHERE engagement_id = ? ORDER BY code`, engagement.id);
+    const workpapers: any[] = [];
+    for (const w of wpRows) {
+      const versions = await getRows<any>(ctx.db, `SELECT * FROM workpaper_versions WHERE workpaper_id = ? ORDER BY version_no DESC`, w.id);
+      workpapers.push({ ...w, versions });
+    }
     const findings = await getRows<any>(ctx.db, `SELECT * FROM findings WHERE engagement_id = ? ORDER BY created_at`, engagement.id);
     return c.json({ engagement, members, requests, workpapers, findings });
   });
@@ -636,6 +685,41 @@ export function buildApp(deps: AppDeps) {
   });
 
   // ---------- 証憑依頼 ----------
+  // 自分の関与する依頼一覧（サイドバー「証憑依頼」・期限管理 F-13 対応）
+  // 監査側: メンバー案件の依頼 / 被監査部門: 自部門宛の依頼 / 管理者: 業務閲覧不可
+  app.get("/api/requests", requireAuth(), async (c) => {
+    const ctx = c.get(CTX_KEY) as AppContext;
+    const user = ctx.user!;
+    const q = c.req.query();
+    const statusFilter = q.status && ["draft", "sent", "partial", "received", "returned", "closed"].includes(q.status) ? q.status : null;
+    const overdueOnly = q.overdue === "1";
+    let rows: any[] = [];
+    if (user.role === "auditee") {
+      rows = await getRows<any>(
+        ctx.db,
+        `SELECT r.id, r.request_no, r.engagement_id, r.recipient_department, r.item, r.purpose, r.due_at, r.status, e.engagement_no, e.title AS engagement_title
+         FROM evidence_requests r JOIN engagements e ON e.id = r.engagement_id
+         WHERE r.recipient_department = ? ORDER BY r.due_at IS NULL, r.due_at, r.created_at DESC LIMIT 200`,
+        user.department
+      );
+    } else if (user.role !== "admin") {
+      const memberships = await getRows<any>(ctx.db, `SELECT engagement_id FROM engagement_members WHERE user_id = ?`, user.id);
+      const ids = memberships.map((m) => m.engagement_id);
+      if (ids.length) {
+        rows = await getRows<any>(
+          ctx.db,
+          `SELECT r.id, r.request_no, r.engagement_id, r.recipient_department, r.item, r.purpose, r.due_at, r.status, e.engagement_no, e.title AS engagement_title
+           FROM evidence_requests r JOIN engagements e ON e.id = r.engagement_id
+           WHERE r.engagement_id IN (${ids.map(() => "?").join(",")}) ORDER BY r.due_at IS NULL, r.due_at, r.created_at DESC LIMIT 200`,
+          ...ids
+        );
+      }
+    }
+    if (statusFilter) rows = rows.filter((r) => r.status === statusFilter);
+    if (overdueOnly) rows = rows.filter((r) => r.due_at && r.due_at.slice(0, 10) < new Date().toISOString().slice(0, 10) && !["received", "closed"].includes(r.status));
+    return c.json({ requests: rows });
+  });
+
   app.get("/api/engagements/:id/requests", requireAuth(), async (c) => {
     const ctx = c.get(CTX_KEY) as AppContext;
     const engagement = await loadEngagement(ctx, c.req.param("id"));

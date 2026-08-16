@@ -31,37 +31,72 @@
   --shadow-md:0 10px 28px rgb(16 48 92 / .12);
   --radius:12px;
   --radius-sm:8px;
+  --sidebar-w:240px;
+  --topbar-h:58px;
   --font:"Yu Gothic UI","Hiragino Kaku Gothic ProN","Meiryo",system-ui,-apple-system,sans-serif;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;font-family:var(--font);color:var(--ink);background:linear-gradient(180deg,#f4f7fb 0%,#eaf0f6 100%);line-height:1.75;font-size:15px}
-.app{min-height:100vh;display:flex;flex-direction:column}
-/* フォーカス可視化（WCAG 2.1: 2.4.7） */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
-/* ヘッダー */
-header{background:linear-gradient(120deg,var(--navy) 0%,var(--navy-2) 55%,var(--blue) 100%);color:#fff;padding:.95rem 1.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;box-shadow:0 2px 10px rgb(16 48 92 / .18);position:sticky;top:0;z-index:10}
-header h1{font-size:1.18rem;margin:0;letter-spacing:.02em;display:flex;align-items:center;gap:.5rem}
-header h1::before{content:"🧭";font-size:1.1rem}
-nav{display:flex;gap:.4rem;flex-wrap:wrap}
-nav a{color:#d8e6f4;text-decoration:none;font-weight:600;padding:.35rem .8rem;border-radius:var(--radius-sm);font-size:.9rem;cursor:pointer;transition:background .15s,color .15s}
-nav a:hover{background:#ffffff26;color:#fff}
-nav a.active{background:#ffffff2e;color:#fff;box-shadow:inset 0 -2px 0 #7fb3e8}
-.userinfo{font-size:.85rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;color:#e6eef7}
-/* メイン */
-main{flex:1;padding:1.4rem clamp(.8rem,3vw,2.6rem) 3rem;max-width:1240px;width:100%;margin:0 auto}
-/* カード */
+button{background:linear-gradient(180deg,var(--blue) 0%,var(--blue-strong) 100%);color:#fff;border:0;border-radius:var(--radius-sm);padding:.5rem 1.05rem;font-size:.9rem;font-weight:600;cursor:pointer;transition:filter .15s,transform .1s,box-shadow .15s;box-shadow:0 1px 2px rgb(16 48 92 / .2)}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px)}
+button.sec{background:#e9eff5;color:var(--navy);box-shadow:none;border:1px solid var(--line)}
+button.sec:hover{background:#dde8f2}
+button.sec.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+button.danger{background:linear-gradient(180deg,#b5453c 0%,#9d2b23 100%)}
+button[disabled]{opacity:.55;cursor:not-allowed}
+input,textarea,select{width:100%;padding:.55rem .65rem;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:.92rem;font-family:inherit;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgb(37 99 166 / .15)}
+label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin:.7rem 0 .25rem}
+a{color:var(--blue-strong);text-decoration:underline;text-underline-offset:2px}
+a:hover{color:var(--navy)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.9rem}
+.muted{color:var(--muted);font-size:.85rem}
+.error{color:var(--err);font-size:.88rem;font-weight:600;margin:.4rem 0 0}
+.hint{font-size:.8rem;color:var(--muted);margin-top:1rem;border-top:1px dashed var(--line);padding-top:.7rem}
+.actions{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.8rem;align-items:center}
+
+/* ===== レイアウト（トップバー + サイドバー + メイン） ===== */
+.app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:linear-gradient(120deg,var(--navy) 0%,var(--navy-2) 55%,var(--blue) 100%);color:#fff;height:var(--topbar-h);padding:0 1.2rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 2px 10px rgb(16 48 92 / .18);position:sticky;top:0;z-index:40}
+.topbar h1{font-size:1.08rem;margin:0;letter-spacing:.02em;display:flex;align-items:center;gap:.5rem;white-space:nowrap}
+.topbar h1::before{content:"🧭";font-size:1.05rem}
+.top-spacer{flex:1}
+.userchip{font-size:.84rem;color:#e6eef7;white-space:nowrap}
+.hamburger{display:none;background:#ffffff22;color:#fff;border:0;border-radius:var(--radius-sm);padding:.35rem .7rem;font-size:1.05rem;box-shadow:none}
+.layout{flex:1;display:flex;align-items:stretch;min-height:0}
+.sidebar{width:var(--sidebar-w);flex:0 0 var(--sidebar-w);background:var(--navy);color:#d8e6f4;padding:.8rem .6rem 1rem;display:flex;flex-direction:column;gap:.15rem;position:sticky;top:var(--topbar-h);height:calc(100vh - var(--topbar-h));overflow-y:auto;z-index:30}
+.side-group{font-size:.68rem;letter-spacing:.08em;color:#8fb0d6;margin:1rem .6rem .25rem;text-transform:uppercase}
+.side-group:first-child{margin-top:.2rem}
+.side-link{display:flex;align-items:center;gap:.6rem;color:#d8e6f4;text-decoration:none;font-weight:600;padding:.5rem .6rem;border-radius:var(--radius-sm);font-size:.9rem;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+.side-link .ic{font-size:1rem;flex:0 0 auto}
+.side-link:hover{background:#ffffff1c;color:#fff}
+.side-link.active{background:#ffffff2e;color:#fff;box-shadow:inset 3px 0 0 #7fb3e8}
+.side-foot{margin-top:auto;padding-top:.8rem;border-top:1px solid #ffffff1a}
+.side-toggle{background:#ffffff14;color:#d8e6f4;border:0;border-radius:var(--radius-sm);padding:.45rem .6rem;font-size:.85rem;cursor:pointer;width:100%;text-align:left}
+.side-toggle:hover{background:#ffffff26}
+.sidebar.collapsed{width:60px;flex-basis:60px}
+.sidebar.collapsed .side-link{justify-content:center;padding:.55rem 0}
+.sidebar.collapsed .side-link .lbl,.sidebar.collapsed .side-group,.sidebar.collapsed .side-toggle span{display:none}
+.sidebar.collapsed .side-toggle{text-align:center}
+.main{flex:1;min-width:0;padding:1.1rem clamp(.8rem,3vw,2.2rem) 3rem;max-width:1280px;margin:0 auto;width:100%}
+.breadcrumb{font-size:.82rem;color:var(--muted);margin-bottom:.7rem;display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}
+.breadcrumb a{color:var(--blue-strong);cursor:pointer;text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+.breadcrumb .sep{color:#9db1c6}
+.breadcrumb .cur{color:var(--ink);font-weight:600}
 .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:1.1rem;box-shadow:var(--shadow-sm)}
 .card h2{margin:0 0 .8rem;color:var(--navy);font-size:1.15rem;border-bottom:2px solid var(--blue-light);padding-bottom:.45rem;display:flex;align-items:center;gap:.5rem}
 .card h3{color:var(--navy-2);font-size:1rem;margin:1.1rem 0 .5rem}
-/* テーブル（モバイルで横スクロール） */
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{padding:.55rem .7rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
 th{background:var(--navy);color:#fff;font-weight:600;white-space:nowrap}
 tr:nth-child(even) td{background:#f6f9fc}
 tbody tr:hover td{background:#eef5fb}
-/* バッジ */
+tr.clickable{cursor:pointer}
 .badge{display:inline-block;border-radius:999px;padding:.14rem .65rem;font-size:.75rem;font-weight:700;letter-spacing:.02em;line-height:1.5;white-space:nowrap}
 .b-gray{background:var(--gray-bg);color:var(--gray)}
 .b-green{background:var(--ok-bg);color:var(--ok)}
@@ -69,63 +104,76 @@ tbody tr:hover td{background:#eef5fb}
 .b-red{background:var(--err-bg);color:var(--err)}
 .b-blue{background:var(--info-bg);color:var(--info)}
 .b-purple{background:var(--purple-bg);color:var(--purple)}
-/* ボタン */
-button{background:linear-gradient(180deg,var(--blue) 0%,var(--blue-strong) 100%);color:#fff;border:0;border-radius:var(--radius-sm);padding:.5rem 1.05rem;font-size:.9rem;font-weight:600;cursor:pointer;transition:filter .15s,transform .1s,box-shadow .15s;box-shadow:0 1px 2px rgb(16 48 92 / .2)}
-button:hover{filter:brightness(1.07)}
-button:active{transform:translateY(1px)}
-button.sec{background:#e9eff5;color:var(--navy);box-shadow:none;border:1px solid var(--line)}
-button.sec:hover{background:#dde8f2}
-button[disabled]{opacity:.55;cursor:not-allowed}
-/* フォーム */
-input,textarea,select{width:100%;padding:.55rem .65rem;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:.92rem;font-family:inherit;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
-input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgb(37 99 166 / .15)}
-label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin:.7rem 0 .25rem}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.9rem}
-/* 状態・補助 */
-.error{color:var(--err);font-size:.88rem;font-weight:600;margin:.4rem 0 0}
-.muted{color:var(--muted);font-size:.85rem}
-.hint{font-size:.8rem;color:var(--muted);margin-top:1rem;border-top:1px dashed var(--line);padding-top:.7rem}
-.actions{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.8rem;align-items:center}
-a{color:var(--blue-strong);text-decoration:underline;text-underline-offset:2px}
-a:hover{color:var(--navy)}
-/* ログイン */
-.login-wrap{max-width:440px;margin:10vh auto 0;padding:0 1rem}
+.overdue{color:var(--err);font-weight:700}
+.mini{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:.15rem .55rem;font-size:.78rem;color:var(--navy);cursor:pointer;background:#fff;box-shadow:none}
+.mini.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.filterbar{display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0 .9rem;align-items:center}
+.item-box{border:1px solid var(--line);border-radius:8px;padding:.8rem;margin:.6rem 0}
+.item-box .top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.4rem}
+.version-list{border-top:1px dashed var(--line);margin-top:.5rem;padding-top:.4rem}
+.version-list .v{font-size:.82rem;color:var(--muted);padding:.2rem 0;border-bottom:1px dotted var(--line)}
+details.version-details summary{cursor:pointer;color:var(--navy);font-size:.85rem;margin-top:.4rem}
+
+/* ===== ログイン ===== */
+.login-wrap{max-width:440px;margin:9vh auto 0;padding:0 1rem}
 .login-box{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:2.2rem;box-shadow:var(--shadow-md)}
 .login-box h2{margin:0 0 .6rem;color:var(--navy);font-size:1.3rem;text-align:center}
 .login-box h2::before{content:"🧭 ";display:block;font-size:1.6rem;margin-bottom:.4rem}
 .login-box .actions{justify-content:center}
 .login-box button{width:100%;padding:.65rem;font-size:.95rem}
-/* リスト内の小カード（依頼・調書・指摘） */
-.actions>div, .card>div:not(.actions):not(.row) > div[style]{ }
-/* 空状態の余白 */
-td.muted{font-size:.85rem}
-/* レスポンシブ */
+
+/* ===== モーダル ===== */
+.modal-backdrop{position:fixed;inset:0;background:rgb(16 48 92 / .45);display:flex;align-items:flex-start;justify-content:center;padding:6vh 1rem 2rem;z-index:100;overflow-y:auto}
+.modal{background:var(--paper);border-radius:14px;box-shadow:var(--shadow-md);width:100%;max-width:560px;animation:modalIn .16s ease-out}
+.modal.wide{max-width:760px}
+@keyframes modalIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.3rem;border-bottom:1px solid var(--line)}
+.modal-head h3{margin:0;color:var(--navy);font-size:1.05rem}
+.modal-x{background:none;border:0;color:var(--muted);font-size:1.3rem;padding:0 .3rem;box-shadow:none}
+.modal-body{padding:1rem 1.3rem;max-height:64vh;overflow-y:auto}
+.modal-foot{display:flex;justify-content:flex-end;gap:.55rem;padding:1rem 1.3rem;border-top:1px solid var(--line)}
+.modal .error{margin:.5rem 0 0}
+
+/* ===== トースト ===== */
+#toast-root{position:fixed;right:1rem;bottom:1rem;z-index:200;display:flex;flex-direction:column;gap:.5rem}
+.toast{background:var(--navy);color:#fff;padding:.65rem 1rem;border-radius:var(--radius-sm);box-shadow:var(--shadow-md);font-size:.88rem;max-width:420px;animation:toastIn .18s ease-out}
+.toast.t-ok{background:#14653e}
+.toast.t-err{background:#9d2b23}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== レスポンシブ ===== */
+@media(max-width:900px){
+  .hamburger{display:inline-block}
+  .sidebar{position:fixed;left:0;top:var(--topbar-h);bottom:0;transform:translateX(-105%);transition:transform .2s ease;width:var(--sidebar-w);flex-basis:auto;height:auto;box-shadow:var(--shadow-md)}
+  .sidebar.open{transform:translateX(0)}
+  .side-backdrop{position:fixed;inset:0;background:rgb(16 48 92 / .35);z-index:25;display:none}
+  .side-backdrop.show{display:block}
+  .userchip{max-width:160px;overflow:hidden;text-overflow:ellipsis}
+}
 @media(max-width:720px){
-  header{flex-direction:column;align-items:flex-start}
+  .topbar{padding:0 .8rem;gap:.5rem}
+  .topbar h1{font-size:.95rem}
   .row{grid-template-columns:1fr}
-  main{padding:1rem .9rem 2.5rem}
+  .main{padding:1rem .9rem 2.5rem}
   table{display:block;overflow-x:auto;white-space:nowrap}
-  .userinfo{width:100%;justify-content:space-between}
+  .actions button{flex:1 1 auto}
 }
-/* 動きを減らす設定（WCAG 2.3.3） */
-@media(prefers-reduced-motion:reduce){
-  *{transition:none!important;animation:none!important}
-}
-/* 印刷（調書・帳票） */
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media print{
-  header{position:static;box-shadow:none}
-  nav,.userinfo button,.actions{display:none!important}
+  .topbar,.sidebar,.breadcrumb,.actions,.filterbar,.modal-backdrop{display:none!important}
   body{background:#fff}
   .card{border:1px solid #999;box-shadow:none;break-inside:avoid}
+  .layout{display:block}
   a{text-decoration:none;color:var(--ink)}
 }
-
 </style>
 </head>
 <body>
 <div id="app" class="app"></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
 <script>
-// ---- API クライアント ----
+// ===================== API クライアント =====================
 async function api(path, opts={}){
   const res = await fetch(path, {...opts, headers:{"Content-Type":"application/json", ...(opts.headers||{})}, credentials:"same-origin"});
   if(!res.ok){ let m=`エラー (${res.status})`; try{const b=await res.json(); if(b.error?.message)m=b.error.message;}catch{} throw new Error(m); }
@@ -134,19 +182,23 @@ async function api(path, opts={}){
 const A = {
   login:(e,p)=>api("/api/auth/login",{method:"POST",body:JSON.stringify({email:e,password:p})}),
   logout:()=>api("/api/auth/logout",{method:"POST"}),
+  changePassword:(cur,next)=>api("/api/auth/password",{method:"POST",body:JSON.stringify({current_password:cur,new_password:next})}),
   health:()=>api("/api/health"),
   me:()=>api("/api/me"),
+  users:()=>api("/api/users"),
   plans:()=>api("/api/plans"),
   createPlan:(d)=>api("/api/plans",{method:"POST",body:JSON.stringify(d)}),
   plan:(id)=>api(`/api/plans/${id}`),
+  updatePlan:(id,d)=>api(`/api/plans/${id}`,{method:"PUT",body:JSON.stringify(d)}),
   submitPlan:(id)=>api(`/api/plans/${id}/submit`,{method:"POST"}),
   approvePlan:(id)=>api(`/api/plans/${id}/approve`,{method:"POST"}),
   rejectPlan:(id)=>api(`/api/plans/${id}/reject`,{method:"POST"}),
   engagements:()=>api("/api/engagements"),
   createEngagement:(d)=>api("/api/engagements",{method:"POST",body:JSON.stringify(d)}),
   engagement:(id)=>api(`/api/engagements/${id}`),
+  updateEngagement:(id,d)=>api(`/api/engagements/${id}`,{method:"PUT",body:JSON.stringify(d)}),
   setEngStatus:(id,s)=>api(`/api/engagements/${id}/status`,{method:"POST",body:JSON.stringify({status:s})}),
-  requests:(eid)=>api(`/api/engagements/${eid}/requests`),
+  requests:(q="")=>api(`/api/requests${q}`),
   createRequest:(eid,d)=>api(`/api/engagements/${eid}/requests`,{method:"POST",body:JSON.stringify(d)}),
   sendRequest:(id)=>api(`/api/requests/${id}/send`,{method:"POST"}),
   receiveRequest:(id)=>api(`/api/requests/${id}/receive`,{method:"POST"}),
@@ -155,6 +207,7 @@ const A = {
   submitEvidence:(rid,d)=>api(`/api/requests/${rid}/submissions`,{method:"POST",body:JSON.stringify(d)}),
   workpapers:(eid)=>api(`/api/engagements/${eid}/workpapers`),
   createWorkpaper:(eid,d)=>api(`/api/engagements/${eid}/workpapers`,{method:"POST",body:JSON.stringify(d)}),
+  updateWorkpaper:(id,d)=>api(`/api/workpapers/${id}`,{method:"PUT",body:JSON.stringify(d)}),
   reqReview:(id)=>api(`/api/workpapers/${id}/review`,{method:"POST"}),
   approveWorkpaper:(id)=>api(`/api/workpapers/${id}/approve`,{method:"POST"}),
   returnWorkpaper:(id)=>api(`/api/workpapers/${id}/return`,{method:"POST"}),
@@ -166,46 +219,424 @@ const A = {
   verifyRemediation:(id,d)=>api(`/api/remediations/${id}/verify`,{method:"POST",body:JSON.stringify(d)}),
   auditEvents:(q="")=>api(`/api/audit-events?${q}`),
 };
+
+// ===================== 定数・表示辞書 =====================
 const ROLE={auditor:"監査役",audit_committee:"監査役会",general_affairs:"総務部",auditee:"被監査部門",admin:"システム管理者"};
-const BADGE={draft:"b-gray",pending_approval:"b-amber",approved:"b-green",rejected:"b-red",in_progress:"b-blue",review:"b-purple",reported:"b-blue",closed:"b-green",sent:"b-blue",partial:"b-amber",received:"b-green",returned:"b-red",review_requested:"b-amber",final:"b-green",fact_check:"b-amber",confirmed:"b-blue",remediated:"b-purple",completed:"b-green",planned:"b-gray",submitted:"b-blue",verified:"b-green"};
+const BADGE={draft:"b-gray",pending_approval:"b-amber",approved:"b-green",rejected:"b-red",in_progress:"b-blue",review:"b-purple",reported:"b-blue",closed:"b-green",sent:"b-blue",partial:"b-amber",received:"b-green",returned:"b-red",review_requested:"b-amber",final:"b-green",fact_check:"b-amber",confirmed:"b-blue",remediated:"b-purple",rechecked:"b-amber",completed:"b-green",planned:"b-gray",submitted:"b-blue",verified:"b-green"};
+const ST={ // 状態の日本語ラベル（F-10 対応）
+  draft:"下書き",pending_approval:"承認申請中",approved:"承認済み",rejected:"却下",
+  in_progress:"実施中",review:"レビュー中",reported:"報告済み",closed:"締切・完了",
+  sent:"送付済",partial:"一部受領",received:"受領済",returned:"差戻し",
+  review_requested:"レビュー依頼中",final:"確定",fact_check:"事実確認中",confirmed:"確定",
+  remediated:"是正中",rechecked:"再確認中",completed:"完了",reissued:"再指摘",
+  planned:"計画",submitted:"提出済",verified:"検証済",accepted:"受領",
+};
+const TASK_TYPE={engagement:"案件",request:"依頼",workpaper:"調書",finding:"指摘",remediation:"是正"};
+const ACTION_JA={ // 監査ログの操作名（F-06 対応）
+  login:"ログイン",logout:"ログアウト",login_failed:"ログイン失敗",
+  password_changed:"パスワード変更",password_change_failed:"パスワード変更失敗",
+  plan_created:"計画作成",plan_updated:"計画更新",plan_submitted:"承認申請",plan_approved:"計画承認",plan_rejected:"計画却下",
+  engagement_created:"案件作成",engagement_updated:"案件更新",engagement_status:"案件状態変更",engagement_access_denied:"案件アクセス拒否",
+  request_created:"依頼作成",request_sent:"依頼送付",request_received:"依頼受領",request_returned:"依頼差戻し",request_closed:"依頼締切",
+  submission_created:"証憑提出",submission_denied:"提出拒否",
+  workpaper_created:"調書作成",workpaper_updated:"調書更新",workpaper_review_requested:"レビュー依頼",workpaper_approved:"調書確定",workpaper_returned:"調書差戻し",
+  finding_created:"指摘作成",finding_response:"指摘回答",finding_confirmed:"指摘確定",
+  remediation_created:"是正登録",remediation_verified:"是正確認",
+  permission_denied:"権限拒否",
+};
+const OBJ_JA={auth:"認証",permission:"権限",audit_plan:"監査計画",engagement:"案件",evidence_request:"証憑依頼",submission:"証憑提出",workpaper:"調書",finding:"指摘",remediation:"是正"};
+const RESULT_JA={success:"成功",denied:"拒否",failed:"失敗"};
+// ロール別UI表示権限（サーバ側の権限判定は変更しない。表示出し分け専用）
+const UI_PERM={
+  auditor:["plan:view","plan:create","plan:update","engagement:view","engagement:create","request:view","request:create","request:send","workpaper:create","finding:create","remediation:create","auditlog:view","users:view"],
+  audit_committee:["plan:view","engagement:view","request:view","auditlog:view"],
+  general_affairs:["plan:view","engagement:view","engagement:update","request:view","request:create","request:send"],
+  auditee:["engagement:view","request:view","request:submit","finding:respond"],
+  admin:["auditlog:view","users:view"],
+};
+const uiCan=(role,perm)=>(UI_PERM[role]||[]).includes(perm);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const el=(tag,html)=>{const d=document.createElement(tag);d.innerHTML=html;return d;};
 const dateFmt=s=>s?new Date(s).toLocaleString("ja-JP"):"—";
 const dateOnly=s=>s?new Date(s).toLocaleDateString("ja-JP"):"—";
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const isOverdue=d=>!!d && d.slice(0,10) < todayStr();
+const stLabel=s=>ST[s]||s;
+const badge=s=>`<span class="badge ${BADGE[s]||"b-gray"}">${esc(stLabel(s))}</span>`;
+const sevLabel=s=>s==="high"?"高":s==="medium"?"中":s==="low"?"低":s;
+const fmtDue=d=>{ if(!d) return "—"; const ov=isOverdue(d); return `<span class="${ov?"overdue":""}">${dateOnly(d)}${ov?"（期限超過）":""}</span>`; };
 
-let state={me:null,view:"home",engId:null,planId:null};
+// ===================== 状態・ルーティング =====================
+let state={me:null};
+const cache={plans:[],planDetail:null,engs:[],engDetail:null,requests:[],events:[],users:[],engFilter:null};
+let renderSeq=0;
 const app=document.getElementById("app");
+const modalRoot=document.getElementById("modal-root");
+const toastRoot=document.getElementById("toast-root");
+let modalState=null;
 
-async function refreshMe(){ try{ state.me=await A.me(); render(); }catch{ state.me=null; render(); } }
-
-function render(){
-  if(!state.me){ renderLogin(); return; }
-  const me=state.me, role=me.user.role;
-  const nav=`
-    <nav>
-      <a class="${state.view==="home"?"active":""}" data-v="home">ホーム</a>
-      ${(role!=="auditee"&&role!=="admin")?`<a class="${state.view==="plans"||state.view==="plan"?"active":""}" data-v="plans">監査計画</a>`:""}
-      <a class="${state.view==="engagements"||state.view==="engagement"?"active":""}" data-v="engagements">監査案件</a>
-      ${(role==="auditor"||role==="admin")?`<a class="${state.view==="auditlog"?"active":""}" data-v="auditlog">監査ログ</a>`:""}
-    </nav>`;
-  const header=`
-    <header>
-      <h1>🧭 監査業務・証跡管理</h1>${nav}
-      <div class="userinfo">${esc(me.user.name)}（${ROLE[role]||role} / ${esc(me.user.department)}）
-        <button class="sec" onclick="A.logout().then(()=>{state.me=null;render()})">ログアウト</button>
-      </div>
-    </header>`;
-  let mainHtml="";
-  if(state.view==="home") mainHtml=renderHome(me);
-  else if(state.view==="plans") mainHtml=renderPlans();
-  else if(state.view==="plan") mainHtml=renderPlan(state.planId);
-  else if(state.view==="engagements") mainHtml=renderEngagements();
-  else if(state.view==="engagement") mainHtml=renderEngagement(state.engId, role, me);
-  else if(state.view==="auditlog") mainHtml=renderAuditLog();
-  app.innerHTML=`${header}<main>${mainHtml}</main>`;
-  app.querySelectorAll("nav a").forEach(a=>a.onclick=e=>{e.preventDefault();state.view=a.dataset.v;render();});
+function parseHash(){
+  const raw=(location.hash||"").replace(/^#\/?/,"");
+  const parts=raw.split("/").filter(Boolean);
+  const r={view:"home",id:null,tab:null,extra:null};
+  if(parts[0]==="plans"){r.view="plans";r.id=parts[1]||null;}
+  else if(parts[0]==="engagements"){r.view="engagements";r.id=parts[1]||null;r.tab=parts[2]||null;}
+  else if(parts[0]==="requests"){r.view="requests";r.extra=parts[1]||null;}
+  else if(parts[0]==="auditlog"){r.view="auditlog";}
+  return r;
+}
+function buildHash(view,id,tab,extra){let h="#/"+view;if(id)h+="/"+id;if(tab)h+="/"+tab;if(extra&&!id&&!tab)h+="/"+extra;return h;}
+function navigate(view,id,tab,extra){
+  const h=buildHash(view,id,tab,extra);
+  closeModal(); // 画面遷移時のみモーダルを閉じる（データ再描画では閉じない）
+  if(location.hash===h){render();}else{location.hash=h;}
 }
 
+function toast(msg,type="ok"){const el=document.createElement("div");el.className=`toast t-${type}`;el.textContent=msg;toastRoot.appendChild(el);setTimeout(()=>{el.remove();},4200);}
+
+// ===================== モーダル =====================
+function openModal({title,body,okLabel="実行",okClass="",onOk=null,wide=false}){
+  modalState={onOk};
+  modalRoot.innerHTML=`
+    <div class="modal-backdrop" data-modal="close">
+      <div class="modal ${wide?"wide":""}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <div class="modal-head"><h3>${esc(title)}</h3><button class="modal-x sec" data-modal="close" aria-label="閉じる">×</button></div>
+        <div class="modal-body">${body}<div id="modal-err" class="error"></div></div>
+        <div class="modal-foot">
+          <button class="sec" data-modal="close">キャンセル</button>
+          <button id="modal-ok" class="${okClass}">${esc(okLabel)}</button>
+        </div>
+      </div>
+    </div>`;
+  const okBtn=document.getElementById("modal-ok");
+  okBtn.onclick=()=>{ if(modalState?.onOk) modalState.onOk(okBtn); };
+  const bodyEl=modalRoot.querySelector(".modal-body");
+  bodyEl.addEventListener("keydown",ev=>{
+    if(ev.key==="Enter" && ev.target.tagName!=="TEXTAREA" && !ev.target.matches("button")){ev.preventDefault();okBtn.click();}
+  });
+  const first=bodyEl.querySelector("input,select,textarea"); if(first) setTimeout(()=>first.focus(),50);
+}
+function closeModal(){modalRoot.innerHTML="";modalState=null;}
+function modalErr(msg){const el=document.getElementById("modal-err");if(el)el.textContent=msg||"";}
+function confirmModal(message,onYes,yesLabel="実行する"){
+  openModal({title:"確認",body:`<p style="margin:.2rem 0">${esc(message)}</p>`,okLabel:yesLabel,okClass:"danger",onOk:()=>{closeModal();onYes();}});
+}
+
+// ===================== トップバー・サイドバー・パンくず =====================
+function topbarHTML(me){
+  const name=esc(me.user.name), role=ROLE[me.user.role]||me.user.role, dept=esc(me.user.department);
+  return `
+  <header class="topbar">
+    <button class="hamburger" data-act="hamburger" aria-label="メニューを開く">☰</button>
+    <h1>監査業務・証跡管理</h1>
+    <div class="top-spacer"></div>
+    <span class="userchip">${name}（${esc(role)} / ${dept}）</span>
+    <button class="sec" data-act="password">🔑 パスワード変更</button>
+    <button class="sec" data-act="logout">ログアウト</button>
+  </header>`;
+}
+function sidebarHTML(role,route){
+  const lnk=(v,l,ic,cond)=>{ if(!cond) return ""; const active=route.view===v?"active":""; return `<a class="side-link ${active}" data-nav="${v}" title="${l}"><span class="ic">${ic}</span><span class="lbl">${l}</span></a>`; };
+  const collapsed=localStorage.getItem("maw.sidebar.collapsed")==="1"?"collapsed":"";
+  return `
+  <aside class="sidebar ${collapsed}" id="sidebar" aria-label="メインメニュー">
+    <div class="side-group">業務</div>
+    ${lnk("home","ホーム","🏠",true)}
+    ${lnk("plans","監査計画","📋",uiCan(role,"plan:view"))}
+    ${lnk("engagements","監査案件","📁",uiCan(role,"engagement:view"))}
+    ${lnk("requests","証憑依頼","📩",uiCan(role,"request:view"))}
+    <div class="side-group">管理</div>
+    ${lnk("auditlog","監査ログ","🕓",uiCan(role,"auditlog:view"))}
+    <div class="side-foot">
+      <button class="side-toggle" data-act="collapse-sidebar" title="サイドバーを折りたたむ"><span>◀ 折りたたむ</span><span style="display:none">▶</span></button>
+    </div>
+  </aside>
+  <div class="side-backdrop" id="side-backdrop" data-act="hamburger"></div>`;
+}
+function breadcrumbHTML(route){
+  const parts=[`<a data-nav="home">ホーム</a>`];
+  const add=(label,nav,id)=>{parts.push(`<span class="sep">›</span><a data-nav="${nav}" ${id?`data-id="${esc(id)}"`:""}>${esc(label)}</a>`);};
+  const addCur=label=>{parts.push(`<span class="sep">›</span><span class="cur">${esc(label)}</span>`);};
+  const tabJA={requests:"証憑依頼",workpapers:"監査調書",findings:"指摘・是正"};
+  if(route.view==="plans"){add("監査計画","plans"); if(route.id) addCur(cache.planDetail?.plan?.title||"計画詳細");}
+  else if(route.view==="engagements"){add("監査案件","engagements"); if(route.id){ addCur(cache.engDetail?.engagement?.engagement_no||"案件"); if(route.tab) addCur(tabJA[route.tab]||route.tab);}}
+  else if(route.view==="engagement"){add("監査案件","engagements"); addCur(cache.engDetail?.engagement?.engagement_no||"案件"); if(route.tab) addCur(tabJA[route.tab]||route.tab);}
+  else if(route.view==="requests"){add("証憑依頼","requests");}
+  else if(route.view==="auditlog"){add("監査ログ","auditlog");}
+  else {addCur("ホーム");}
+  return `<div class="breadcrumb">${parts.join("")}</div>`;
+}
+
+// ===================== 描画 =====================
+async function refreshMe(){
+  try{ state.me=await A.me(); render(); }
+  catch{ state.me=null; render(); }
+}
+function render(){
+  renderSeq++;
+  if(!state.me){ closeModal(); renderLogin(); return; }
+  const me=state.me, role=me.user.role;
+  const route=parseHash();
+  app.innerHTML=`${topbarHTML(me)}
+    <div class="layout">${sidebarHTML(role,route)}
+    <main class="main" id="main">${breadcrumbHTML(route)}${viewHTML(route)}</main>
+    </div>`;
+  loadViewData(route);
+}
+function viewHTML(route){
+  const r=route;
+  if(r.view==="plans" && r.id) return planHTML(r.id);
+  if(r.view==="plans") return plansHTML();
+  if(r.view==="engagements" && r.id) return engagementHTML(r.id, r.tab);
+  if(r.view==="engagements") return engagementsHTML();
+  if(r.view==="requests") return requestsHTML(r.extra);
+  if(r.view==="auditlog") return auditLogHTML();
+  return homeHTML();
+}
+// 各ビューのデータ取得（取得後に再描画）
+function loadViewData(route){
+  const seq=renderSeq;
+  const done=()=>{ if(seq===renderSeq) render(); };
+  try{
+    if(route.view==="plans" && route.id) A.plan(route.id).then(x=>{cache.planDetail=x;done();}).catch(e=>{toast(e.message,"err");});
+    else if(route.view==="plans") A.plans().then(x=>{cache.plans=x.plans;done();}).catch(e=>toast(e.message,"err"));
+    else if(route.view==="engagements" && !route.id) A.engagements().then(x=>{cache.engs=x.engagements;done();}).catch(e=>toast(e.message,"err"));
+    // 案件作成フォーム用に計画も取得（案件一覧表示とは独立。権限のあるロールのみ）
+    if(route.view==="engagements" && !route.id && uiCan(state.me.user.role,"plan:view"))
+      A.plans().then(x=>{cache.plans=x.plans; if(seq===renderSeq) render();}).catch(()=>{});
+    else if(route.view==="engagements" && route.id) A.engagement(route.id).then(x=>{cache.engDetail=x;done();}).catch(e=>{toast(e.message,"err");});
+    else if(route.view==="requests") A.requests(route.extra?`?status=${encodeURIComponent(route.extra)}`:"").then(x=>{cache.requests=x.requests;done();}).catch(e=>toast(e.message,"err"));
+    else if(route.view==="auditlog"){
+      Promise.all([A.auditEvents(), uiCan(state.me.user.role,"users:view")?A.users():Promise.resolve(null)])
+        .then(([ev,us])=>{cache.events=ev.events; if(us) cache.users=us.users; done();})
+        .catch(e=>toast(e.message,"err"));
+    }
+  }catch(e){ toast(e.message,"err"); }
+}
+
+// ===================== ホーム =====================
+function homeHTML(){
+  const me=state.me, role=me.user.role;
+  const tasks=me.tasks||[];
+  const rows=tasks.map(t=>{
+    const nav=t.engagement_id?` data-nav="engagements" data-id="${esc(t.engagement_id)}" data-tab="requests"`:"";
+    const rowCls=t.engagement_id?"clickable":"";
+    return `<tr class="${rowCls}"${nav}><td>${TASK_TYPE[t.type]||esc(t.type)}</td><td>${esc(t.title)}</td><td>${badge(t.status)}</td><td>${fmtDue(t.due_at)}</td></tr>`;
+  }).join("");
+  return `
+    <div class="card"><h2>自分のタスク・期限</h2>
+      ${tasks.length?`<div class="table-wrap"><table><tr><th>種別</th><th>内容</th><th>状態</th><th>期限</th></tr>${rows}</table></div>
+      <p class="muted">行をクリックすると案件詳細（証憑依頼）を開きます。</p>`
+      :`<p class="muted">現在、割り当てられたタスクはありません。</p>`}
+    </div>
+    <div class="card"><h2>監査の全体像</h2>
+      <p class="muted">年度監査計画 → 個別監査 → 証憑依頼・受領 → 監査手続・調書 → レビュー・承認 → 指摘・改善 → 完了・保存</p>
+      <div class="actions">
+        ${uiCan(role,"plan:view")?`<button data-nav="plans">監査計画へ</button>`:""}
+        ${uiCan(role,"engagement:view")?`<button class="sec" data-nav="engagements">監査案件一覧へ</button>`:""}
+      </div>
+    </div>`;
+}
+
+// ===================== 監査計画 =====================
+function plansHTML(){
+  const role=state.me.user.role;
+  const rows=cache.plans.map(p=>`<tr class="clickable" data-nav="plans" data-id="${esc(p.id)}">
+    <td>${esc(p.fiscal_year)}</td><td>${esc(p.title)}</td>
+    <td>${badge(p.status)}</td><td>v${esc(p.version)}</td><td>${dateFmt(p.updated_at)}</td></tr>`).join("");
+  return `<div class="card"><h2>年度監査計画</h2>
+    ${uiCan(role,"plan:create")?`<div class="actions"><button data-act="plan-create">新規計画</button></div>`:""}
+    <div class="table-wrap"><table><tr><th>年度</th><th>計画名</th><th>状態</th><th>版</th><th>更新日</th></tr>
+    ${rows||`<tr><td colspan="5" class="muted">計画がありません</td></tr>`}</table></div></div>`;
+}
+function planHTML(id){
+  const p=cache.planDetail?.plan; if(!p) return loadingCard();
+  const role=state.me.user.role;
+  const engs=cache.planDetail.engagements||[];
+  const actions=[];
+  if(p.status==="draft"&&uiCan(role,"plan:create")) actions.push(`<button data-act="plan-submit" data-id="${esc(p.id)}">承認申請</button>`);
+  if(p.status==="pending_approval"&&role==="audit_committee"){
+    actions.push(`<button data-act="plan-approve" data-id="${esc(p.id)}">承認</button>`);
+    actions.push(`<button class="sec" data-act="plan-reject" data-id="${esc(p.id)}">却下</button>`);
+  }
+  if(p.status==="rejected"&&uiCan(role,"plan:create")) actions.push(`<button data-act="plan-submit" data-id="${esc(p.id)}">再申請</button>`);
+  if(uiCan(role,"plan:update")&&p.status!=="approved") actions.push(`<button class="sec" data-act="plan-edit" data-id="${esc(p.id)}">編集</button>`);
+  if(p.status==="approved") actions.push(`<p class="muted" style="margin:.4rem 0">承認済みのため編集できません。次年度版として新規作成してください。</p>`);
+  return `<div class="card"><h2>${esc(p.fiscal_year)}年度 ${esc(p.title)}</h2>
+    <p class="muted">状態: ${badge(p.status)}（v${esc(p.version)}）</p>
+    <p>${esc(p.policy)||"（方針未記載）"}</p>
+    ${actions.length?`<div class="actions">${actions.join("")}</div>`:""}
+    <h3 style="margin-top:1rem">関連案件</h3>
+    <div class="table-wrap"><table><tr><th>案件番号</th><th>名称</th><th>対象部門</th><th>状態</th></tr>${
+      engs.map(e=>`<tr class="clickable" data-nav="engagements" data-id="${esc(e.id)}"><td>${esc(e.engagement_no)}</td><td>${esc(e.title)}</td><td>${esc(e.department)}</td><td>${badge(e.status)}</td></tr>`).join("")
+    }${engs.length?"":`<tr><td colspan="4" class="muted">案件がありません</td></tr>`}</table></div></div>`;
+}
+
+// ===================== 監査案件 =====================
+function engagementsHTML(){
+  const role=state.me.user.role;
+  const engs=cache.engs||[];
+  const statuses=["draft","pending_approval","in_progress","review","reported","closed"];
+  const chips=[`<button class="mini ${!cache.engFilter?"on":""}" data-act="eng-filter" data-status="">すべて</button>`
+    +statuses.map(s=>`<button class="mini ${cache.engFilter===s?"on":""}" data-act="eng-filter" data-status="${s}">${stLabel(s)}</button>`).join("")];
+  const shown=cache.engFilter?engs.filter(e=>e.status===cache.engFilter):engs;
+  const rows=shown.map(e=>`<tr class="clickable" data-nav="engagements" data-id="${esc(e.id)}">
+    <td>${esc(e.engagement_no)}</td><td>${esc(e.title)}</td><td>${esc(e.department)}</td>
+    <td><span class="badge b-purple">${esc(e.classification)}</span></td><td>${badge(e.status)}</td></tr>`).join("");
+  return `<div class="card"><h2>監査案件</h2>
+    ${uiCan(role,"engagement:create")?`<div class="actions"><button data-act="eng-create">新規案件</button></div>`:""}
+    <div class="filterbar">${chips.join("")}</div>
+    <div class="table-wrap"><table><tr><th>案件番号</th><th>名称</th><th>対象部門</th><th>機密</th><th>状態</th></tr>
+    ${rows||`<tr><td colspan="5" class="muted">案件がありません</td></tr>`}</table></div></div>`;
+}
+function engagementHTML(id,tab){
+  const d=cache.engDetail; if(!d) return loadingCard();
+  const e=d.engagement, role=state.me.user.role;
+  const canEdit=role==="auditor"||role==="general_affairs";
+  const actions=[];
+  if(e.status==="draft"&&role==="auditor") actions.push(`<button data-act="eng-status" data-id="${esc(e.id)}" data-status="pending_approval">承認申請</button>`);
+  if(e.status==="pending_approval"&&role==="audit_committee") actions.push(`<button data-act="eng-status" data-id="${esc(e.id)}" data-status="in_progress">開始</button>`);
+  if(e.status==="in_progress"&&(role==="auditor"||role==="general_affairs")) actions.push(`<button class="sec" data-act="eng-status" data-id="${esc(e.id)}" data-status="review">レビューへ</button>`);
+  if(e.status==="review"&&role==="audit_committee") actions.push(`<button data-act="eng-status" data-id="${esc(e.id)}" data-status="reported">報告確定</button>`);
+  if(e.status==="reported"&&role==="audit_committee") actions.push(`<button data-act="eng-status" data-id="${esc(e.id)}" data-status="closed">完了</button>`);
+  if(canEdit) actions.push(`<button class="sec" data-act="eng-edit" data-id="${esc(e.id)}">編集</button>`);
+  const tabs=[["requests","証憑依頼"],["workpapers","監査調書"],["findings","指摘・是正"]]
+    .map(([k,l])=>`<button class="sec ${(tab||"requests")===k?"on":""}" data-tab="${k}">${l}</button>`).join("");
+  let body="";
+  if((tab||"requests")==="workpapers") body=workpapersHTML(d.workpapers||[], e.id, role, state.me.user);
+  else if((tab||"requests")==="findings") body=findingsHTML(d.findings||[], e.id, role);
+  else body=requestsHTMLForEng(d.requests||[], e.id, role, state.me.user);
+  return `<div class="card"><h2>${esc(e.engagement_no)} ${esc(e.title)}</h2>
+    <p class="muted">対象部門: ${esc(e.department)} ｜ 機密: <span class="badge b-purple">${esc(e.classification)}</span> ｜
+    状態: ${badge(e.status)}</p>
+    <p><strong>目的・範囲:</strong> ${esc(e.scope)||"—"}</p><p><strong>評価基準:</strong> ${esc(e.criteria)||"—"}</p>
+    ${actions.length?`<div class="actions">${actions.join("")}</div>`:""}
+    <div class="filterbar">${tabs}</div>${body}</div>`;
+}
+
+// ===================== 証憑依頼 =====================
+function requestsHTML(filter){
+  const reqs=cache.requests||[];
+  const statuses=["draft","sent","partial","received","returned","closed"];
+  const chips=[`<button class="mini ${!filter?"on":""}" data-nav="requests">すべて</button>`
+    +statuses.map(s=>`<button class="mini ${filter===s?"on":""}" data-nav="requests" data-extra="${s}">${stLabel(s)}</button>`).join("")];
+  const rows=reqs.map(r=>`<tr class="clickable" data-nav="engagements" data-id="${esc(r.engagement_id)}" data-tab="requests">
+    <td>${esc(r.request_no)}</td><td>${esc(r.engagement_no)} ${esc(r.engagement_title||"")}</td>
+    <td>${esc(r.item)}</td><td>${esc(r.recipient_department)}</td>
+    <td>${badge(r.status)}</td><td>${fmtDue(r.due_at)}</td></tr>`).join("");
+  return `<div class="card"><h2>証憑依頼（自分の関与する依頼）</h2>
+    <p class="muted">被監査部門: 自部門宛の依頼 ／ 監査側: メンバー案件の依頼。期限超過は赤字で表示します。</p>
+    <div class="filterbar">${chips.join("")}</div>
+    <div class="table-wrap"><table><tr><th>依頼番号</th><th>案件</th><th>依頼内容</th><th>依頼先</th><th>状態</th><th>期限</th></tr>
+    ${rows||`<tr><td colspan="6" class="muted">依頼がありません</td></tr>`}</table></div></div>`;
+}
+function requestsHTMLForEng(requests,eid,role,me){
+  const isAuditee=role==="auditee", canCreate=role==="auditor"||role==="general_affairs";
+  const cards=requests.map(r=>{
+    const subs=r.submissions||[];
+    const btns=[];
+    if(r.status==="draft"&&canCreate&&!isAuditee) btns.push(`<button data-act="req-send" data-id="${esc(r.id)}">送付</button>`);
+    if(canCreate&&!isAuditee&&["sent","partial"].includes(r.status)) btns.push(`<button class="sec" data-act="req-receive" data-id="${esc(r.id)}">全件受領</button>`);
+    if(canCreate&&!isAuditee&&["sent","partial","received"].includes(r.status)) btns.push(`<button class="sec" data-act="req-return" data-id="${esc(r.id)}">差戻し</button>`);
+    if(canCreate&&!isAuditee&&["draft","sent","partial","received","returned"].includes(r.status)) btns.push(`<button class="sec" data-act="req-close" data-id="${esc(r.id)}">締切</button>`);
+    if(isAuditee&&r.recipient_department===me.department&&["sent","partial","returned"].includes(r.status)) btns.push(`<button data-act="evidence-submit" data-id="${esc(r.id)}">証憑を提出</button>`);
+    return `<div class="item-box">
+      <div class="top"><strong>${esc(r.request_no)} — ${esc(r.item)}</strong>${badge(r.status)}</div>
+      <p class="muted">依頼先: ${esc(r.recipient_department)} ｜ 期限: ${fmtDue(r.due_at)} ｜ 目的: ${esc(r.purpose)||"—"}</p>
+      ${btns.length?`<div class="actions">${btns.join("")}</div>`:""}
+      ${subs.length?`<div style="margin-top:.4rem"><p class="muted" style="margin:.2rem 0">提出履歴:</p>
+        ${subs.map(s=>`<div class="muted" style="font-size:.85rem">📄 ${esc(s.file_name)}（記録ID: ${esc(s.content_hash.slice(0,12))}…）${dateFmt(s.submitted_at)}</div>`).join("")}</div>`:""}
+    </div>`;
+  }).join("");
+  return `<div>
+    ${canCreate&&!isAuditee?`<div class="actions"><button data-act="req-create" data-id="${esc(eid)}">新規依頼</button></div>`:""}
+    ${cards||`<p class="muted">依頼がありません</p>`}</div>`;
+}
+
+// ===================== 監査調書 =====================
+function workpapersHTML(wps,eid,role,me){
+  const cards=wps.map(w=>{
+    const v=w.versions||[];
+    const latest=v[0];
+    const canEdit=role==="auditor"&&w.owner_id===me.id&&["draft","returned"].includes(w.status);
+    const btns=[];
+    if(w.status!=="final"&&role==="auditor"&&w.owner_id===me.id) btns.push(`<button data-act="wp-review" data-id="${esc(w.id)}">レビュー依頼</button>`);
+    if(w.status==="review_requested"&&w.reviewer_id===me.id){
+      btns.push(`<button data-act="wp-approve" data-id="${esc(w.id)}">確定・署名</button>`);
+      btns.push(`<button class="sec" data-act="wp-return" data-id="${esc(w.id)}">差戻し</button>`);
+    }
+    if(canEdit) btns.push(`<button class="sec" data-act="wp-edit" data-id="${esc(w.id)}">編集（新版）</button>`);
+    const vers= v.length?`<details class="version-details"><summary>版履歴（${v.length}件）</summary><div class="version-list">${
+      v.map(x=>`<div class="v">v${esc(x.version_no)} ｜ ${dateFmt(x.created_at)} ｜ ${x.is_final?"<strong>正本</strong>":"草稿"} ｜ ハッシュ: ${esc(x.content_hash.slice(0,12))}…</div>`).join("")
+    }</div></details>`:"";
+    return `<div class="item-box">
+      <div class="top"><strong>${esc(w.code)} — ${esc(w.title)}</strong>${badge(w.status)}</div>
+      <p class="muted">最新版: v${esc(latest?.version_no||1)}（${dateFmt(w.updated_at)}）</p>
+      <p style="white-space:pre-wrap;font-size:.92rem">${esc((latest?.body||"").slice(0,240))}</p>
+      ${btns.length?`<div class="actions">${btns.join("")}</div>`:""}${vers}
+    </div>`;
+  }).join("");
+  return `<div>
+    ${role==="auditor"?`<div class="actions"><button data-act="wp-create" data-id="${esc(eid)}">新規調書</button></div>`:""}
+    ${cards||`<p class="muted">調書がありません</p>`}</div>`;
+}
+
+// ===================== 指摘・是正 =====================
+function findingsHTML(findings,eid,role){
+  const cards=findings.map(f=>{
+    const btns=[];
+    if(!["completed","confirmed"].includes(f.status)&&role==="auditor") btns.push(`<button class="sec" data-act="fnd-confirm" data-id="${esc(f.id)}">事実確認（確定）</button>`);
+    if(f.status==="confirmed"&&role==="auditee") btns.push(`<button data-act="fnd-respond" data-id="${esc(f.id)}">回答</button>`);
+    if(f.status==="confirmed"&&role==="auditor") btns.push(`<button data-act="rem-create" data-id="${esc(f.id)}">是正計画を登録</button>`);
+    const lastResp=f.responses?.[f.responses.length-1];
+    const rems=(f.remediations||[]).map(r=>`
+      <div style="border-top:1px dashed var(--line);margin-top:.4rem;padding-top:.4rem">
+        <p class="muted" style="margin:.2rem 0">📋 是正: ${esc(r.action)} ｜ 責任者: ${esc(ownerName(r.owner_id))} ｜ 期限: ${fmtDue(r.due_at)} ｜ 状態: ${badge(r.status)}</p>
+        ${r.status!=="completed"&&role==="auditor"?`<div class="actions"><button class="sec" data-act="rem-verify" data-id="${esc(r.id)}">再確認・完了判定</button></div>`:""}
+      </div>`).join("");
+    return `<div class="item-box">
+      <div class="top"><strong>${esc(f.finding_no)} — ${esc(f.fact.slice(0,60))}</strong>
+        <span><span class="badge b-purple">重要度 ${sevLabel(f.severity)}</span> ${badge(f.status)}</span></div>
+      <p class="muted">基準: ${esc(f.criterion)||"—"} ｜ 原因: ${esc(f.cause)||"—"} ｜ 影響: ${esc(f.impact)||"—"}</p>
+      ${lastResp?`<p class="muted" style="font-size:.85rem">回答: ${esc(lastResp.response)}${lastResp.disagreement?`（異議: ${esc(lastResp.disagreement)}）`:""}</p>`:""}
+      ${btns.length?`<div class="actions">${btns.join("")}</div>`:""}${rems}
+    </div>`;
+  }).join("");
+  return `<div>
+    ${role==="auditor"?`<div class="actions"><button data-act="fnd-create" data-id="${esc(eid)}">新規指摘</button></div>`:""}
+    ${cards||`<p class="muted">指摘がありません</p>`}</div>`;
+}
+function ownerName(uid){ const u=cache.users.find(x=>x.id===uid); return u?`${u.name}（${u.department}）`:uid.slice(0,12); }
+
+// ===================== 監査ログ =====================
+function auditLogHTML(){
+  const events=cache.events||[];
+  const usersOpts=cache.users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)}（${esc(u.department)}）</option>`).join("");
+  const actionKeys=Object.keys(ACTION_JA);
+  const rows=events.map(ev=>{
+    const actor=cache.users.find(u=>u.id===ev.actor_id);
+    const rawAction=ev.action.startsWith("permission_denied")?"permission_denied":ev.action;
+    return `<tr><td>${dateFmt(ev.occurred_at)}</td>
+      <td>${actor?`${esc(actor.name)}（${esc(actor.department)}）`:(ev.actor_id?esc(ev.actor_id.slice(0,14)):"—")}</td>
+      <td>${ACTION_JA[rawAction]||esc(ev.action)}${ev.action!==rawAction?` <span class="muted">(${esc(ev.action.split(":")[1])})</span>`:""}</td>
+      <td>${OBJ_JA[ev.object_type]||esc(ev.object_type)}/${esc(ev.object_id.slice(0,16))}</td>
+      <td>${RESULT_JA[ev.result]||esc(ev.result)}</td>
+      <td>${esc(ev.detail)}</td><td class="muted">${esc(ev.ip)}</td></tr>`;
+  }).join("");
+  return `<div class="card"><h2>監査ログ（追記専用）</h2>
+    <div class="filterbar">
+      <select id="log-actor" style="max-width:220px"><option value="">操作者（すべて）</option>${usersOpts}</select>
+      <select id="log-action" style="max-width:200px"><option value="">操作（すべて）</option>${actionKeys.map(k=>`<option value="${esc(k)}">${ACTION_JA[k]}</option>`).join("")}</select>
+      <select id="log-obj" style="max-width:180px"><option value="">対象（すべて）</option>${Object.entries(OBJ_JA).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
+      <select id="log-limit" style="max-width:120px"><option value="100">100件</option><option value="200">200件</option><option value="500">500件</option></select>
+      <button data-act="log-apply">絞り込み</button>
+    </div>
+    <div class="table-wrap"><table><tr><th>日時</th><th>操作者</th><th>操作</th><th>対象</th><th>結果</th><th>詳細</th><th>IP</th></tr>
+    ${rows||`<tr><td colspan="7" class="muted">ログがありません</td></tr>`}</table></div></div>`;
+}
+
+function loadingCard(){ return `<div class="card"><h2>読み込み中…</h2><p class="muted">データを取得しています。</p></div>`; }
+
+// ===================== ログイン =====================
 function renderLogin(){
   app.innerHTML=`<main class="login-wrap"><div class="login-box">
     <h2>🧭 監査業務・証跡管理</h2>
@@ -213,307 +644,270 @@ function renderLogin(){
     <label>メールアドレス</label><input id="le" type="email" autocomplete="username">
     <label>パスワード</label><input id="lp" type="password" autocomplete="current-password">
     <p class="error" id="lerr"></p>
-    <div class="actions"><button onclick="doLogin()">ログイン</button></div>
+    <div class="actions"><button id="login-btn">ログイン</button></div>
     <p class="hint" id="hint" style="display:none">テスト用: auditor@mirai.local / Mirai@2026pass（committee / ga / kensetsu / zaimu / admin も同様）</p>
   </div></main>`;
-  document.getElementById("lp").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
-  // テスト用ヒントは preview 環境のみ表示（本番にテスト認証情報を見せない）
+  const doLogin=async()=>{
+    try{ await A.login(document.getElementById("le").value, document.getElementById("lp").value); state.me=await A.me(); navigate("home"); render(); }
+    catch(e){ const el=document.getElementById("lerr"); if(el) el.textContent=e.message; }
+  };
+  document.getElementById("login-btn").onclick=doLogin;
+  document.getElementById("lp").addEventListener("keydown",e=>{ if(e.key==="Enter") doLogin(); });
   A.health().then(h=>{ if(h?.environment!=="production"){ const el=document.getElementById("hint"); if(el) el.style.display=""; } }).catch(()=>{});
 }
-async function doLogin(){
-  try{ await A.login(document.getElementById("le").value, document.getElementById("lp").value); state.me=await A.me(); render(); }
-  catch(e){ document.getElementById("lerr").textContent=e.message; }
-}
 
-function taskTable(tasks){
-  if(!tasks||!tasks.length) return `<p class="muted">現在、割り当てられたタスクはありません。</p>`;
-  const kind={engagement:"案件",request:"依頼",workpaper:"調書",finding:"指摘",remediation:"是正"};
-  return `<table><tr><th>種別</th><th>内容</th><th>状態</th><th>期限</th></tr>${
-    tasks.map(t=>`<tr><td>${kind[t.type]||t.type}</td><td>${esc(t.title)}</td><td><span class="badge ${BADGE[t.status]||"b-gray"}">${esc(t.status)}</span></td><td>${dateOnly(t.due_at)}</td></tr>`).join("")
-  }</table>`;
-}
-function renderHome(me){
-  return `<div class="card"><h2>自分のタスク・期限</h2>${taskTable(me.tasks)}</div>
-  <div class="card"><h2>監査の全体像</h2>
-    <p class="muted">年度監査計画 → 個別監査 → 証憑依頼・受領 → 監査手続・調書 → レビュー・承認 → 指摘・改善 → 完了・保存</p>
-    <div class="actions"><button onclick="state.view='plans';render()">監査計画へ</button>
-    <button class="sec" onclick="state.view='engagements';render()">監査案件一覧へ</button></div>
-  </div>`;
-}
+// ===================== アクション =====================
+function refreshRoute(){ render(); }
 
-let plansCache=[];
-function renderPlans(){
-  A.plans().then(r=>{plansCache=r.plans;render();}).catch(e=>alert(e.message));
-  return `<div class="card"><h2>年度監査計画</h2>
-    <div class="actions"><button onclick="showPlanForm()">新規計画</button></div>
-    <div id="planform"></div>
-    <table><tr><th>年度</th><th>計画名</th><th>状態</th><th>版</th><th>更新日</th></tr>${
-      plansCache.map(p=>`<tr style="cursor:pointer" onclick="state.view='plan';state.planId='${p.id}';render()">
-        <td>${esc(p.fiscal_year)}</td><td>${esc(p.title)}</td>
-        <td><span class="badge ${BADGE[p.status]||"b-gray"}">${esc(p.status)}</span></td><td>v${p.version}</td><td>${dateFmt(p.updated_at)}</td></tr>`).join("")
-    }${plansCache.length?"":`<tr><td colspan="5" class="muted">計画がありません</td></tr>`}</table></div>`;
-}
-function showPlanForm(){
-  const fy=new Date().getFullYear();
-  document.getElementById("planform").innerHTML=`
-    <div class="row"><div><label>年度</label><input id="pfy" value="${fy}"></div>
-    <div><label>計画名</label><input id="ptitle"></div></div>
-    <label>方針・重点領域</label><textarea id="ppolicy" rows="2"></textarea>
-    <div class="actions"><button onclick="createPlan()">作成</button></div>`;
-}
-async function createPlan(){
-  try{ await A.createPlan({fiscal_year:document.getElementById("pfy").value,title:document.getElementById("ptitle").value,policy:document.getElementById("ppolicy").value});
-    document.getElementById("planform").innerHTML=""; await A.plans().then(r=>plansCache=r.plans); render(); }
-  catch(e){alert(e.message);}
-}
-
-function renderPlan(id){
-  A.plan(id).then(r=>{plansCache.detail=r;render();}).catch(e=>alert(e.message));
-  const p=plansCache.detail?.plan;
-  if(!p) return `<div class="card">読み込み中…</div>`;
-  const engs=plansCache.detail.engagements||[];
-  return `<div class="card"><h2>${esc(p.fiscal_year)}年度 ${esc(p.title)}</h2>
-    <p class="muted">状態: <span class="badge ${BADGE[p.status]||"b-gray"}">${esc(p.status)}</span>（v${p.version}）</p>
-    <p>${esc(p.policy)||"（方針未記載）"}</p>
-    <div class="actions">
-      ${p.status==="draft"?`<button onclick="A.submitPlan('${p.id}').then(render)">承認申請</button>`:""}
-      ${p.status==="pending_approval"?`<button onclick="A.approvePlan('${p.id}').then(render)">承認</button>
-      <button class="sec" onclick="if(confirm('この計画を却下しますか？'))A.rejectPlan('${p.id}').then(render)">却下</button>`:""}
-      ${p.status==="rejected"?`<button onclick="A.submitPlan('${p.id}').then(render)">再申請</button>`:""}
-      <button class="sec" onclick="state.view='engagements';render()">案件一覧へ</button>
-    </div>
-    <h3 style="margin-top:1rem">関連案件</h3>
-    <table><tr><th>案件番号</th><th>名称</th><th>対象部門</th><th>状態</th></tr>${
-      engs.map(e=>`<tr style="cursor:pointer" onclick="state.view='engagement';state.engId='${e.id}';render()">
-        <td>${esc(e.engagement_no)}</td><td>${esc(e.title)}</td><td>${esc(e.department)}</td>
-        <td><span class="badge ${BADGE[e.status]||"b-gray"}">${esc(e.status)}</span></td></tr>`).join("")
-    }${engs.length?"":`<tr><td colspan="4" class="muted">案件がありません</td></tr>`}</table></div>`;
-}
-
-let engCache=[];
-function renderEngagements(){
-  Promise.all([A.engagements(),A.plans()]).then(([er,pr])=>{engCache.engs=er.engagements;engCache.plans=pr.plans;render();}).catch(e=>alert(e.message));
-  return `<div class="card"><h2>監査案件</h2>
-    ${engCache.plans?.length?`<div class="actions"><button onclick="showEngForm()">新規案件</button></div>`:""}
-    <div id="engform"></div>
-    <table><tr><th>案件番号</th><th>名称</th><th>対象部門</th><th>機密</th><th>状態</th></tr>${
-      (engCache.engs||[]).map(e=>`<tr style="cursor:pointer" onclick="state.view='engagement';state.engId='${e.id}';render()">
-        <td>${esc(e.engagement_no)}</td><td>${esc(e.title)}</td><td>${esc(e.department)}</td>
-        <td><span class="badge b-purple">${esc(e.classification)}</span></td>
-        <td><span class="badge ${BADGE[e.status]||"b-gray"}">${esc(e.status)}</span></td></tr>`).join("")
-    }${(engCache.engs||[]).length?"":`<tr><td colspan="5" class="muted">案件がありません</td></tr>`}</table></div>`;
-}
-function showEngForm(){
-  document.getElementById("engform").innerHTML=`
-    <div class="row">
-      <div><label>対象計画</label><select id="eplan">${(engCache.plans||[]).map(p=>`<option value="${p.id}">${esc(p.fiscal_year)} ${esc(p.title)}</option>`).join("")}</select></div>
-      <div><label>案件名</label><input id="etitle"></div>
-      <div><label>対象部門</label><input id="edept"></div>
-      <div><label>機密区分</label><select id="eclass"><option value="C1">C1 社内</option><option value="C2" selected>C2 監査限定</option><option value="C3">C3 特別機密</option></select></div>
-    </div>
-    <label>目的・範囲</label><textarea id="escope" rows="2"></textarea>
-    <label>評価基準</label><textarea id="ecrit" rows="2"></textarea>
-    <div class="actions"><button onclick="createEng()">作成</button></div>`;
-}
-async function createEng(){
+async function runAction(act){
+  const a=act.dataset.act, id=act.dataset.id||null;
   try{
-    await A.createEngagement({plan_id:document.getElementById("eplan").value,title:document.getElementById("etitle").value,
-      department:document.getElementById("edept").value,scope:document.getElementById("escope").value,
-      criteria:document.getElementById("ecrit").value,classification:document.getElementById("eclass").value});
-    document.getElementById("engform").innerHTML=""; const er=await A.engagements(); engCache.engs=er.engagements; render();
-  }catch(e){alert(e.message);}
+    switch(a){
+      case "hamburger": {
+        const sb=document.getElementById("sidebar"), bd=document.getElementById("side-backdrop");
+        sb?.classList.toggle("open"); bd?.classList.toggle("show"); break;
+      }
+      case "collapse-sidebar": {
+        const sb=document.getElementById("sidebar");
+        const collapsed=sb?.classList.toggle("collapsed");
+        localStorage.setItem("maw.sidebar.collapsed", collapsed?"1":"0"); break;
+      }
+      case "logout": await A.logout(); state.me=null; navigate("home"); render(); toast("ログアウトしました"); break;
+      case "password": openPasswordModal(); break;
+
+      // ---- 監査計画 ----
+      case "plan-create": openPlanForm(null); break;
+      case "plan-edit": { const p=cache.planDetail?.plan; if(p) openPlanForm(p); break; }
+      case "plan-submit": confirmModal("承認申請を提出します。よろしいですか？", async()=>{ await A.submitPlan(id); toast("承認申請しました"); refreshRoute(); }); break;
+      case "plan-approve": confirmModal("この計画を承認します。よろしいですか？", async()=>{ await A.approvePlan(id); toast("承認しました"); refreshRoute(); }); break;
+      case "plan-reject": confirmModal("この計画を却下します。よろしいですか？", async()=>{ await A.rejectPlan(id); toast("却下しました"); refreshRoute(); }); break;
+
+      // ---- 監査案件 ----
+      case "eng-create": openEngForm(null); break;
+      case "eng-edit": { const e=cache.engDetail?.engagement; if(e) openEngForm(e); break; }
+      case "eng-status": confirmModal(`案件状態を「${stLabel(act.dataset.status)}」へ変更します。よろしいですか？`, async()=>{ await A.setEngStatus(id, act.dataset.status); toast("状態を更新しました"); refreshRoute(); }); break;
+      case "eng-filter": cache.engFilter=act.dataset.status||null; render(); break;
+
+      // ---- 証憑依頼 ----
+      case "req-create": openReqForm(id); break;
+      case "req-send": confirmModal("依頼を被監査部門へ送付します。よろしいですか？", async()=>{ await A.sendRequest(id); toast("送付しました"); refreshRoute(); }); break;
+      case "req-receive": confirmModal("証憑を全件受領します。よろしいですか？", async()=>{ await A.receiveRequest(id); toast("受領しました"); refreshRoute(); }); break;
+      case "req-return": confirmModal("この依頼を差し戻します。よろしいですか？", async()=>{ await A.returnRequest(id); toast("差し戻しました"); refreshRoute(); }); break;
+      case "req-close": confirmModal("この依頼を締め切ります。よろしいですか？", async()=>{ await A.closeRequest(id); toast("締め切りました"); refreshRoute(); }); break;
+      case "evidence-submit": openEvidenceForm(id); break;
+
+      // ---- 監査調書 ----
+      case "wp-create": openWpForm(id,null); break;
+      case "wp-edit": { const w=(cache.engDetail?.workpapers||[]).find(x=>x.id===id); if(w) openWpForm(id,w); break; }
+      case "wp-review": confirmModal("レビューを依頼します。よろしいですか？", async()=>{ await A.reqReview(id); toast("レビューを依頼しました"); refreshRoute(); }); break;
+      case "wp-approve": confirmModal("この調書を確定（正本）とします。よろしいですか？", async()=>{ await A.approveWorkpaper(id); toast("確定しました"); refreshRoute(); }); break;
+      case "wp-return": confirmModal("この調書を差し戻します。よろしいですか？", async()=>{ await A.returnWorkpaper(id); toast("差し戻しました"); refreshRoute(); }); break;
+
+      // ---- 指摘・是正 ----
+      case "fnd-create": openFndForm(id); break;
+      case "fnd-confirm": confirmModal("指摘の事実確認（確定）を行います。よろしいですか？", async()=>{ await A.confirmFinding(id,{}); toast("確定しました"); refreshRoute(); }); break;
+      case "fnd-respond": openRespForm(id); break;
+      case "rem-create": openRemForm(id); break;
+      case "rem-verify": openVerifyForm(id); break;
+
+      // ---- 監査ログ ----
+      case "log-apply": {
+        const p=new URLSearchParams();
+        const actor=document.getElementById("log-actor")?.value, act2=document.getElementById("log-action")?.value,
+              obj=document.getElementById("log-obj")?.value, lim=document.getElementById("log-limit")?.value;
+        if(actor) p.set("actor_id",actor); if(act2) p.set("action",act2); if(obj) p.set("object_type",obj); if(lim) p.set("limit",lim);
+        const seq=renderSeq;
+        const ev=await A.auditEvents(p.toString()); if(seq===renderSeq){ cache.events=ev.events; render(); }
+        break;
+      }
+      default: break;
+    }
+  }catch(e){ toast(e.message,"err"); }
 }
 
-function renderEngagement(id, role, me){
-  A.engagement(id).then(r=>{engCache.detail=r;render();}).catch(e=>alert(e.message));
-  const d=engCache.detail; if(!d) return `<div class="card">読み込み中…</div>`;
-  const e=d.engagement, canEdit=role==="auditor"||role==="general_affairs";
-  const tabs=`<div class="actions" style="margin:.8rem 0">
-    <button class="sec" onclick="engTab='requests';render()">証憑依頼</button>
-    <button class="sec" onclick="engTab='workpapers';render()">監査調書</button>
-    <button class="sec" onclick="engTab='findings';render()">指摘・是正</button></div>`;
-  let body="";
-  if(engTab==="workpapers") body=renderWorkpapers(d.workpapers||[], e.id, role, me);
-  else if(engTab==="findings") body=renderFindings(d.findings||[], e.id, role);
-  else body=renderRequests(d.requests||[], e.id, role, me);
-  return `<div class="card"><h2>${esc(e.engagement_no)} ${esc(e.title)}</h2>
-    <p class="muted">対象部門: ${esc(e.department)} ｜ 機密: <span class="badge b-purple">${esc(e.classification)}</span> ｜
-    状態: <span class="badge ${BADGE[e.status]||"b-gray"}">${esc(e.status)}</span></p>
-    <p><strong>目的・範囲:</strong> ${esc(e.scope)||"—"}</p><p><strong>評価基準:</strong> ${esc(e.criteria)||"—"}</p>
-    ${canEdit?`<div class="actions">
-      ${e.status==="draft"?`<button onclick="A.setEngStatus('${e.id}','pending_approval').then(render)">承認申請</button>`:""}
-      ${e.status==="pending_approval"&&role==="audit_committee"?`<button onclick="A.setEngStatus('${e.id}','in_progress').then(render)">開始</button>`:""}
-      ${e.status==="in_progress"?`<button class="sec" onclick="A.setEngStatus('${e.id}','review').then(render)">レビューへ</button>`:""}
-      ${e.status==="review"&&role==="audit_committee"?`<button onclick="A.setEngStatus('${e.id}','reported').then(render)">報告確定</button>`:""}
-      ${e.status==="reported"&&role==="audit_committee"?`<button onclick="A.setEngStatus('${e.id}','closed').then(render)">完了</button>`:""}
-    </div>`:""}
-    ${tabs}${body}</div>`;
+// ===================== フォーム（モーダル） =====================
+function openPasswordModal(){
+  openModal({title:"パスワード変更",okLabel:"変更する",body:`
+    <label>現在のパスワード</label><input id="pw-cur" type="password" autocomplete="current-password">
+    <label>新しいパスワード（8文字以上・英字と数字を含む）</label><input id="pw-new" type="password" autocomplete="new-password">
+    <label>新しいパスワード（確認）</label><input id="pw-new2" type="password" autocomplete="new-password">`,
+    onOk:async(btn)=>{
+      const cur=document.getElementById("pw-cur").value, n1=document.getElementById("pw-new").value, n2=document.getElementById("pw-new2").value;
+      if(!cur||!n1){modalErr("すべての項目を入力してください");return;}
+      if(n1!==n2){modalErr("新しいパスワードが一致しません");return;}
+      if(!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(n1)){modalErr("8文字以上で英字と数字をそれぞれ1文字以上含めてください");return;}
+      btn.disabled=true;
+      try{ await A.changePassword(cur,n1); closeModal(); toast("パスワードを変更しました"); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
-let engTab="requests";
-window.engTab=engTab;
-
-function renderRequests(requests, eid, role, me){
-  const isAuditee=role==="auditee", canCreate=role==="auditor"||role==="general_affairs";
-  return `<div>
-    ${canCreate&&!isAuditee?`<div class="actions"><button onclick="showReqForm('${eid}')">新規依頼</button></div>`:""}
-    <div id="reqform"></div>
-    ${requests.map(r=>`
-      <div style="border:1px solid var(--line);border-radius:8px;padding:.8rem;margin:.6rem 0">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.4rem">
-          <strong>${esc(r.request_no)} — ${esc(r.item)}</strong>
-          <span class="badge ${BADGE[r.status]||"b-gray"}">${esc(r.status)}</span></div>
-        <p class="muted">依頼先: ${esc(r.recipient_department)} ｜ 期限: ${dateOnly(r.due_at)}</p>
-        <div class="actions">
-          ${r.status==="draft"&&canCreate&&!isAuditee?`<button onclick="A.sendRequest('${r.id}').then(()=>state.view='engagement',render)">送付</button>`:""}
-          ${canCreate&&!isAuditee&&["sent","partial"].includes(r.status)?`<button class="sec" onclick="A.receiveRequest('${r.id}').then(render)">全件受領</button>`:""}
-          ${canCreate&&!isAuditee&&["sent","partial","received"].includes(r.status)?`<button class="sec" onclick="if(confirm('この依頼を差し戻しますか？'))A.returnRequest('${r.id}').then(render)">差戻し</button>`:""}
-          ${canCreate&&!isAuditee&&["draft","sent","partial","received","returned"].includes(r.status)?`<button class="sec" onclick="if(confirm('この依頼を締め切りますか？'))A.closeRequest('${r.id}').then(render)">締切</button>`:""}
-          ${isAuditee&&r.recipient_department===me.user.department&&["sent","partial","returned"].includes(r.status)?
-            `<button onclick="showSubmitForm('${r.id}')">証憑を提出</button>`:""}
-        </div>
-        <div id="subform-${r.id}"></div>
-        ${(r.submissions||[]).length?`<div style="margin-top:.4rem"><p class="muted" style="margin:.2rem 0">提出履歴:</p>
-          ${r.submissions.map(s=>`<div class="muted" style="font-size:.85rem">📄 ${esc(s.file_name)}（ハッシュ: ${esc(s.content_hash.slice(0,12))}…）${dateFmt(s.submitted_at)}</div>`).join("")}</div>`:""}
-      </div>`).join("")}
-    ${requests.length?"":`<p class="muted">依頼がありません</p>`}</div>`;
+function openPlanForm(p){
+  openModal({title:p?"計画の編集":"新規監査計画",okLabel:p?"保存":"作成",body:`
+    <div class="row"><div><label>年度（西暦4桁）</label><input id="pfy" value="${p?esc(p.fiscal_year):new Date().getFullYear()}"></div>
+    <div><label>計画名</label><input id="ptitle" value="${p?esc(p.title):""}"></div></div>
+    <label>方針・重点領域</label><textarea id="ppolicy" rows="3">${p?esc(p.policy):""}</textarea>`,
+    onOk:async(btn)=>{
+      const d={fiscal_year:document.getElementById("pfy").value.trim(),title:document.getElementById("ptitle").value.trim(),policy:document.getElementById("ppolicy").value.trim()};
+      if(!/^\d{4}$/.test(d.fiscal_year)){modalErr("年度は西暦4桁で入力してください");return;}
+      if(!d.title){modalErr("計画名は必須です");return;}
+      btn.disabled=true;
+      try{ if(p) await A.updatePlan(p.id,d); else await A.createPlan(d); closeModal(); toast("保存しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
-function showReqForm(eid){
-  document.getElementById("reqform").innerHTML=`
+async function ensureUsers(){ if(cache.users.length) return; try{ const r=await A.users(); cache.users=r.users||[]; }catch{ /* 権限なし等は無視 */ } }
+function userOptions(roles){
+  const us=cache.users.filter(u=>!roles||roles.includes(u.role));
+  return us.map(u=>`<option value="${esc(u.id)}">${esc(u.name)}（${esc(u.department)} / ${ROLE[u.role]||esc(u.role)}）</option>`).join("");
+}
+function openEngForm(e){
+  const plansOpts=cache.plans.map(p=>`<option value="${esc(p.id)}" ${e&&e.plan_id===p.id?"selected":""}>${esc(p.fiscal_year)} ${esc(p.title)}</option>`).join("");
+  openModal({title:e?"案件の編集":"新規監査案件",okLabel:e?"保存":"作成",wide:true,body:`
+    ${e?"":`<label>対象計画</label><select id="eplan">${plansOpts}</select>`}
+    <div class="row"><div><label>案件名</label><input id="etitle" value="${e?esc(e.title):""}"></div>
+    <div><label>対象部門</label><input id="edept" value="${e?esc(e.department):""}"></div>
+    <div><label>機密区分</label><select id="eclass"><option value="C1" ${e&&e.classification==="C1"?"selected":""}>C1 社内</option><option value="C2" ${!e||e.classification==="C2"?"selected":""}>C2 監査限定</option><option value="C3" ${e&&e.classification==="C3"?"selected":""}>C3 特別機密</option></select></div></div>
+    <label>目的・範囲</label><textarea id="escope" rows="2">${e?esc(e.scope):""}</textarea>
+    <label>評価基準</label><textarea id="ecrit" rows="2">${e?esc(e.criteria):""}</textarea>`,
+    onOk:async(btn)=>{
+      const title=document.getElementById("etitle").value.trim(), dept=document.getElementById("edept").value.trim();
+      if(!title||!dept){modalErr("案件名と対象部門は必須です");return;}
+      const d={title,department:dept,classification:document.getElementById("eclass").value,scope:document.getElementById("escope").value.trim(),criteria:document.getElementById("ecrit").value.trim()};
+      btn.disabled=true;
+      try{
+        if(e){ await A.updateEngagement(e.id,d); }
+        else { const planId=document.getElementById("eplan")?.value; if(!planId){modalErr("対象計画を選択してください");btn.disabled=false;return;} d.plan_id=planId; await A.createEngagement(d); }
+        closeModal(); toast("保存しました"); refreshRoute();
+      }catch(err){ modalErr(err.message); btn.disabled=false; }
+    }});
+}
+function openReqForm(eid){
+  openModal({title:"新規証憑依頼",okLabel:"作成",body:`
     <div class="row"><div><label>依頼先部門</label><input id="rdept"></div>
     <div><label>期限</label><input id="rdue" type="date"></div></div>
     <label>依頼内容</label><textarea id="ritem" rows="2"></textarea>
     <label>目的</label><input id="rpurpose">
-    <div class="actions"><button onclick="createReq('${eid}')">作成</button></div>`;
+    <p class="hint">現時点では依頼の記録と状態管理のみです（メール等の通知は未実装。受入試験前に通知機能の実装を推奨）。</p>`,
+    onOk:async(btn)=>{
+      const item=document.getElementById("ritem").value.trim(), dept=document.getElementById("rdept").value.trim();
+      if(!item||!dept){modalErr("依頼内容と依頼先部門は必須です");return;}
+      btn.disabled=true;
+      try{ await A.createRequest(eid,{recipient_department:dept,item,purpose:document.getElementById("rpurpose").value.trim(),due_at:document.getElementById("rdue").value||null}); closeModal(); toast("依頼を作成しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
-async function createReq(eid){
-  try{ await A.createRequest(eid,{recipient_department:document.getElementById("rdept").value,item:document.getElementById("ritem").value,
-    purpose:document.getElementById("rpurpose").value,due_at:document.getElementById("rdue").value||null});
-    document.getElementById("reqform").innerHTML=""; render(); }catch(e){alert(e.message);}
+function openEvidenceForm(rid){
+  openModal({title:"証憑を提出",okLabel:"提出する",body:`
+    <label>ファイル名</label><input id="sf">
+    <label>補足</label><input id="sn">
+    <p class="hint">現行MVPはファイルの実アップロード未対応のため、ファイル名と記録ID（ハッシュ）を記録します。実ファイル保存・検証（R2 + SHA-256）は受入試験前に実装予定です（評価レポート F-05）。</p>`,
+    onOk:async(btn)=>{
+      const fn=document.getElementById("sf").value.trim();
+      if(!fn){modalErr("ファイル名は必須です");return;}
+      const note=document.getElementById("sn").value.trim();
+      const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fn+note+Date.now()));
+      const hash=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+      btn.disabled=true;
+      try{ await A.submitEvidence(rid,{file_name:fn,content_hash:hash,note}); closeModal(); toast("提出しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
-function showSubmitForm(rid){
-  document.getElementById("subform-"+rid).innerHTML=`
-    <div class="row"><div><label>ファイル名</label><input id="sf-${rid}"></div>
-    <div><label>補足</label><input id="sn-${rid}"></div></div>
-    <div class="actions"><button onclick="submitEvidence('${rid}')">証憑を提出</button></div>`;
+async function openWpForm(eid,w){
+  await ensureUsers();
+  openModal({title:w?"調書の編集（新版として保存）":"新規監査調書",okLabel:w?"新版を保存":"作成",wide:true,body:`
+    ${w?"":`<div class="row"><div><label>調書コード</label><input id="wcode"></div>
+    <div><label>調書名</label><input id="wtitle"></div></div>`}
+    <label>実施内容</label><textarea id="wbody" rows="5">${w?esc(w.versions?.[0]?.body||""):""}</textarea>
+    <label>結論</label><textarea id="wconc" rows="3">${w?esc(w.versions?.[0]?.conclusion||""):""}</textarea>
+    ${w?"":`<label>レビュー担当者（作成者と分離が必要）</label><select id="wrev"><option value="">未指定</option>${userOptions(["auditor","audit_committee"])}</select>`}`,
+    onOk:async(btn)=>{
+      btn.disabled=true;
+      try{
+        if(w){
+          await A.updateWorkpaper(w.id,{body:document.getElementById("wbody").value,conclusion:document.getElementById("wconc").value});
+        }else{
+          const code=document.getElementById("wcode").value.trim(), title=document.getElementById("wtitle").value.trim();
+          if(!code||!title){modalErr("調書コードと調書名は必須です");btn.disabled=false;return;}
+          const reviewer=document.getElementById("wrev")?.value||null;
+          if(reviewer===state.me.user.id){modalErr("作成者とレビュー者を分離してください");btn.disabled=false;return;}
+          await A.createWorkpaper(eid,{code,title,body:document.getElementById("wbody").value,conclusion:document.getElementById("wconc").value,reviewer_id:reviewer});
+        }
+        closeModal(); toast("保存しました"); refreshRoute();
+      }catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
-async function submitEvidence(rid){
-  try{
-    const fn=document.getElementById("sf-"+rid).value, note=document.getElementById("sn-"+rid).value;
-    const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fn+note+Date.now()));
-    const hash=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
-    await A.submitEvidence(rid,{file_name:fn,content_hash:hash,note}); render();
-  }catch(e){alert(e.message);}
-}
-
-function renderWorkpapers(wps, eid, role, me){
-  return `<div>
-    ${role==="auditor"?`<div class="actions"><button onclick="showWpForm('${eid}')">新規調書</button></div>`:""}
-    <div id="wpform"></div>
-    ${wps.map(w=>`
-      <div style="border:1px solid var(--line);border-radius:8px;padding:.8rem;margin:.6rem 0">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.4rem">
-          <strong>${esc(w.code)} — ${esc(w.title)}</strong>
-          <span class="badge ${BADGE[w.status]||"b-gray"}">${esc(w.status)}</span></div>
-        <p class="muted">最新版: v${(w.versions?.[0]?.version_no)||1}（${dateFmt(w.updated_at)}）</p>
-        <p style="white-space:pre-wrap;font-size:.92rem">${esc((w.versions?.[0]?.body||"").slice(0,200))}</p>
-        <div class="actions">
-          ${w.status!=="final"&&role==="auditor"?`<button onclick="A.reqReview('${w.id}').then(render)">レビュー依頼</button>`:""}
-          ${w.status==="review_requested"&&w.reviewer_id===me.user.id?`<button onclick="A.approveWorkpaper('${w.id}').then(render)">確定・署名</button>
-          <button class="sec" onclick="if(confirm('この調書を差し戻しますか？'))A.returnWorkpaper('${w.id}').then(render)">差戻し</button>`:""}
-        </div>
-      </div>`).join("")}
-    ${wps.length?"":`<p class="muted">調書がありません</p>`}</div>`;
-}
-function showWpForm(eid){
-  document.getElementById("wpform").innerHTML=`
-    <div class="row"><div><label>調書コード</label><input id="wcode"></div>
-    <div><label>調書名</label><input id="wtitle"></div></div>
-    <label>実施内容</label><textarea id="wbody" rows="3"></textarea>
-    <label>結論</label><textarea id="wconc" rows="2"></textarea>
-    <div class="actions"><button onclick="createWp('${eid}')">作成</button></div>`;
-}
-async function createWp(eid){
-  try{ await A.createWorkpaper(eid,{code:document.getElementById("wcode").value,title:document.getElementById("wtitle").value,
-    body:document.getElementById("wbody").value,conclusion:document.getElementById("wconc").value});
-    document.getElementById("wpform").innerHTML=""; render(); }catch(e){alert(e.message);}
-}
-
-function renderFindings(findings, eid, role){
-  return `<div>
-    ${role==="auditor"?`<div class="actions"><button onclick="showFndForm('${eid}')">新規指摘</button></div>`:""}
-    <div id="fndform"></div>
-    ${findings.map(f=>`
-      <div style="border:1px solid var(--line);border-radius:8px;padding:.8rem;margin:.6rem 0">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.4rem">
-          <strong>${esc(f.finding_no)} — ${esc(f.fact.slice(0,60))}</strong>
-          <span><span class="badge b-purple">${esc(f.severity)}</span> <span class="badge ${BADGE[f.status]||"b-gray"}">${esc(f.status)}</span></span></div>
-        <p class="muted">基準: ${esc(f.criterion)||"—"} ｜ 原因: ${esc(f.cause)||"—"} ｜ 影響: ${esc(f.impact)||"—"}</p>
-        <div class="actions">
-          ${f.status!=="completed"&&f.status!=="confirmed"&&role==="auditor"?`<button class="sec" onclick="A.confirmFinding('${f.id}',{}).then(render)">事実確認（確定）</button>`:""}
-          ${f.status==="confirmed"&&role==="auditee"?`<button onclick="showRespForm('${f.id}')">回答</button>`:""}
-          ${f.status==="confirmed"&&role==="auditor"?`<button onclick="showRemForm('${f.id}')">是正計画を登録</button>`:""}
-        </div>
-        <div id="resp-${f.id}"></div><div id="rem-${f.id}"></div>
-        ${(f.responses||[]).length?`<p class="muted" style="font-size:.85rem">回答: ${esc(f.responses[f.responses.length-1].response)}</p>`:""}
-        ${(f.remediations||[]).map(r=>`
-          <div style="border-top:1px dashed var(--line);margin-top:.4rem;padding-top:.4rem">
-            <p class="muted" style="margin:.2rem 0">📋 是正: ${esc(r.action)} ｜ 状態: <span class="badge ${BADGE[r.status]||"b-gray"}">${esc(r.status)}</span></p>
-            ${r.status!=="completed"&&role==="auditor"?`<button class="sec" onclick="showVerifyForm('${r.id}')">再確認・完了判定</button>`:""}
-            <div id="ver-${r.id}"></div>
-          </div>`).join("")}
-      </div>`).join("")}
-    ${findings.length?"":`<p class="muted">指摘がありません</p>`}</div>`;
-}
-function showFndForm(eid){
-  document.getElementById("fndform").innerHTML=`
+function openFndForm(eid){
+  openModal({title:"新規指摘",okLabel:"作成",body:`
     <label>事実</label><textarea id="ffact" rows="2"></textarea>
     <div class="row"><div><label>評価基準</label><input id="fcrit"></div>
     <div><label>重要度</label><select id="fsev"><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select></div></div>
-    <label>原因</label><input id="fcause"><label>影響</label><input id="fimpact">
-    <div class="actions"><button onclick="createFnd('${eid}')">作成</button></div>`;
+    <label>原因</label><input id="fcause"><label>影響</label><input id="fimpact">`,
+    onOk:async(btn)=>{
+      const fact=document.getElementById("ffact").value.trim();
+      if(!fact){modalErr("事実は必須です");return;}
+      btn.disabled=true;
+      try{ await A.createFinding(eid,{fact,criterion:document.getElementById("fcrit").value.trim(),cause:document.getElementById("fcause").value.trim(),impact:document.getElementById("fimpact").value.trim(),severity:document.getElementById("fsev").value}); closeModal(); toast("指摘を作成しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
-async function createFnd(eid){
-  try{ await A.createFinding(eid,{fact:document.getElementById("ffact").value,criterion:document.getElementById("fcrit").value,
-    cause:document.getElementById("fcause").value,impact:document.getElementById("fimpact").value,severity:document.getElementById("fsev").value});
-    document.getElementById("fndform").innerHTML=""; render(); }catch(e){alert(e.message);}
+function openRespForm(fid){
+  openModal({title:"指摘への回答",okLabel:"回答を提出",body:`
+    <label>回答・見解</label><textarea id="rr" rows="3"></textarea>
+    <label>異議（あれば）</label><input id="rd">`,
+    onOk:async(btn)=>{
+      const response=document.getElementById("rr").value.trim();
+      if(!response){modalErr("回答は必須です");return;}
+      btn.disabled=true;
+      try{ await A.respondFinding(fid,{response,disagreement:document.getElementById("rd").value.trim()}); closeModal(); toast("回答を提出しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
-function showRespForm(fid){
-  document.getElementById("resp-"+fid).innerHTML=`
-    <label>回答・見解</label><textarea id="rr-${fid}" rows="2"></textarea>
-    <label>異議（あれば）</label><input id="rd-${fid}">
-    <div class="actions"><button onclick="respondFnd('${fid}')">回答を提出</button></div>`;
+async function openRemForm(fid){
+  await ensureUsers();
+  openModal({title:"是正計画を登録",okLabel:"登録",body:`
+    <label>是正内容</label><textarea id="ra" rows="3"></textarea>
+    <div class="row"><div><label>是正責任者（選択）</label><select id="ro">${userOptions()}</select></div>
+    <div><label>期限</label><input id="rd" type="date"></div></div>`,
+    onOk:async(btn)=>{
+      const action=document.getElementById("ra").value.trim(), owner=document.getElementById("ro").value;
+      if(!action){modalErr("是正内容は必須です");return;}
+      if(!owner){modalErr("是正責任者を選択してください");return;}
+      btn.disabled=true;
+      try{ await A.createRemediation(fid,{action,owner_id:owner,due_at:document.getElementById("rd").value||null}); closeModal(); toast("是正計画を登録しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
-async function respondFnd(fid){
-  try{ await A.respondFinding(fid,{response:document.getElementById("rr-"+fid).value,disagreement:document.getElementById("rd-"+fid).value}); render(); }
-  catch(e){alert(e.message);}
-}
-function showRemForm(fid){
-  const owner=prompt("是正責任者（ユーザーID）:"); if(!owner)return;
-  const action=prompt("是正内容:"); if(!action)return;
-  const due=prompt("期限(YYYY-MM-DD):");
-  A.createRemediation(fid,{action,owner_id:owner,due_at:due||null}).then(render).catch(e=>alert(e.message));
-}
-function showVerifyForm(rid){
-  document.getElementById("ver-"+rid).innerHTML=`
-    <div class="row"><div><label>再確認結果</label><input id="vr-${rid}"></div>
-    <div><label>完了証憑</label><input id="ve-${rid}"></div></div>
-    <div class="actions"><button onclick="verifyRem('${rid}')">再確認・完了判定</button></div>`;
-}
-async function verifyRem(rid){
-  try{ await A.verifyRemediation(rid,{result:document.getElementById("vr-"+rid).value,evidence_note:document.getElementById("ve-"+rid).value}); render(); }
-  catch(e){alert(e.message);}
+function openVerifyForm(rid){
+  openModal({title:"再確認・完了判定",okLabel:"判定する",body:`
+    <label>再確認結果</label><input id="vr">
+    <label>完了証憑</label><input id="ve">
+    <p class="hint">完了・継続監視・再指摘の最終判断は監査役が行います（本操作は完了として記録します）。</p>`,
+    onOk:async(btn)=>{
+      const result=document.getElementById("vr").value.trim();
+      if(!result){modalErr("再確認結果は必須です");return;}
+      btn.disabled=true;
+      try{ await A.verifyRemediation(rid,{result,evidence_note:document.getElementById("ve").value.trim()}); closeModal(); toast("判定を記録しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
 
-function renderAuditLog(){
-  A.auditEvents().then(r=>{engCache.events=r.events;render();}).catch(e=>alert(e.message));
-  const events=engCache.events||[];
-  return `<div class="card"><h2>監査ログ（追記専用）</h2>
-    <table><tr><th>日時</th><th>操作者</th><th>操作</th><th>対象</th><th>結果</th><th>詳細</th></tr>${
-      events.map(ev=>`<tr><td>${dateFmt(ev.occurred_at)}</td><td>${esc(ev.actor_id)||"—"}</td><td>${esc(ev.action)}</td>
-        <td>${esc(ev.object_type)}/${esc(ev.object_id.slice(0,12))}</td><td>${esc(ev.result)}</td><td>${esc(ev.detail)}</td></tr>`).join("")
-    }${events.length?"":`<tr><td colspan="6" class="muted">ログがありません</td></tr>`}</table></div>`;
-}
+// ===================== イベント委譲（1箇所で全て処理） =====================
+document.addEventListener("click", e=>{
+  const navEl=e.target.closest("[data-nav]");
+  if(navEl){ e.preventDefault();
+    if(navEl.dataset.nav==="requests"&&navEl.dataset.extra) navigate("requests",null,null,navEl.dataset.extra);
+    else navigate(navEl.dataset.nav, navEl.dataset.id||null, navEl.dataset.tab||null);
+    return; }
+  const tabEl=e.target.closest("[data-tab]");
+  if(tabEl){ const r=parseHash(); if(r.id){ navigate("engagements", r.id, tabEl.dataset.tab); } return; }
+  const modalEl=e.target.closest("[data-modal]");
+  if(modalEl){ closeModal(); return; }
+  const actEl=e.target.closest("[data-act]");
+  if(actEl){ e.preventDefault(); runAction(actEl); return; }
+});
+window.addEventListener("hashchange", ()=>{ closeModal(); render(); });
 
+// ===================== 起動 =====================
 refreshMe();
 </script>
 </body>
