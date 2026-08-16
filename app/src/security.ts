@@ -98,11 +98,11 @@ export const REQUEST_TRANSITIONS: Record<string, string[]> = {
   closed: [],
 };
 
-/** 監査調書: レビュー依頼→確定 または 差戻し */
+/** 監査調書: レビュー依頼→確定 または 差戻し。差戻し後は再レビュー依頼を経て確定 */
 export const WORKPAPER_TRANSITIONS: Record<string, string[]> = {
   draft: ["review_requested", "returned"],
   review_requested: ["final", "returned"],
-  returned: ["review_requested", "final"],
+  returned: ["review_requested"],
   approved: ["final"],
   final: [],
 };
