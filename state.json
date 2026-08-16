@@ -15,8 +15,8 @@
     "review_blocker_count": 0,
     "security_issue_count": 0,
     "broken_link_count": 0,
-    "app_tests": 48,
-    "app_tests_pass": 48
+    "app_tests": 55,
+    "app_tests_pass": 55
   },
   "execution": {
     "max_duration_minutes": 300,
@@ -29,17 +29,17 @@
     "current_phase": "improvement",
     "stable": true,
     "verification": {
-      "link_check": "PASS (MD 84 / HTML 20)",
+      "link_check": "PASS (MD 88 / HTML 20)",
       "html_structure": "PASS (5 files)",
       "mermaid_blocks": "PASS",
       "secret_scan": "PASS (0 hits)",
       "app_typecheck": "PASS",
       "app_lint": "PASS (0 warnings)",
-      "app_test": "PASS (48/48: unit + integration incl. security/CSRF/rate-limit/transitions)",
+      "app_test": "PASS (55/55: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering)",
       "app_build": "PASS (web -> embedded -> typecheck)",
       "git": "作業branchでapp/実装・セキュリティ強化・CI/CD・文書整合をコミットしPR作成。main確定commitと検証済みcommitの一致確認後にpreview→productionデプロイ",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
-      "next_action": "①GitHubリモート追加とPR作成→CI実行→レビュー→mainマージ、②previewデプロイ（mvp-DB）とスモーク、③productionデプロイ（main-DB）と本番判定。正式運用（実データ）は監査役会・総務部・情報システム部門の承認と受入試験（UAT-01〜10）の完了が前提"
+      "next_action": "①PR（#1）をレビュー後mainへマージ、②CI/CDデプロイ自動化のため CLOUDFLARE_API_TOKEN を GitHub Actions secrets に設定、③受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
     }
   },
   "priority": {

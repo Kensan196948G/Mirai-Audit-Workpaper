@@ -21,6 +21,7 @@ import {
   ENGAGEMENT_TRANSITIONS,
   REQUEST_TRANSITIONS,
   WORKPAPER_TRANSITIONS,
+  FINDING_TRANSITIONS,
 } from "./security.ts";
 
 export interface AppDeps {
@@ -430,7 +431,7 @@ export function buildApp(deps: AppDeps) {
   });
 
   // ---------- 年度監査計画 ----------
-  app.get("/api/plans", requireAuth(), async (c) => {
+  app.get("/api/plans", requireAuth(), requirePerm("plan:view"), async (c) => {
     const ctx = c.get(CTX_KEY) as AppContext;
     const rows = await getRows<any>(
       ctx.db,
@@ -453,7 +454,7 @@ export function buildApp(deps: AppDeps) {
     return c.json({ id }, 201);
   });
 
-  app.get("/api/plans/:id", requireAuth(), async (c) => {
+  app.get("/api/plans/:id", requireAuth(), requirePerm("plan:view"), async (c) => {
     const ctx = c.get(CTX_KEY) as AppContext;
     const plan = await getRow<any>(
       ctx.db,
@@ -567,8 +568,12 @@ export function buildApp(deps: AppDeps) {
     const body = bodyOf(c);
     const plan = await getRow<any>(ctx.db, `SELECT * FROM audit_plans WHERE id = ?`, body.plan_id);
     if (!plan) throw new AppError(404, "NOT_FOUND", "計画が見つかりません");
-    // 年度ごとの連番
-    const cnt = await getRow<any>(ctx.db, `SELECT COUNT(*) AS n FROM engagements WHERE plan_id = ?`, body.plan_id);
+    // 年度ごとのグローバル連番（案件番号 AUD-YYYY-NNNN は年度単位で一意）
+    const cnt = await getRow<any>(
+      ctx.db,
+      `SELECT COUNT(*) AS n FROM engagements e JOIN audit_plans p ON p.id = e.plan_id WHERE p.fiscal_year = ?`,
+      plan.fiscal_year
+    );
     const seq = (cnt?.n ?? 0) + 1;
     const no = engagementNo(plan.fiscal_year, seq);
     const id = newId("eng");
@@ -650,7 +655,12 @@ export function buildApp(deps: AppDeps) {
     await checkEngagementAccess(ctx, engagement);
     const body = bodyOf(c);
     const plan = await getRow<any>(ctx.db, `SELECT fiscal_year FROM audit_plans WHERE id = ?`, engagement.plan_id);
-    const cnt = await getRow<any>(ctx.db, `SELECT COUNT(*) AS n FROM evidence_requests WHERE engagement_id = ?`, engagement.id);
+    // 依頼番号 REQ-YYYY-NNNN は年度単位で一意（年度グローバル連番）
+    const cnt = await getRow<any>(
+      ctx.db,
+      `SELECT COUNT(*) AS n FROM evidence_requests r JOIN engagements e ON e.id = r.engagement_id JOIN audit_plans p ON p.id = e.plan_id WHERE p.fiscal_year = ?`,
+      plan?.fiscal_year ?? fiscalYear()
+    );
     const seq = (cnt?.n ?? 0) + 1;
     const no = requestNo(plan?.fiscal_year ?? fiscalYear(), seq);
     const id = newId("req");
@@ -668,6 +678,7 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const r = await getRow<any>(ctx.db, `SELECT * FROM evidence_requests WHERE id = ?`, c.req.param("id"));
     if (!r) throw new AppError(404, "NOT_FOUND", "依頼が見つかりません");
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, r.engagement_id));
     assertTransition(REQUEST_TRANSITIONS, r.status, "sent", "証憑依頼");
     await run(ctx.db, `UPDATE evidence_requests SET status = 'sent', updated_at = ? WHERE id = ?`, nowIso(), r.id);
     await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "request_sent", objectType: "evidence_request", objectId: r.id, ip: ctx.ip });
@@ -678,6 +689,7 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const r = await getRow<any>(ctx.db, `SELECT * FROM evidence_requests WHERE id = ?`, c.req.param("id"));
     if (!r) throw new AppError(404, "NOT_FOUND", "依頼が見つかりません");
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, r.engagement_id));
     assertTransition(REQUEST_TRANSITIONS, r.status, "received", "証憑依頼");
     await run(ctx.db, `UPDATE evidence_requests SET status = 'received', updated_at = ? WHERE id = ?`, nowIso(), r.id);
     await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "request_received", objectType: "evidence_request", objectId: r.id, ip: ctx.ip });
@@ -688,6 +700,7 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const r = await getRow<any>(ctx.db, `SELECT * FROM evidence_requests WHERE id = ?`, c.req.param("id"));
     if (!r) throw new AppError(404, "NOT_FOUND", "依頼が見つかりません");
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, r.engagement_id));
     assertTransition(REQUEST_TRANSITIONS, r.status, "returned", "証憑依頼");
     await run(ctx.db, `UPDATE evidence_requests SET status = 'returned', updated_at = ? WHERE id = ?`, nowIso(), r.id);
     await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "request_returned", objectType: "evidence_request", objectId: r.id, ip: ctx.ip });
@@ -698,6 +711,7 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const r = await getRow<any>(ctx.db, `SELECT * FROM evidence_requests WHERE id = ?`, c.req.param("id"));
     if (!r) throw new AppError(404, "NOT_FOUND", "依頼が見つかりません");
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, r.engagement_id));
     assertTransition(REQUEST_TRANSITIONS, r.status, "closed", "証憑依頼");
     await run(ctx.db, `UPDATE evidence_requests SET status = 'closed', updated_at = ? WHERE id = ?`, nowIso(), r.id);
     await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "request_closed", objectType: "evidence_request", objectId: r.id, ip: ctx.ip });
@@ -753,6 +767,8 @@ export function buildApp(deps: AppDeps) {
     if (body.reviewer_id && body.reviewer_id === ctx.user!.id) {
       throw new AppError(409, "CONFLICT", "作成者とレビュー者を分離する必要があります");
     }
+    // レビュー者は案件メンバーとして追加（監査役・監査役会の場合）
+    if (body.reviewer_id) await addMemberIfAuditor(ctx, engagement.id, body.reviewer_id);
     const id = newId("wp");
     const ts = nowIso();
     await run(
@@ -785,6 +801,8 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const w = await getRow<any>(ctx.db, `SELECT * FROM workpapers WHERE id = ?`, c.req.param("id"));
     if (!w) throw new AppError(404, "NOT_FOUND", "調書が見つかりません");
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, w.engagement_id));
+    if (w.owner_id !== ctx.user!.id) throw new AppError(403, "FORBIDDEN", "作成者のみ調書を変更できます");
     if (w.status === "final" || w.status === "approved") throw new AppError(409, "VERSION_CONFLICT", "確定済みの調書は変更できません。追補版を作成してください");
     if (w.status === "review_requested") throw new AppError(409, "INVALID_TRANSITION", "レビュー中の調書は変更できません。差戻し後に修正してください");
     const body = bodyOf(c);
@@ -801,6 +819,8 @@ export function buildApp(deps: AppDeps) {
       vid, w.id, newVersionNo, newBody, newConclusion, hash, ctx.user!.id, nowIso()
     );
     if (body.reviewer_id !== undefined) {
+      if (body.reviewer_id === ctx.user!.id) throw new AppError(409, "CONFLICT", "作成者とレビュー者を分離する必要があります");
+      await addMemberIfAuditor(ctx, w.engagement_id, body.reviewer_id);
       await run(ctx.db, `UPDATE workpapers SET reviewer_id = ?, updated_at = ? WHERE id = ?`, body.reviewer_id, nowIso(), w.id);
     }
     await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "workpaper_updated", objectType: "workpaper", objectId: w.id, detail: `v${newVersionNo}`, ip: ctx.ip });
@@ -811,6 +831,8 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const w = await getRow<any>(ctx.db, `SELECT * FROM workpapers WHERE id = ?`, c.req.param("id"));
     if (!w) throw new AppError(404, "NOT_FOUND", "調書が見つかりません");
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, w.engagement_id));
+    if (w.owner_id !== ctx.user!.id) throw new AppError(403, "FORBIDDEN", "作成者のみレビュー依頼できます");
     assertTransition(WORKPAPER_TRANSITIONS, w.status, "review_requested", "監査調書");
     if (!w.reviewer_id) throw new AppError(400, "BAD_REQUEST", "レビュー担当者が設定されていません");
     if (w.reviewer_id === w.owner_id) throw new AppError(409, "CONFLICT", "作成者とレビュー者を分離する必要があります");
@@ -823,6 +845,7 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const w = await getRow<any>(ctx.db, `SELECT * FROM workpapers WHERE id = ?`, c.req.param("id"));
     if (!w) throw new AppError(404, "NOT_FOUND", "調書が見つかりません");
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, w.engagement_id));
     if (ctx.user!.id !== w.reviewer_id) throw new AppError(403, "FORBIDDEN", "レビュー担当者のみ確定できます");
     assertTransition(WORKPAPER_TRANSITIONS, w.status, "final", "監査調書");
     const latest = await getRow<any>(ctx.db, `SELECT * FROM workpaper_versions WHERE workpaper_id = ? ORDER BY version_no DESC LIMIT 1`, w.id);
@@ -836,6 +859,7 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const w = await getRow<any>(ctx.db, `SELECT * FROM workpapers WHERE id = ?`, c.req.param("id"));
     if (!w) throw new AppError(404, "NOT_FOUND", "調書が見つかりません");
+    await checkEngagementAccess(ctx, await loadEngagement(ctx, w.engagement_id));
     if (ctx.user!.id !== w.reviewer_id) throw new AppError(403, "FORBIDDEN", "レビュー担当者のみ差戻しできます");
     assertTransition(WORKPAPER_TRANSITIONS, w.status, "returned", "監査調書");
     await run(ctx.db, `UPDATE workpapers SET status = 'returned', updated_at = ? WHERE id = ?`, nowIso(), w.id);
@@ -864,7 +888,12 @@ export function buildApp(deps: AppDeps) {
     await checkEngagementAccess(ctx, engagement);
     const body = bodyOf(c);
     const plan = await getRow<any>(ctx.db, `SELECT fiscal_year FROM audit_plans WHERE id = ?`, engagement.plan_id);
-    const cnt = await getRow<any>(ctx.db, `SELECT COUNT(*) AS n FROM findings WHERE engagement_id = ?`, engagement.id);
+    // 指摘番号 FND-YYYY-NNNN は年度単位で一意（年度グローバル連番）
+    const cnt = await getRow<any>(
+      ctx.db,
+      `SELECT COUNT(*) AS n FROM findings f JOIN engagements e ON e.id = f.engagement_id JOIN audit_plans p ON p.id = e.plan_id WHERE p.fiscal_year = ?`,
+      plan?.fiscal_year ?? fiscalYear()
+    );
     const seq = (cnt?.n ?? 0) + 1;
     const no = findingNo(plan?.fiscal_year ?? fiscalYear(), seq);
     const id = newId("fnd");
@@ -883,10 +912,12 @@ export function buildApp(deps: AppDeps) {
     const f = await getRow<any>(ctx.db, `SELECT * FROM findings WHERE id = ?`, c.req.param("id"));
     if (!f) throw new AppError(404, "NOT_FOUND", "指摘が見つかりません");
     const engagement = await loadEngagement(ctx, f.engagement_id);
+    await checkEngagementAccess(ctx, engagement);
     // 被監査部門は自部門の案件のみ回答可能
     if (ctx.user!.role === "auditee" && engagement.department !== ctx.user!.department) {
       throw new AppError(403, "FORBIDDEN", "この指摘への回答権限がありません");
     }
+    assertTransition(FINDING_TRANSITIONS, f.status, "fact_check", "指摘");
     const body = bodyOf(c);
     const id = newId("fres");
     await run(
@@ -903,6 +934,9 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const f = await getRow<any>(ctx.db, `SELECT * FROM findings WHERE id = ?`, c.req.param("id"));
     if (!f) throw new AppError(404, "NOT_FOUND", "指摘が見つかりません");
+    const engagement = await loadEngagement(ctx, f.engagement_id);
+    await checkEngagementAccess(ctx, engagement);
+    assertTransition(FINDING_TRANSITIONS, f.status, "confirmed", "指摘");
     const body = bodyOf(c);
     await run(
       ctx.db,
@@ -918,6 +952,13 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const f = await getRow<any>(ctx.db, `SELECT * FROM findings WHERE id = ?`, c.req.param("id"));
     if (!f) throw new AppError(404, "NOT_FOUND", "指摘が見つかりません");
+    const engagement = await loadEngagement(ctx, f.engagement_id);
+    await checkEngagementAccess(ctx, engagement);
+    // 被監査部門は自部門の案件のみ是正計画を登録可能（監査役は全案件可）
+    if (ctx.user!.role === "auditee" && engagement.department !== ctx.user!.department) {
+      throw new AppError(403, "FORBIDDEN", "この指摘への是正登録権限がありません");
+    }
+    assertTransition(FINDING_TRANSITIONS, f.status, "remediated", "指摘");
     const body = bodyOf(c);
     const id = newId("rem");
     const ts = nowIso();
@@ -935,6 +976,9 @@ export function buildApp(deps: AppDeps) {
     const ctx = c.get(CTX_KEY) as AppContext;
     const r = await getRow<any>(ctx.db, `SELECT * FROM remediations WHERE id = ?`, c.req.param("id"));
     if (!r) throw new AppError(404, "NOT_FOUND", "是正計画が見つかりません");
+    const f = await getRow<any>(ctx.db, `SELECT * FROM findings WHERE id = ?`, r.finding_id);
+    if (f) await checkEngagementAccess(ctx, await loadEngagement(ctx, f.engagement_id));
+    assertTransition(FINDING_TRANSITIONS, f?.status ?? "", "completed", "指摘");
     const body = bodyOf(c);
     const ts = nowIso();
     await run(
@@ -963,16 +1007,21 @@ export function buildApp(deps: AppDeps) {
   });
 
   // ---------- 管理（シード・初期化） ----------
-  // preview/mvp/local のみ。本番環境では常に拒否。初期パスワードは環境変数 BOOTSTRAP_PASSWORD で上書き可能
+  // preview/mvp/local のみ。本番環境では常に拒否。初期パスワードは環境変数 BOOTSTRAP_PASSWORD が必須
   app.post("/api/admin/bootstrap", async (c) => {
     const ctx = c.get(CTX_KEY) as AppContext;
     if (deps.environment !== "preview" && deps.environment !== "mvp" && deps.environment !== "local") {
       throw new AppError(403, "FORBIDDEN", "本番ではbootstrapを実行できません");
     }
+    limiter(`bootstrap:${ctx.ip}`, 3, 60_000);
     const count = await getRow<any>(ctx.db, `SELECT COUNT(*) AS n FROM users`);
     if ((count?.n ?? 0) > 0) throw new AppError(409, "CONFLICT", "ユーザーが既に存在します");
+    // テスト環境であっても既定パスワードのハードコードを避け、BOOTSTRAP_PASSWORD を必須とする
+    if (!deps.bootstrapPassword) {
+      throw new AppError(403, "FORBIDDEN", "BOOTSTRAP_PASSWORD が未設定のため初期化できません");
+    }
     const ts = nowIso();
-    const bootstrapPassword = deps.bootstrapPassword ?? "Mirai@2026pass";
+    const bootstrapPassword = deps.bootstrapPassword;
     const users: Array<{ email: string; name: string; role: Role; department: string }> = [
       { email: "admin@mirai.local", name: "システム管理者", role: "admin", department: "情報システム部" },
       { email: "auditor@mirai.local", name: "監査役（山田）", role: "auditor", department: "監査役室" },

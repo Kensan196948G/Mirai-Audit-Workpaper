@@ -137,8 +137,22 @@ describe("integration: security", () => {
     assert.equal(res.status, 403);
   });
 
-  test("bootstrap works in preview when empty", async () => {
+  test("bootstrap works in preview when BOOTSTRAP_PASSWORD set and DB empty", async () => {
     // 空のDBを用意（ユーザーなし）
+    const { DatabaseSync } = await import("node:sqlite");
+    const { applySchema } = await import("./helpers.ts");
+    const dbRaw = new DatabaseSync(":memory:");
+    applySchema(dbRaw);
+    const { SyncDb } = await import("./helpers.ts");
+    const { buildApp: build } = await import("../../src/app.ts");
+    const app = build({ db: new SyncDb(dbRaw), environment: "preview", bootstrapPassword: "TestBootstrap2026!", getClientIp: () => "198.51.100.7" });
+    const res = await app.fetch(
+      new Request("http://localhost/api/admin/bootstrap", { method: "POST" })
+    );
+    assert.equal(res.status, 200);
+  });
+
+  test("bootstrap without BOOTSTRAP_PASSWORD is rejected in preview", async () => {
     const { DatabaseSync } = await import("node:sqlite");
     const { applySchema } = await import("./helpers.ts");
     const dbRaw = new DatabaseSync(":memory:");
@@ -149,7 +163,7 @@ describe("integration: security", () => {
     const res = await app.fetch(
       new Request("http://localhost/api/admin/bootstrap", { method: "POST" })
     );
-    assert.equal(res.status, 200);
+    assert.equal(res.status, 403);
   });
 });
 

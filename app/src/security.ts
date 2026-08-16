@@ -103,8 +103,19 @@ export const WORKPAPER_TRANSITIONS: Record<string, string[]> = {
   draft: ["review_requested", "returned"],
   review_requested: ["final", "returned"],
   returned: ["review_requested", "final"],
-  approved: [],
+  approved: ["final"],
   final: [],
+};
+
+/** 発見事項・指摘: draft→確認→是正→再確認→完了。completed/reissued は終端 */
+export const FINDING_TRANSITIONS: Record<string, string[]> = {
+  draft: ["fact_check", "confirmed"],
+  fact_check: ["confirmed", "draft", "remediated"],
+  confirmed: ["fact_check", "remediated"],
+  remediated: ["rechecked", "completed"],
+  rechecked: ["completed", "remediated"],
+  completed: [],
+  reissued: [],
 };
 
 /** 状態遷移を検証し、不正なら AppError(409) を投げる */

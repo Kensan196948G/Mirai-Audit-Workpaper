@@ -61,6 +61,7 @@ describe("unit: permissions", () => {
     assert.ok(hasPermission("admin", "admin:manage"));
     assert.ok(hasPermission("admin", "auditlog:view"));
     assert.ok(!hasPermission("admin", "plan:create"));
+    assert.ok(!hasPermission("admin", "plan:view"));
     assert.ok(!hasPermission("admin", "engagement:create"));
     assert.ok(!hasPermission("admin", "workpaper:create"));
   });

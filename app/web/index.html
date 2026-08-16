@@ -94,7 +94,7 @@ function render(){
   const nav=`
     <nav>
       <a class="${state.view==="home"?"active":""}" data-v="home">ホーム</a>
-      ${role!=="auditee"?`<a class="${state.view==="plans"||state.view==="plan"?"active":""}" data-v="plans">監査計画</a>`:""}
+      ${(role!=="auditee"&&role!=="admin")?`<a class="${state.view==="plans"||state.view==="plan"?"active":""}" data-v="plans">監査計画</a>`:""}
       <a class="${state.view==="engagements"||state.view==="engagement"?"active":""}" data-v="engagements">監査案件</a>
       ${(role==="auditor"||role==="admin")?`<a class="${state.view==="auditlog"?"active":""}" data-v="auditlog">監査ログ</a>`:""}
     </nav>`;

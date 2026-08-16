@@ -40,7 +40,7 @@ const ROLE_PERMISSIONS: Record<Role, Set<Permission>> = {
     "request:view", "request:submit", "finding:respond", "remediation:create",
   ]),
   admin: new Set([
-    "admin:manage", "auditlog:view", "plan:view", "engagement:view",
+    "admin:manage", "auditlog:view",
   ]),
 };
 
