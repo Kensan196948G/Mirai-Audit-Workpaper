@@ -19,23 +19,26 @@
 ## 2. デプロイ手順
 
 ### 2.1 前提
-- main ブランチの確定 commit が CI（.github/workflows/ci.yml）の型チェック・lint・テスト・ビルド・リンク検証を通過していること
+- main ブランチの確定 commit が CI（.github/workflows/ci.yml）の型チェック・lint・テスト・ビルド・リンク検証・シークレットスキャン（gitleaks）を通過していること
 - secrets: CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID が GitHub に設定されていること
+- デプロイワークフロー（.github/workflows/deploy.yml）は main への push で preview・MVP を自動デプロイし、production は workflow_dispatch の target=production 明示指定時のみ実行する（push では実行されない）
 
-### 2.2 preview デプロイ（main への push で自動実行）
-- 手動実行: GitHub Actions > Deploy > Run workflow（preview job）または下記ローカル手順
+### 2.2 preview / MVP デプロイ（main への push で自動実行）
+- 手動実行: GitHub Actions > Deploy > Run workflow（target: preview-mvp / preview / mvp を選択）または下記ローカル手順
 
 ```bash
 cd app
 npm ci
-npx wrangler d1 migrations apply mirai-audit-workpaper-mvp-db -c wrangler.jsonc   # 冪等
+npx wrangler d1 migrations apply mirai-audit-workpaper-mvp-db -c wrangler.jsonc   # 冪等（preview）
+npx wrangler d1 migrations apply mirai-audit-workpaper-mvp-db -c wrangler.mvp.jsonc  # 冪等（MVP・同一DB）
 npm run deploy:preview                                                            # build + wrangler deploy -c wrangler.jsonc
+npm run deploy:mvp                                                                 # build + wrangler deploy -c wrangler.mvp.jsonc
 ```
 
-- スモーク: `curl https://mirai-audit-workpaper-preview.kensan1969.workers.dev/api/health` で `{"status":"ok"}` を確認
+- スモーク: `curl https://mirai-audit-workpaper-preview.kensan1969.workers.dev/api/health` および `curl https://maw-mvp.mirai-dx-platform.com/api/health` で `"db":"ok"` を含む `{"status":"ok"}` を確認
 
-### 2.3 production デプロイ（手動実行のみ）
-- 受入条件（受入試験・権限棚卸し・復元試験・教育）クリア後に GitHub Actions > Deploy > Run workflow で実行
+### 2.3 production デプロイ（手動実行のみ・target=production）
+- 受入条件（受入試験・権限棚卸し・復元試験・教育）クリア後に GitHub Actions > Deploy > Run workflow（target: production）で実行
 - ローカル手順:
 
 ```bash
@@ -46,8 +49,8 @@ npm run deploy:production
 ```
 
 - スモーク:
-  - `curl https://mirai-audit-workpaper.kensan1969.workers.dev/api/health`
-  - `curl -s -o /dev/null -w '%{http_code}' -X POST https://mirai-audit-workpaper.kensan1969.workers.dev/api/admin/bootstrap` → `403` を確認（本番bootstrap無効）
+  - `curl https://maw.mirai-dx-platform.com/api/health` で `"db":"ok"` を含む `{"status":"ok"}` を確認
+  - `curl -s -o /dev/null -w '%{http_code}' -X POST https://maw.mirai-dx-platform.com/api/admin/bootstrap` → `403` を確認（本番bootstrap無効）
 
 ### 2.4 ロールバック
 - Cloudflare Dashboard > Workers > mirai-audit-workpaper > Deployments から直前のデプロイメントを Rollback（Workers の履歴ロールバック）
@@ -64,7 +67,7 @@ npm run deploy:production
 ## 4. 監視・アラート
 
 - オブザーバビリティ: wrangler 設定で有効（preview 1.0 / production 0.1 サンプリング）。Cloudflare Dashboard > Workers > 対象Worker > Logs / Metrics
-- ヘルスチェック: GET /api/health（status・environment・time）
+- ヘルスチェック: GET /api/health（status・environment・db死活・time。DB異常時は 503 + db:error）
 - アラート試験・SLI/SLO: 社内決定後に Uptime（Cloudflare）や外部監視で設定。初期安定化期間（1〜2週間）はエラー率・ログを日次確認
 
 ## 5. 障害対応
