@@ -38,7 +38,7 @@
       "app_test": "PASS (62/62: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format/health-readiness)",
       "app_build": "PASS (web -> embedded -> typecheck)",
       "deploy": "GitHub Actions Deploy ワークフローが動作（deploy.ymlのsecretsをifで使用していた不具合を修正・CHG-029）。main push で deploy-preview/deploy-mvp 成功、deploy-production は正しくスキップ。WebUI改修（CHG-026）を preview・MVP へ反映・実機確認済み（health db:ok・/api/users 200・/api/me の engagement_id・hashルーティング・ログイン/ログアウト）",
-      "git": "main にPR#1〜7 マージ済み。CI green。CLOUDFLARE_API_TOKEN を GitHub Actions secrets に設定しデプロイ自動化を有効化。default branch を main に修正。本番（maw.mirai-dx-platform.com）は pre-rework コードのまま受入基準クリア後（target=production）にデプロイ予定",
+      "git": "main にPR#1〜9 マージ済み。CI green。CLOUDFLARE_API_TOKEN を GitHub Actions secrets に設定しデプロイ自動化を有効化。default branch を main に修正。main に branch protection 設定（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。本番（maw.mirai-dx-platform.com）は pre-rework コードのまま受入基準クリア後（target=production）にデプロイ予定",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
       "next_action": "①受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て、本番へ target=production でデプロイ（CI/CDは動作確認済み）、②実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
     }
