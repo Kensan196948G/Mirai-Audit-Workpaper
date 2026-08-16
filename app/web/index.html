@@ -7,6 +7,7 @@
 <meta name="description" content="監査業務・証跡管理（Mirai Audit Workpaper）— 監査計画・証憑・調書・指摘・改善確認を証跡とともに管理します。" />
 <meta name="robots" content="noindex,nofollow" />
 <title>監査業務・証跡管理 | Mirai Audit Workpaper</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2310305c'/%3E%3Ctext x='16' y='23' font-size='17' text-anchor='middle' fill='%23ffffff' font-family='sans-serif'%3E%E7%9B%A3%3C/text%3E%3C/svg%3E" />
 <style>
 :root{
   /* ---- デザイントークン（監査・統治ブランド） ---- */
@@ -186,6 +187,12 @@ const A = {
   health:()=>api("/api/health"),
   me:()=>api("/api/me"),
   users:()=>api("/api/users"),
+  adminUsers:()=>api("/api/admin/users"),
+  createAdminUser:(d)=>api("/api/admin/users",{method:"POST",body:JSON.stringify(d)}),
+  updateAdminUser:(id,d)=>api(`/api/admin/users/${id}`,{method:"PUT",body:JSON.stringify(d)}),
+  deactivateUser:(id)=>api(`/api/admin/users/${id}/deactivate`,{method:"POST"}),
+  activateUser:(id)=>api(`/api/admin/users/${id}/activate`,{method:"POST"}),
+  resetUserPassword:(id,d)=>api(`/api/admin/users/${id}/password`,{method:"POST",body:JSON.stringify(d)}),
   plans:()=>api("/api/plans"),
   createPlan:(d)=>api("/api/plans",{method:"POST",body:JSON.stringify(d)}),
   plan:(id)=>api(`/api/plans/${id}`),
@@ -216,6 +223,7 @@ const A = {
   respondFinding:(id,d)=>api(`/api/findings/${id}/responses`,{method:"POST",body:JSON.stringify(d)}),
   confirmFinding:(id,d)=>api(`/api/findings/${id}/confirm`,{method:"POST",body:JSON.stringify(d)}),
   createRemediation:(fid,d)=>api(`/api/findings/${fid}/remediations`,{method:"POST",body:JSON.stringify(d)}),
+  remStatus:(id,s)=>api(`/api/remediations/${id}/status`,{method:"POST",body:JSON.stringify({status:s})}),
   verifyRemediation:(id,d)=>api(`/api/remediations/${id}/verify`,{method:"POST",body:JSON.stringify(d)}),
   auditEvents:(q="")=>api(`/api/audit-events?${q}`),
 };
@@ -241,10 +249,12 @@ const ACTION_JA={ // 監査ログの操作名（F-06 対応）
   submission_created:"証憑提出",submission_denied:"提出拒否",
   workpaper_created:"調書作成",workpaper_updated:"調書更新",workpaper_review_requested:"レビュー依頼",workpaper_approved:"調書確定",workpaper_returned:"調書差戻し",
   finding_created:"指摘作成",finding_response:"指摘回答",finding_confirmed:"指摘確定",
-  remediation_created:"是正登録",remediation_verified:"是正確認",
+  remediation_created:"是正登録",remediation_status:"是正進捗更新",remediation_verified:"是正確認",
+  remediation_status:"是正状態変更",
+  user_created:"ユーザー作成",user_updated:"ユーザー更新",user_deactivated:"ユーザー無効化",user_activated:"ユーザー再有効化",user_password_reset:"パスワード再設定",
   permission_denied:"権限拒否",
 };
-const OBJ_JA={auth:"認証",permission:"権限",audit_plan:"監査計画",engagement:"案件",evidence_request:"証憑依頼",submission:"証憑提出",workpaper:"調書",finding:"指摘",remediation:"是正"};
+const OBJ_JA={auth:"認証",permission:"権限",user:"ユーザー",audit_plan:"監査計画",engagement:"案件",evidence_request:"証憑依頼",submission:"証憑提出",workpaper:"調書",finding:"指摘",remediation:"是正"};
 const RESULT_JA={success:"成功",denied:"拒否",failed:"失敗"};
 // ロール別UI表示権限（サーバ側の権限判定は変更しない。表示出し分け専用）
 const UI_PERM={
@@ -252,7 +262,7 @@ const UI_PERM={
   audit_committee:["plan:view","engagement:view","request:view","auditlog:view"],
   general_affairs:["plan:view","engagement:view","engagement:update","request:view","request:create","request:send"],
   auditee:["engagement:view","request:view","request:submit","finding:respond"],
-  admin:["auditlog:view","users:view"],
+  admin:["auditlog:view","users:view","users:manage"],
 };
 const uiCan=(role,perm)=>(UI_PERM[role]||[]).includes(perm);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -267,7 +277,7 @@ const fmtDue=d=>{ if(!d) return "—"; const ov=isOverdue(d); return `<span clas
 
 // ===================== 状態・ルーティング =====================
 let state={me:null};
-const cache={plans:[],planDetail:null,engs:[],engDetail:null,requests:[],events:[],users:[],engFilter:null};
+const cache={plans:[],planDetail:null,engs:[],engDetail:null,requests:[],events:[],users:[],adminUsers:[],engFilter:null};
 let renderSeq=0;
 const app=document.getElementById("app");
 const modalRoot=document.getElementById("modal-root");
@@ -282,6 +292,7 @@ function parseHash(){
   else if(parts[0]==="engagements"){r.view="engagements";r.id=parts[1]||null;r.tab=parts[2]||null;}
   else if(parts[0]==="requests"){r.view="requests";r.extra=parts[1]||null;}
   else if(parts[0]==="auditlog"){r.view="auditlog";}
+  else if(parts[0]==="users"){r.view="users";}
   return r;
 }
 function buildHash(view,id,tab,extra){let h="#/"+view;if(id)h+="/"+id;if(tab)h+="/"+tab;if(extra&&!id&&!tab)h+="/"+extra;return h;}
@@ -346,6 +357,7 @@ function sidebarHTML(role,route){
     ${lnk("requests","証憑依頼","📩",uiCan(role,"request:view"))}
     <div class="side-group">管理</div>
     ${lnk("auditlog","監査ログ","🕓",uiCan(role,"auditlog:view"))}
+    ${lnk("users","ユーザー管理","👤",uiCan(role,"users:manage"))}
     <div class="side-foot">
       <button class="side-toggle" data-act="collapse-sidebar" title="サイドバーを折りたたむ"><span>◀ 折りたたむ</span><span style="display:none">▶</span></button>
     </div>
@@ -362,6 +374,7 @@ function breadcrumbHTML(route){
   else if(route.view==="engagement"){add("監査案件","engagements"); addCur(cache.engDetail?.engagement?.engagement_no||"案件"); if(route.tab) addCur(tabJA[route.tab]||route.tab);}
   else if(route.view==="requests"){add("証憑依頼","requests");}
   else if(route.view==="auditlog"){add("監査ログ","auditlog");}
+  else if(route.view==="users"){add("ユーザー管理","users");}
   else {addCur("ホーム");}
   return `<div class="breadcrumb">${parts.join("")}</div>`;
 }
@@ -390,6 +403,7 @@ function viewHTML(route){
   if(r.view==="engagements") return engagementsHTML();
   if(r.view==="requests") return requestsHTML(r.extra);
   if(r.view==="auditlog") return auditLogHTML();
+  if(r.view==="users") return usersHTML();
   return homeHTML();
 }
 // 各ビューのデータ取得（取得後に再描画）
@@ -410,6 +424,7 @@ function loadViewData(route){
         .then(([ev,us])=>{cache.events=ev.events; if(us) cache.users=us.users; done();})
         .catch(e=>toast(e.message,"err"));
     }
+    else if(route.view==="users") A.adminUsers().then(x=>{cache.adminUsers=x.users;done();}).catch(e=>toast(e.message,"err"));
   }catch(e){ toast(e.message,"err"); }
 }
 
@@ -503,7 +518,7 @@ function engagementHTML(id,tab){
     .map(([k,l])=>`<button class="sec ${(tab||"requests")===k?"on":""}" data-tab="${k}">${l}</button>`).join("");
   let body="";
   if((tab||"requests")==="workpapers") body=workpapersHTML(d.workpapers||[], e.id, role, state.me.user);
-  else if((tab||"requests")==="findings") body=findingsHTML(d.findings||[], e.id, role);
+  else if((tab||"requests")==="findings") body=findingsHTML(d.findings||[], e.id, role, state.me.user);
   else body=requestsHTMLForEng(d.requests||[], e.id, role, state.me.user);
   return `<div class="card"><h2>${esc(e.engagement_no)} ${esc(e.title)}</h2>
     <p class="muted">対象部門: ${esc(e.department)} ｜ 機密: <span class="badge b-purple">${esc(e.classification)}</span> ｜
@@ -581,7 +596,7 @@ function workpapersHTML(wps,eid,role,me){
 }
 
 // ===================== 指摘・是正 =====================
-function findingsHTML(findings,eid,role){
+function findingsHTML(findings,eid,role,me){
   const cards=findings.map(f=>{
     const btns=[];
     if(!["completed","confirmed"].includes(f.status)&&role==="auditor") btns.push(`<button class="sec" data-act="fnd-confirm" data-id="${esc(f.id)}">事実確認（確定）</button>`);
@@ -591,7 +606,12 @@ function findingsHTML(findings,eid,role){
     const rems=(f.remediations||[]).map(r=>`
       <div style="border-top:1px dashed var(--line);margin-top:.4rem;padding-top:.4rem">
         <p class="muted" style="margin:.2rem 0">📋 是正: ${esc(r.action)} ｜ 責任者: ${esc(ownerName(r.owner_id))} ｜ 期限: ${fmtDue(r.due_at)} ｜ 状態: ${badge(r.status)}</p>
-        ${r.status!=="completed"&&role==="auditor"?`<div class="actions"><button class="sec" data-act="rem-verify" data-id="${esc(r.id)}">再確認・完了判定</button></div>`:""}
+        <div class="actions">
+        ${r.status==="planned"&&(r.owner_id===me.id||role==="auditor")?`<button data-act="rem-status" data-id="${esc(r.id)}" data-status="in_progress">着手</button>`:""}
+        ${r.status==="in_progress"&&(r.owner_id===me.id||role==="auditor")?`<button data-act="rem-status" data-id="${esc(r.id)}" data-status="submitted">提出</button>`:""}
+        ${r.status==="submitted"&&r.owner_id===me.id?`<button class="sec" data-act="rem-status" data-id="${esc(r.id)}" data-status="in_progress">差戻し</button>`:""}
+        ${r.status!=="completed"&&role==="auditor"?`<button class="sec" data-act="rem-verify" data-id="${esc(r.id)}">再確認・完了判定</button>`:""}
+        </div>
       </div>`).join("");
     return `<div class="item-box">
       <div class="top"><strong>${esc(f.finding_no)} — ${esc(f.fact.slice(0,60))}</strong>
@@ -634,6 +654,29 @@ function auditLogHTML(){
     ${rows||`<tr><td colspan="7" class="muted">ログがありません</td></tr>`}</table></div></div>`;
 }
 
+// ===================== ユーザー管理（管理者のみ） =====================
+function usersHTML(){
+  const role=state.me.user.role;
+  if(!uiCan(role,"users:manage")) return `<div class="card"><h2>ユーザー管理</h2><p class="muted">この操作の権限がありません。</p></div>`;
+  const rows=cache.adminUsers.map(u=>`
+    <tr>
+      <td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.department)}</td>
+      <td>${ROLE[u.role]||esc(u.role)}</td>
+      <td>${u.active===1?`<span class="badge b-green">有効</span>`:`<span class="badge b-red">無効</span>`}</td>
+      <td>${dateFmt(u.updated_at)}</td>
+      <td>
+        <button class="sec" data-act="user-edit" data-id="${esc(u.id)}">編集</button>
+        ${u.active===1?`<button class="sec danger" data-act="user-deactivate" data-id="${esc(u.id)}">無効化</button>`:`<button class="sec" data-act="user-activate" data-id="${esc(u.id)}">再有効化</button>`}
+        <button class="sec" data-act="user-password" data-id="${esc(u.id)}">パスワード再設定</button>
+      </td>
+    </tr>`).join("");
+  return `<div class="card"><h2>ユーザー管理（利用者ライフサイクル）</h2>
+    <p class="muted">退職・異動時の権限剥奪（無効化）は即時反映され、既存セッションも無効になります（UAT-08対応）。監査ログに全操作が記録されます。</p>
+    <div class="actions"><button data-act="user-create">新規ユーザー作成</button></div>
+    <div class="table-wrap"><table><tr><th>氏名</th><th>メール</th><th>部門</th><th>ロール</th><th>状態</th><th>更新日</th><th>操作</th></tr>
+    ${rows||`<tr><td colspan="7" class="muted">ユーザーがありません</td></tr>`}</table></div></div>`;
+}
+
 function loadingCard(){ return `<div class="card"><h2>読み込み中…</h2><p class="muted">データを取得しています。</p></div>`; }
 
 // ===================== ログイン =====================
@@ -645,7 +688,7 @@ function renderLogin(){
     <label>パスワード</label><input id="lp" type="password" autocomplete="current-password">
     <p class="error" id="lerr"></p>
     <div class="actions"><button id="login-btn">ログイン</button></div>
-    <p class="hint" id="hint" style="display:none">テスト用: auditor@mirai.local / Mirai@2026pass（committee / ga / kensetsu / zaimu / admin も同様）</p>
+    <p class="hint" id="hint" style="display:none">テスト用ID（preview/MVPのみ）: admin / auditor / committee / ga / kensetsu / zaimu @mirai.local。パスワードは運用手順書を参照してください。</p>
   </div></main>`;
   const doLogin=async()=>{
     try{ await A.login(document.getElementById("le").value, document.getElementById("lp").value); state.me=await A.me(); navigate("home"); render(); }
@@ -708,6 +751,7 @@ async function runAction(act){
       case "fnd-confirm": confirmModal("指摘の事実確認（確定）を行います。よろしいですか？", async()=>{ await A.confirmFinding(id,{}); toast("確定しました"); refreshRoute(); }); break;
       case "fnd-respond": openRespForm(id); break;
       case "rem-create": openRemForm(id); break;
+      case "rem-status": confirmModal(`是正計画を「${stLabel(act.dataset.status)}」へ更新します。よろしいですか？`, async()=>{ await A.remStatus(id, act.dataset.status); toast("進捗を更新しました"); refreshRoute(); }); break;
       case "rem-verify": openVerifyForm(id); break;
 
       // ---- 監査ログ ----
@@ -720,9 +764,84 @@ async function runAction(act){
         const ev=await A.auditEvents(p.toString()); if(seq===renderSeq){ cache.events=ev.events; render(); }
         break;
       }
+      // ---- ユーザー管理 ----
+      case "user-create": openUserForm(); break;
+      case "user-edit": { const u=cache.adminUsers.find(x=>x.id===id); if(u) openUserEditForm(u); break; }
+      case "user-deactivate": confirmModal("このユーザーを無効化します（ログイン不可・既存セッション無効）。よろしいですか？", async()=>{ await A.deactivateUser(id); toast("無効化しました"); refreshRoute(); }); break;
+      case "user-activate": confirmModal("このユーザーを再有効化します。よろしいですか？", async()=>{ await A.activateUser(id); toast("再有効化しました"); refreshRoute(); }); break;
+      case "user-password": openUserPasswordForm(id); break;
       default: break;
     }
   }catch(e){ toast(e.message,"err"); }
+}
+
+// ===================== ユーザー管理フォーム =====================
+function openUserForm(){
+  openModal({title:"新規ユーザー作成",okLabel:"作成",wide:true,body:`
+    <div class="row">
+      <div><label>メールアドレス</label><input id="uemail" type="email" autocomplete="off"></div>
+      <div><label>氏名</label><input id="uname" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div><label>ロール</label><select id="urole">
+        <option value="auditor">監査役</option><option value="audit_committee">監査役会</option>
+        <option value="general_affairs">総務部</option><option value="auditee">被監査部門</option>
+        <option value="admin">システム管理者</option>
+      </select></div>
+      <div><label>部門</label><input id="udept" autocomplete="off"></div>
+    </div>
+    <label>初期パスワード（8文字以上・英字と数字を含む）</label><input id="upass" type="password" autocomplete="new-password">
+    <p class="hint">作成後の初回ログイン後、本人によるパスワード変更を推奨します。パスワードは画面・ログに表示されません。</p>`,
+    onOk:async(btn)=>{
+      const d={email:document.getElementById("uemail").value.trim(),name:document.getElementById("uname").value.trim(),
+        role:document.getElementById("urole").value,department:document.getElementById("udept").value.trim(),
+        password:document.getElementById("upass").value};
+      if(!d.email||!d.name||!d.department||!d.password){modalErr("すべての項目を入力してください");return;}
+      if(!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(d.password)){modalErr("パスワードは8文字以上で英字と数字をそれぞれ1文字以上含めてください");return;}
+      btn.disabled=true;
+      try{ await A.createAdminUser(d); closeModal(); toast("ユーザーを作成しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openUserPasswordForm(uid){
+  const u=cache.adminUsers.find(x=>x.id===uid);
+  openModal({title:`パスワード再設定（${u?esc(u.name):""}）`,okLabel:"再設定",body:`
+    <label>新しいパスワード（8文字以上・英字と数字を含む）</label><input id="upass2" type="password" autocomplete="new-password">
+    <p class="hint">再設定後、対象ユーザーの全セッションが無効になります。</p>`,
+    onOk:async(btn)=>{
+      const p=document.getElementById("upass2").value;
+      if(!p){modalErr("パスワードを入力してください");return;}
+      if(!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(p)){modalErr("パスワードは8文字以上で英字と数字をそれぞれ1文字以上含めてください");return;}
+      btn.disabled=true;
+      try{ await A.resetUserPassword(uid,{new_password:p}); closeModal(); toast("パスワードを再設定しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
+}
+function openUserEditForm(u){
+  openModal({title:`ユーザー編集（${esc(u.name)}）`,okLabel:"保存",wide:true,body:`
+    <div class="row">
+      <div><label>メールアドレス（変更不可）</label><input value="${esc(u.email)}" disabled></div>
+      <div><label>氏名</label><input id="ue-name" value="${esc(u.name)}" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div><label>ロール</label><select id="ue-role">
+        ${Object.entries(ROLE).map(([k,v])=>`<option value="${k}" ${u.role===k?"selected":""}>${v}</option>`).join("")}
+      </select></div>
+      <div><label>部門</label><input id="ue-dept" value="${esc(u.department)}" autocomplete="off"></div>
+    </div>
+    <label>有効（ログイン可）</label><input id="ue-active" type="checkbox" ${u.active===1?"checked":""} style="width:auto">
+    <label>パスワード再設定（変更する場合のみ入力）</label><input id="ue-pass" type="password" autocomplete="new-password">
+    <p class="hint">自分自身の無効化・ロール変更・パスワード再設定はできません。無効化時は既存セッションが無効になります。</p>`,
+    onOk:async(btn)=>{
+      const d={name:document.getElementById("ue-name").value.trim(),role:document.getElementById("ue-role").value,
+        department:document.getElementById("ue-dept").value.trim(),active:document.getElementById("ue-active").checked};
+      const p=document.getElementById("ue-pass").value;
+      if(!d.name){modalErr("氏名は必須です");return;}
+      if(p){ if(!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(p)){modalErr("パスワードは8文字以上で英字と数字をそれぞれ1文字以上含めてください");return;} d.new_password=p; }
+      btn.disabled=true;
+      try{ await A.updateAdminUser(u.id,d); closeModal(); toast("ユーザーを更新しました"); refreshRoute(); }
+      catch(e){ modalErr(e.message); btn.disabled=false; }
+    }});
 }
 
 // ===================== フォーム（モーダル） =====================

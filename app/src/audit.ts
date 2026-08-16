@@ -59,11 +59,13 @@ export async function queryAuditEvents(
     where.push("action = ?");
     params.push(opts.action);
   }
+  // limit は 1〜500 にクランプ（負値や 0 で無制限・全件取得にならないようにする）
+  const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 100), 1), 500);
   const sql =
     `SELECT id, occurred_at, actor_id, action, object_type, object_id, result, detail, ip
      FROM audit_events` +
     (where.length ? ` WHERE ${where.join(" AND ")}` : "") +
-    ` ORDER BY occurred_at DESC LIMIT ${Math.min(opts.limit ?? 100, 500)}`;
+    ` ORDER BY occurred_at DESC LIMIT ${limit}`;
   const rows = await db.prepare(sql).bind(...params).all();
   return rows.results;
 }

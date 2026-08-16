@@ -49,6 +49,10 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
+      - name: 依存関係・脆弱性スキャン（npm audit）
+        run: npm audit --audit-level=high
+      - name: Wrangler 型定義の整合確認
+        run: npx wrangler types --check
       - name: テスト（単体・統合）
         run: npm test
       - name: ビルド（web + 埋め込み + 型チェック）

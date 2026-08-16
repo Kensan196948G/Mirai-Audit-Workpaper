@@ -9,9 +9,7 @@
     "head_sampling_rate": 1
   },
   "vars": {
-    "ENVIRONMENT": "mvp",
-    // テスト環境用の初期パスワード（preview/mvp/local のみ使用。本番は未使用・bootstrap拒否）
-    "BOOTSTRAP_PASSWORD": "Mirai@2026pass"
+    "ENVIRONMENT": "mvp"
   },
   "d1_databases": [
     {
