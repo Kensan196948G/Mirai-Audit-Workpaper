@@ -12,14 +12,15 @@
 
 - 技術: Cloudflare Workers（Hono）+ D1（SQLite）+ ネイティブHTML/JS SPA（TypeScript・デザインシステム適用）
 - 機能: 認証（セッションCookie）、ロール別権限（監査役・監査役会・総務部・被監査部門・管理者）、年度計画の承認フロー、個別監査案件、証憑依頼・提出・受領、監査調書（版管理・レビュー・確定）、指摘・是正・フォローアップ（進捗追跡含む）、監査ログ（追記専用）、ダッシュボード、管理者ユーザー管理（作成・更新・無効化・パスワード再設定）
-- 検証: 型チェック・lint・テスト（76件）・ビルド・リンク検証 すべてPASS
+- 検証: 型チェック・lint・テスト（78件）・ビルド・リンク検証 すべてPASS
 - セキュリティ: CSRF対策、レート制限、Cookie Secure、セキュリティヘッダー（CSP・HSTS・no-store）、環境分離（preview/MVP/production）、bootstrapは本番で無効、テスト用パスワードはGit外のSecretsで管理
+- 情報開示の最小化: 被監査部門は自部門宛の証憑依頼・提出記録と確定後の指摘・是正のみ閲覧でき、監査調書・内部所見・他部門の依頼はAPI・画面とも非表示（R-01対応）
 - 稼働URL:
   - 🧪 preview（内部検証）: https://mirai-audit-workpaper-preview.kensan1969.workers.dev
   - 🚀 MVP: https://maw-mvp.mirai-dx-platform.com
   - 🏭 本番: https://maw.mirai-dx-platform.com
 - 詳細: [実装計画](docs/実装計画.md)、[実装・導入バックログ](docs/実装・導入バックログ.md)、[アプリ運用・障害対応Runbook](docs/アプリ運用・障害対応Runbook.md)
-- ✅ 本番デプロイ済み（2026-08-16・main f86acd5 相当の検証済みコード。health db:ok・bootstrap無効403・ヘッダー確認済み。本番DBはスキーマのみ・ユーザー0件）
+- ✅ 本番デプロイ済み（2026-08-16・検証済みコード。health db:ok・bootstrap無効403・ヘッダー確認済み。本番DBはスキーマのみ・ユーザー0件。最新の是正反映は変更履歴 CHG-035 参照）
 - ⚠️ 本番（実データ）運用には、監査役会・総務部・情報システム部門の承認と受入試験の完了が必要です。テスト用ログイン情報は開発環境（preview/MVP）専用で、パスワードはCloudflare Secretsで管理します（Git・画面に表示しません）。
 
 ```mermaid

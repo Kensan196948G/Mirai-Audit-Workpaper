@@ -15,8 +15,8 @@
     "review_blocker_count": 0,
     "security_issue_count": 0,
     "broken_link_count": 0,
-    "app_tests": 76,
-    "app_tests_pass": 76
+    "app_tests": 78,
+    "app_tests_pass": 78
   },
   "execution": {
     "max_duration_minutes": 300,
@@ -35,12 +35,12 @@
       "secret_scan": "PASS (0 hits・CIにgitleaks追加)",
       "app_typecheck": "PASS",
       "app_lint": "PASS (0 warnings)",
-      "app_test": "PASS (76/76: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format/health-readiness/admin-users/remediation-status/audit-limit/session-invalidation)",
+      "app_test": "PASS (78/78: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format/health-readiness/admin-users/remediation-status/audit-limit/session-invalidation/auditee-scoping)",
       "app_build": "PASS (web -> embedded -> typecheck)",
-      "deploy": "main push で preview/MVP 自動デプロイ成功（CHG-031〜033 反映・ログイン新旧パスワード確認・HSTS/no-store・favicon・ユーザー管理UI）。本番は workflow_dispatch target=production でデプロイ成功（CHG-034: run 31933385390・deployment c0734b06・health db:ok・bootstrap 403・/api/me 401・DB 0ユーザー）。初回は D1 export の一時エラー（10001）で再実行により成功",
-      "git": "main にPR#1〜11 マージ済み（CHG-031〜033）。CI green（app/docs/secretscan）・npm audit 0件・gitleaks 0件。branch protection 有効（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。本番デプロイ済み",
+      "deploy": "CHG-031〜034 は preview/MVP 自動デプロイ・本番デプロイ済み（deployment c0734b06）。CHG-035（被監査部門の閲覧範囲最小化・dry-run・バックアップ再試行）は PR マージ後の preview/MVP/本番反映を CHG-036 で記録予定",
+      "git": "main にPR#1〜12 マージ済み。CI green（app/docs/secretscan）・npm audit 0件・gitleaks 0件。branch protection 有効（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。CHG-035 は PR#13 で反映予定",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
-      "next_action": "①初期安定化監視（1〜2週間のエラー率・ログ・メトリクス日次確認）②実アカウントのプロビジョニング（BL-09: 初回管理者はRunbook §3.1のCLI手順、以降はユーザー管理UI）と受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育 ③正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
+      "next_action": "①CHG-035 の PR#13 を CI green 後にマージし preview/MVP 自動デプロイ→本番 workflow_dispatch で反映・スモーク（CHG-036）②初期安定化監視（1〜2週間のエラー率・ログ・メトリクス日次確認）③実アカウントのプロビジョニング（BL-09: 初回管理者はRunbook §3.1のCLI手順、以降はユーザー管理UI）と受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育 ④正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
     }
   },
   "priority": {

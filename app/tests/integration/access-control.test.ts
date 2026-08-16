@@ -241,3 +241,122 @@ describe("integration: fiscal-year global numbering (P1-6)", () => {
     assert.match(eng2.engagement_no, /^AUD-2026-\d{4}$/);
   });
 });
+
+describe("integration: auditee information scoping (R-01)", () => {
+  test("auditee detail hides workpapers/members/scope and filters requests/findings", async () => {
+    const app = await buildTestApp();
+    const a1 = await login(app, "auditor1@test.local", "TestPass2026!");
+    const kensetsu = await login(app, "kensetsu@test.local", "TestPass2026!");
+    const plan = await createPlan(app, a1);
+    const eng = await createEngagement(app, a1, plan.id, "建設部");
+
+    // 自部門宛・他部門宛の依頼を作成
+    for (const [dept, item] of [["建設部", "工事契約書"], ["財務部", "決算資料"]] as const) {
+      const res = await authedFetch(app, a1, `/api/engagements/${eng.id}/requests`, {
+        method: "POST",
+        body: JSON.stringify({ recipient_department: dept, item, purpose: "", due_at: null }),
+      });
+      assert.equal(res.status, 201);
+    }
+    // 調書を作成
+    const wpRes = await authedFetch(app, a1, `/api/engagements/${eng.id}/workpapers`, {
+      method: "POST",
+      body: JSON.stringify({ code: "WP-SECRET", title: "内部調書", body: "内部所見", conclusion: "" }),
+    });
+    assert.equal(wpRes.status, 201);
+    const wp = (await wpRes.json()) as { id: string };
+    // 指摘2件（draft・confirmed）
+    const f1Res = await authedFetch(app, a1, `/api/engagements/${eng.id}/findings`, {
+      method: "POST",
+      body: JSON.stringify({ fact: "未確定の所見", criterion: "", severity: "medium" }),
+    });
+    const f1 = (await f1Res.json()) as { id: string };
+    const f2Res = await authedFetch(app, a1, `/api/engagements/${eng.id}/findings`, {
+      method: "POST",
+      body: JSON.stringify({ fact: "確定済みの指摘", criterion: "決裁規程", severity: "high" }),
+    });
+    const f2 = (await f2Res.json()) as { id: string };
+    assert.equal((await authedFetch(app, a1, `/api/findings/${f2.id}/confirm`, { method: "POST", body: JSON.stringify({ severity: "high" }) })).status, 200);
+
+    // 被監査部門の案件詳細: 内部情報は非開示・自部門依頼・確定指摘のみ
+    const detailRes = await authedFetch(app, kensetsu, `/api/engagements/${eng.id}`);
+    assert.equal(detailRes.status, 200);
+    const detail = (await detailRes.json()) as {
+      engagement: { scope: string | null; criteria: string | null };
+      members: unknown[];
+      workpapers: unknown[];
+      requests: Array<{ recipient_department: string }>;
+      findings: Array<{ id: string; status: string }>;
+    };
+    assert.equal(detail.engagement.scope, null);
+    assert.equal(detail.engagement.criteria, null);
+    assert.equal(detail.members.length, 0);
+    assert.equal(detail.workpapers.length, 0);
+    assert.equal(detail.requests.length, 1);
+    assert.equal(detail.requests[0]!.recipient_department, "建設部");
+    assert.equal(detail.findings.length, 1);
+    assert.equal(detail.findings[0]!.status, "confirmed");
+    assert.ok(!detail.findings.some((f) => f.id === f1.id));
+
+    // 案件一覧でも内部評価（scope/criteria）は非開示
+    const listRes = await authedFetch(app, kensetsu, "/api/engagements");
+    const listBody = (await listRes.json()) as { engagements: Array<{ scope: string | null; criteria: string | null }> };
+    assert.equal(listBody.engagements.length, 1);
+    assert.equal(listBody.engagements[0]!.scope, null);
+    assert.equal(listBody.engagements[0]!.criteria, null);
+
+    // 調書APIは403・拒否ログが残る
+    const wpList = await authedFetch(app, kensetsu, `/api/engagements/${eng.id}/workpapers`);
+    assert.equal(wpList.status, 403);
+    const wpDetail = await authedFetch(app, kensetsu, `/api/workpapers/${wp.id}`);
+    assert.equal(wpDetail.status, 403);
+    const events = await authedFetch(app, a1, "/api/audit-events?action=workpaper_access_denied");
+    const ev = (await events.json()) as { events: Array<{ result: string }> };
+    assert.ok(ev.events.some((e) => e.result === "denied"));
+
+    // 指摘一覧APIも確定以降のみ
+    const flist = await authedFetch(app, kensetsu, `/api/engagements/${eng.id}/findings`);
+    const fbody = (await flist.json()) as { findings: Array<{ id: string; status: string }> };
+    assert.equal(fbody.findings.length, 1);
+    assert.equal(fbody.findings[0]!.status, "confirmed");
+  });
+
+  test("remediation can only be registered after finding is confirmed", async () => {
+    const app = await buildTestApp();
+    const a1 = await login(app, "auditor1@test.local", "TestPass2026!");
+    const kensetsu = await login(app, "kensetsu@test.local", "TestPass2026!");
+    const plan = await createPlan(app, a1);
+    const eng = await createEngagement(app, a1, plan.id, "建設部");
+    const fndRes = await authedFetch(app, a1, `/api/engagements/${eng.id}/findings`, {
+      method: "POST",
+      body: JSON.stringify({ fact: "承認漏れ", criterion: "決裁規程", severity: "high" }),
+    });
+    const fnd = (await fndRes.json()) as { id: string };
+    const meRes = await authedFetch(app, kensetsu, "/api/me");
+    const me = (await meRes.json()) as { user: { id: string } };
+    const kensetsuId = me.user.id;
+
+    // draft のまま是正登録 → 409
+    assert.equal((await authedFetch(app, a1, `/api/findings/${fnd.id}/remediations`, {
+      method: "POST",
+      body: JSON.stringify({ action: "是正", owner_id: kensetsuId, due_at: null }),
+    })).status, 409);
+
+    // 回答（draft→fact_check）後に確認せず是正登録 → 409
+    assert.equal((await authedFetch(app, kensetsu, `/api/findings/${fnd.id}/responses`, {
+      method: "POST",
+      body: JSON.stringify({ response: "改善します", disagreement: "" }),
+    })).status, 201);
+    assert.equal((await authedFetch(app, a1, `/api/findings/${fnd.id}/remediations`, {
+      method: "POST",
+      body: JSON.stringify({ action: "是正", owner_id: kensetsuId, due_at: null }),
+    })).status, 409);
+
+    // 監査役が確定 → 是正登録可能
+    assert.equal((await authedFetch(app, a1, `/api/findings/${fnd.id}/confirm`, { method: "POST", body: JSON.stringify({ severity: "high" }) })).status, 200);
+    assert.equal((await authedFetch(app, a1, `/api/findings/${fnd.id}/remediations`, {
+      method: "POST",
+      body: JSON.stringify({ action: "承認フロー再設計", owner_id: kensetsuId, due_at: "2026-12-31" }),
+    })).status, 201);
+  });
+});
