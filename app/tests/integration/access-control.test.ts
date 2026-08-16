@@ -90,6 +90,29 @@ describe("integration: access control (P1-1..P1-4)", () => {
     assert.equal((await authedFetch(app, a1, `/api/requests/${req.id}/send`, { method: "POST" })).status, 200);
   });
 
+  test("non-member auditor cannot submit evidence to another engagement's request", async () => {
+    const app = await buildTestApp();
+    const a1 = await login(app, "auditor1@test.local", "TestPass2026!");
+    const a2 = await login(app, "auditor2@test.local", "TestPass2026!");
+    const plan = await createPlan(app, a1);
+    const eng = await createEngagement(app, a1, plan.id);
+    const reqRes = await authedFetch(app, a1, `/api/engagements/${eng.id}/requests`, {
+      method: "POST",
+      body: JSON.stringify({ recipient_department: "建設部", item: "契約書一覧", purpose: "", due_at: null }),
+    });
+    const req = (await reqRes.json()) as { id: string };
+    // a2（非メンバー）は ID を知っていても提出できない（他案件への書き込み防止）
+    const res = await authedFetch(app, a2, `/api/requests/${req.id}/submissions`, {
+      method: "POST",
+      body: JSON.stringify({ file_name: "contract.pdf", content_hash: "abc123", note: "" }),
+    });
+    assert.equal(res.status, 403);
+    // 拒否は案件アクセス拒否として監査ログに残る
+    const events = await authedFetch(app, a1, "/api/audit-events?action=engagement_access_denied");
+    const ev = (await events.json()) as { events: Array<{ result: string }> };
+    assert.ok(ev.events.some((e) => e.result === "denied"));
+  });
+
   test("auditee from other department cannot create remediation (P1-2)", async () => {
     const app = await buildTestApp();
     const a1 = await login(app, "auditor1@test.local", "TestPass2026!");

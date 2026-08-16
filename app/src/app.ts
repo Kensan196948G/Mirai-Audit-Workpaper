@@ -1205,25 +1205,6 @@ export function buildApp(deps: AppDeps) {
     return c.json({ id }, 201);
   });
 
-  // 是正計画の進捗更新（着手・提出・差戻し）。完了判定は verify（監査役）が行う
-  app.post("/api/remediations/:id/status", requireAuth(), requirePerm("remediation:create"), makeValidator(remediationStatusSchema), async (c) => {
-    const ctx = c.get(CTX_KEY) as AppContext;
-    const r = await getRow<any>(ctx.db, `SELECT * FROM remediations WHERE id = ?`, c.req.param("id"));
-    if (!r) throw new AppError(404, "NOT_FOUND", "是正計画が見つかりません");
-    const f = await getRow<any>(ctx.db, `SELECT * FROM findings WHERE id = ?`, r.finding_id);
-    if (f) await checkEngagementAccess(ctx, await loadEngagement(ctx, f.engagement_id));
-    const next = bodyOf(c).status;
-    if (!(next in REMEDIATION_TRANSITIONS)) throw new AppError(400, "BAD_REQUEST", "不正な状態です");
-    assertTransition(REMEDIATION_TRANSITIONS, r.status, next, "是正計画");
-    // 進捗更新は是正責任者本人（または補助する監査役）のみ
-    if (ctx.user!.role !== "auditor" && r.owner_id !== ctx.user!.id) {
-      throw new AppError(403, "FORBIDDEN", "是正責任者本人のみ進捗を更新できます");
-    }
-    await run(ctx.db, `UPDATE remediations SET status = ?, updated_at = ? WHERE id = ?`, next, nowIso(), r.id);
-    await writeAuditEvent(ctx.db, { actorId: ctx.user!.id, action: "remediation_status", objectType: "remediation", objectId: r.id, detail: `${r.status}->${next}`, ip: ctx.ip });
-    return c.json({ ok: true });
-  });
-
   app.post("/api/remediations/:id/verify", requireAuth(), requirePerm("remediation:verify"), makeValidator(remediationVerifySchema), async (c) => {
     const ctx = c.get(CTX_KEY) as AppContext;
     const r = await getRow<any>(ctx.db, `SELECT * FROM remediations WHERE id = ?`, c.req.param("id"));

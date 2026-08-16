@@ -21,7 +21,12 @@ async function hashPassword(password) {
   return `pbkdf2$90000$${b64(salt.buffer)}$${b64(bits)}`;
 }
 
-const PASSWORD = "Mirai@2026pass";
+// パスワードは Git 管理しない（環境変数 MAW_SEED_PASSWORD で指定）
+const PASSWORD = process.env.MAW_SEED_PASSWORD;
+if (!PASSWORD) {
+  console.error("MAW_SEED_PASSWORD 環境変数を指定してください（例: MAW_SEED_PASSWORD=... node scripts/seed.mjs --remote）");
+  process.exit(1);
+}
 
 async function main() {
   const hash = await hashPassword(PASSWORD);
@@ -33,7 +38,7 @@ async function main() {
   const sql = `INSERT OR IGNORE INTO users (id, email, name, role, department, active, password_hash, created_at, updated_at) VALUES\n${rows.join(",\n")};`;
   const fs = await import("node:fs");
   fs.writeFileSync(new URL("./seed-users.sql", import.meta.url), sql);
-  console.log(`seed SQL generated: ${users.length} users (password: ${PASSWORD})`);
+  console.log(`seed SQL generated: ${users.length} users (password は環境変数から取得・非表示)`);
   console.log(`apply with: npx wrangler d1 execute mirai-audit-workpaper-db --${mode} --file scripts/seed-users.sql`);
 }
 

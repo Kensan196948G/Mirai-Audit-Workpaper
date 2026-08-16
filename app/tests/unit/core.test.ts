@@ -19,6 +19,12 @@ describe("unit: password hashing", () => {
     assert.ok(!(await verifyPassword("x", "not-a-hash")));
   });
 
+  test("verify rejects unsafe iteration count (DoS guard)", async () => {
+    // 反復回数が安全範囲外（1回・100万回）のハッシュは検証を拒否する
+    assert.ok(!(await verifyPassword("x", "pbkdf2$1$AAAA$AAAA")));
+    assert.ok(!(await verifyPassword("x", "pbkdf2$1000000$AAAA$AAAA")));
+  });
+
   test("sha256 produces 64 hex chars", async () => {
     const h = await sha256Hex("abc");
     assert.equal(h.length, 64);
