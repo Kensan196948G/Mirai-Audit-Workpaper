@@ -8,6 +8,8 @@ on:
 jobs:
   deploy-preview:
     # main への push（CI通過後）と手動実行で preview へデプロイ
+    # CLOUDFLARE_API_TOKEN 未設定時はスキップ（初回はsecrets設定が必要）
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
     runs-on: ubuntu-latest
     environment: preview
     defaults:
@@ -37,8 +39,8 @@ jobs:
           curl -sf https://mirai-audit-workpaper-preview.kensan1969.workers.dev/api/health || exit 1
 
   deploy-production:
-    # 手動実行のみ（本番は受入基準クリア後に意図的に実行）
-    if: github.event_name == 'workflow_dispatch'
+    # 手動実行のみ（本番は受入基準クリア後に意図的に実行）。トークン未設定時はスキップ
+    if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     environment: production
     defaults:
