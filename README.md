@@ -12,7 +12,7 @@
 
 - 技術: Cloudflare Workers（Hono）+ D1（SQLite）+ ネイティブHTML/JS SPA（TypeScript・デザインシステム適用）
 - 機能: 認証（セッションCookie）、ロール別権限（監査役・監査役会・総務部・被監査部門・管理者）、年度計画の承認フロー、個別監査案件、証憑依頼・提出・受領、監査調書（版管理・レビュー・確定）、指摘・是正・フォローアップ、監査ログ（追記専用）、ダッシュボード
-- 検証: 型チェック・lint・テスト（57件）・ビルド・リンク検証 すべてPASS
+- 検証: 型チェック・lint・テスト（62件）・ビルド・リンク検証 すべてPASS
 - セキュリティ: CSRF対策、レート制限、Cookie Secure、セキュリティヘッダー、環境分離（preview/MVP/production）、bootstrapは本番で無効
 - 稼働URL:
   - 🧪 preview（内部検証）: https://mirai-audit-workpaper-preview.kensan1969.workers.dev

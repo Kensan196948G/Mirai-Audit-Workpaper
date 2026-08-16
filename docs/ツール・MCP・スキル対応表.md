@@ -10,8 +10,8 @@
 | filesystem | ファイル・文書の読み書き、検証 | セッション許可ディレクトリ | 読書可 | ✅ 使用 | 文書群の精査・更新・リンク検証に必須 |
 | bash | スクリプト実行（リンク検証・HTML構造検証・テスト） | セッションサンドボックス | 実行 | ✅ 使用 | check-links.py・app のビルド/テスト/デプロイ検証 |
 | web_search | 一般情報の参照 | — | 読 | ⚪ 状況による | 製品候補（AppSuite等）の仕様確認時のみ |
-| GitHub CLI（gh） | リポジトリ・PR・Actions・secrets 管理 | 要認証（トークン） | 読書 | ✅ 使用 | GitHub リポジトリ作成、PR#1〜4 作成・マージ、CI 確認、CLOUDFLARE_ACCOUNT_ID secret 設定 |
-| Cloudflare MCP | Workers/D1/ゾーン/DNS の確認・Workerデプロイ | 要アカウント（Workers Scripts:Edit 相当） | 読書＋Worker書込み | ✅ 使用 | Worker デプロイ（multipart API）、D1 クエリ/migration、ゾーン・DNS・カスタムドメイン確認。カスタムドメイン/ルート作成APIはトークン権限（10405/10000）で不可のため、既存ドメインを利用し Worker コード更新で対応 |
+| GitHub CLI（gh） | リポジトリ・PR・Actions・secrets 管理 | 要認証（トークン） | 読書 | ✅ 使用 | GitHub リポジトリ作成、PR#1〜5 作成・マージ、CI 確認、secrets 設定（CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN）、default branch を main に修正、workflow run 確認 |
+| Cloudflare MCP | Workers/D1/ゾーン/DNS の確認 | 要アカウント（アカウントスコープのAPIトークン） | 読書（トークン作成等の User API Tokens 操作は権限外で不可） | ✅ 使用 | Worker・D1・ゾーン・カスタムドメインの実在確認、デプロイ状況・ルート確認、トークンverify（作成・一覧は9109で不可のため CI 用トークンは既存トークンを流用しローテーションを推奨記録）。デプロイ本体は CI（GitHub Actions）が実施 |
 | Neon MCP | Postgres DB管理 | 要アカウント | 読書 | 🔴 未使用 | 本プロジェクトは Cloudflare D1 を使用（Postgres 対象なし） |
 
 ## 2. スキル
@@ -26,6 +26,7 @@
 |---|---|---|
 | scripts/check-links.py | 全 Markdown／HTML 相対リンクの検証 | `python3 scripts/check-links.py`（PASS を確認） |
 | HTML構造検証 | タグ整合・閉じ忘れの確認 | セッション内で html.parser を使用 |
+| Secret スキャン（gitleaks） | 秘密情報・資格情報のコミット防止 | CI（.github/workflows/ci.yml）の secretscan ジョブで PR/push 毎に実行 |
 | レスポンシブ・印刷確認 | viewport・@media の有無 | 各HTMLのCSS確認 |
 
 ## 4. 記録・見直し
