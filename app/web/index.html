@@ -3,33 +3,123 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#10305c" />
+<meta name="description" content="監査業務・証跡管理（Mirai Audit Workpaper）— 監査計画・証憑・調書・指摘・改善確認を証跡とともに管理します。" />
+<meta name="robots" content="noindex,nofollow" />
 <title>監査業務・証跡管理 | Mirai Audit Workpaper</title>
 <style>
-:root{--navy:#183a61;--blue:#2563a6;--pale:#edf5fc;--line:#cbd8e6;--ok:#176b4d;--warn:#9a5a00;--err:#b3261e;--ink:#172033;--muted:#536174}
-*{box-sizing:border-box}body{margin:0;font-family:"Yu Gothic UI","Meiryo",sans-serif;color:var(--ink);background:#eef2f6;line-height:1.7}
+:root{
+  /* ---- デザイントークン（監査・統治ブランド） ---- */
+  --navy:#10305c;
+  --navy-2:#1c4d86;
+  --blue:#2563a6;
+  --blue-strong:#1b4f8a;
+  --blue-light:#dcebf7;
+  --pale:#eef3f8;
+  --paper:#ffffff;
+  --line:#c7d4e2;
+  --ink:#182235;
+  --muted:#4c5a6c;
+  --ok:#14653e; --ok-bg:#e0f4e8;
+  --warn:#7a5200; --warn-bg:#fdf0d0;
+  --err:#9d2b23; --err-bg:#fbe5e2;
+  --info:#1c5a8c; --info-bg:#e0f0fb;
+  --purple:#523a99; --purple-bg:#efe9fb;
+  --gray:#52616f; --gray-bg:#e8edf2;
+  --focus:#2563a6;
+  --shadow-sm:0 1px 2px rgb(16 48 92 / .07);
+  --shadow-md:0 10px 28px rgb(16 48 92 / .12);
+  --radius:12px;
+  --radius-sm:8px;
+  --font:"Yu Gothic UI","Hiragino Kaku Gothic ProN","Meiryo",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:var(--font);color:var(--ink);background:linear-gradient(180deg,#f4f7fb 0%,#eaf0f6 100%);line-height:1.75;font-size:15px}
 .app{min-height:100vh;display:flex;flex-direction:column}
-header{background:linear-gradient(135deg,#102c4b,#2563a6);color:#fff;padding:.9rem 1.4rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
-header h1{font-size:1.15rem;margin:0}nav{display:flex;gap:.5rem;flex-wrap:wrap}
-nav a{color:#dce9f5;text-decoration:none;font-weight:600;padding:.25rem .7rem;border-radius:6px;font-size:.9rem;cursor:pointer}
-nav a:hover,nav a.active{background:#ffffff22;color:#fff}
-.userinfo{font-size:.85rem}main{flex:1;padding:1.2rem clamp(.8rem,3vw,2.5rem) 3rem;max-width:1200px;width:100%;margin:0 auto}
-.card{background:#fff;border:1px solid var(--line);border-radius:.6rem;padding:1.1rem 1.2rem;margin-bottom:1rem}
-.card h2{margin:0 0 .7rem;color:var(--navy);font-size:1.2rem;border-bottom:2px solid #77a9d7;padding-bottom:.3rem}
-table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:.5rem .6rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
-th{background:var(--navy);color:#fff}tr:nth-child(even) td{background:#f7fafc}
-.badge{display:inline-block;border-radius:999px;padding:.12rem .6rem;font-size:.78rem;font-weight:700}
-.b-gray{background:#e8edf2;color:#445}.b-green{background:#d8f0e2;color:var(--ok)}.b-amber{background:#fdeecf;color:var(--warn)}
-.b-red{background:#f9d9d7;color:var(--err)}.b-blue{background:#d9efff;color:#164e78}.b-purple{background:#ebe6ff;color:#4e3996}
-button{background:var(--blue);color:#fff;border:0;border-radius:6px;padding:.45rem 1rem;font-size:.9rem;font-weight:600;cursor:pointer}
-button:hover{filter:brightness(1.08)}button.sec{background:#e8edf2;color:var(--navy)}
-input,textarea,select{width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:6px;font-size:.92rem;font-family:inherit}
-label{display:block;font-size:.85rem;font-weight:600;color:var(--muted);margin:.6rem 0 .2rem}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem}
-.error{color:var(--err);font-size:.88rem}.muted{color:var(--muted);font-size:.85rem}
-.actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem}a{color:#145f9b}
-.login-wrap{max-width:420px;margin:12vh auto 0}.login-box{background:#fff;border:1px solid var(--line);border-radius:.8rem;padding:2rem;box-shadow:0 8px 24px #1a314722}
-.hint{font-size:.8rem;color:var(--muted);margin-top:.8rem}
-@media(max-width:640px){header{flex-direction:column;align-items:flex-start}.row{grid-template-columns:1fr}}
+/* フォーカス可視化（WCAG 2.1: 2.4.7） */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+/* ヘッダー */
+header{background:linear-gradient(120deg,var(--navy) 0%,var(--navy-2) 55%,var(--blue) 100%);color:#fff;padding:.95rem 1.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;box-shadow:0 2px 10px rgb(16 48 92 / .18);position:sticky;top:0;z-index:10}
+header h1{font-size:1.18rem;margin:0;letter-spacing:.02em;display:flex;align-items:center;gap:.5rem}
+header h1::before{content:"🧭";font-size:1.1rem}
+nav{display:flex;gap:.4rem;flex-wrap:wrap}
+nav a{color:#d8e6f4;text-decoration:none;font-weight:600;padding:.35rem .8rem;border-radius:var(--radius-sm);font-size:.9rem;cursor:pointer;transition:background .15s,color .15s}
+nav a:hover{background:#ffffff26;color:#fff}
+nav a.active{background:#ffffff2e;color:#fff;box-shadow:inset 0 -2px 0 #7fb3e8}
+.userinfo{font-size:.85rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;color:#e6eef7}
+/* メイン */
+main{flex:1;padding:1.4rem clamp(.8rem,3vw,2.6rem) 3rem;max-width:1240px;width:100%;margin:0 auto}
+/* カード */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:1.1rem;box-shadow:var(--shadow-sm)}
+.card h2{margin:0 0 .8rem;color:var(--navy);font-size:1.15rem;border-bottom:2px solid var(--blue-light);padding-bottom:.45rem;display:flex;align-items:center;gap:.5rem}
+.card h3{color:var(--navy-2);font-size:1rem;margin:1.1rem 0 .5rem}
+/* テーブル（モバイルで横スクロール） */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.55rem .7rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{background:var(--navy);color:#fff;font-weight:600;white-space:nowrap}
+tr:nth-child(even) td{background:#f6f9fc}
+tbody tr:hover td{background:#eef5fb}
+/* バッジ */
+.badge{display:inline-block;border-radius:999px;padding:.14rem .65rem;font-size:.75rem;font-weight:700;letter-spacing:.02em;line-height:1.5;white-space:nowrap}
+.b-gray{background:var(--gray-bg);color:var(--gray)}
+.b-green{background:var(--ok-bg);color:var(--ok)}
+.b-amber{background:var(--warn-bg);color:var(--warn)}
+.b-red{background:var(--err-bg);color:var(--err)}
+.b-blue{background:var(--info-bg);color:var(--info)}
+.b-purple{background:var(--purple-bg);color:var(--purple)}
+/* ボタン */
+button{background:linear-gradient(180deg,var(--blue) 0%,var(--blue-strong) 100%);color:#fff;border:0;border-radius:var(--radius-sm);padding:.5rem 1.05rem;font-size:.9rem;font-weight:600;cursor:pointer;transition:filter .15s,transform .1s,box-shadow .15s;box-shadow:0 1px 2px rgb(16 48 92 / .2)}
+button:hover{filter:brightness(1.07)}
+button:active{transform:translateY(1px)}
+button.sec{background:#e9eff5;color:var(--navy);box-shadow:none;border:1px solid var(--line)}
+button.sec:hover{background:#dde8f2}
+button[disabled]{opacity:.55;cursor:not-allowed}
+/* フォーム */
+input,textarea,select{width:100%;padding:.55rem .65rem;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:.92rem;font-family:inherit;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgb(37 99 166 / .15)}
+label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin:.7rem 0 .25rem}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.9rem}
+/* 状態・補助 */
+.error{color:var(--err);font-size:.88rem;font-weight:600;margin:.4rem 0 0}
+.muted{color:var(--muted);font-size:.85rem}
+.hint{font-size:.8rem;color:var(--muted);margin-top:1rem;border-top:1px dashed var(--line);padding-top:.7rem}
+.actions{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.8rem;align-items:center}
+a{color:var(--blue-strong);text-decoration:underline;text-underline-offset:2px}
+a:hover{color:var(--navy)}
+/* ログイン */
+.login-wrap{max-width:440px;margin:10vh auto 0;padding:0 1rem}
+.login-box{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:2.2rem;box-shadow:var(--shadow-md)}
+.login-box h2{margin:0 0 .6rem;color:var(--navy);font-size:1.3rem;text-align:center}
+.login-box h2::before{content:"🧭 ";display:block;font-size:1.6rem;margin-bottom:.4rem}
+.login-box .actions{justify-content:center}
+.login-box button{width:100%;padding:.65rem;font-size:.95rem}
+/* リスト内の小カード（依頼・調書・指摘） */
+.actions>div, .card>div:not(.actions):not(.row) > div[style]{ }
+/* 空状態の余白 */
+td.muted{font-size:.85rem}
+/* レスポンシブ */
+@media(max-width:720px){
+  header{flex-direction:column;align-items:flex-start}
+  .row{grid-template-columns:1fr}
+  main{padding:1rem .9rem 2.5rem}
+  table{display:block;overflow-x:auto;white-space:nowrap}
+  .userinfo{width:100%;justify-content:space-between}
+}
+/* 動きを減らす設定（WCAG 2.3.3） */
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+/* 印刷（調書・帳票） */
+@media print{
+  header{position:static;box-shadow:none}
+  nav,.userinfo button,.actions{display:none!important}
+  body{background:#fff}
+  .card{border:1px solid #999;box-shadow:none;break-inside:avoid}
+  a{text-decoration:none;color:var(--ink)}
+}
+
 </style>
 </head>
 <body>

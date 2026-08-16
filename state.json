@@ -37,9 +37,9 @@
       "app_lint": "PASS (0 warnings)",
       "app_test": "PASS (57/57: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format)",
       "app_build": "PASS (web -> embedded -> typecheck)",
-      "git": "main にPR#1（実装・セキュリティ強化・CI/CD・文書整合）とPR#2（deployガード）をマージ済み。CI（app/docs）green。preview・production デプロイ済み・実機検証済み",
+      "git": "main にPR#1〜4 マージ済み。CI green。カスタムドメイン設定済み（maw=本番 / maw-mvp=MVP）・WebUIデザイン刷新（デザインシステム）",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
-      "next_action": "①GitHub Actions secrets に CLOUDFLARE_API_TOKEN を設定してデプロイ自動化を有効化（CLOUDFLARE_ACCOUNT_ID は設定済み）、②受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
+      "next_action": "①CLOUDFLARE_API_TOKEN を GitHub Actions secrets に設定してデプロイ自動化を有効化、②受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育を経て実アカウントのプロビジョニング（BL-09）と本番運用開始。正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
     }
   },
   "priority": {

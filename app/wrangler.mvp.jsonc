@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mirai-audit-workpaper-mvp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "ENVIRONMENT": "mvp",
+    // テスト環境用の初期パスワード（preview/mvp/local のみ使用。本番は未使用・bootstrap拒否）
+    "BOOTSTRAP_PASSWORD": "Mirai@2026pass"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mirai-audit-workpaper-mvp-db",
+      "database_id": "b26ede33-f2ff-4297-ad0f-a6770e33db13",
+      "migrations_dir": "migrations"
+    }
+  ]
+  // カスタムドメイン: maw-mvp.mirai-dx-platform.com（Cloudflare Dashboard / API で管理済み）
+}
