@@ -18,7 +18,7 @@ async function hashPassword(password) {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 90000 }, key, 256);
   const b64 = (buf) => Buffer.from(buf).toString("base64");
-  return `pbkdf2$90000${b64(salt.buffer)}${b64(bits)}`;
+  return `pbkdf2$90000$${b64(salt.buffer)}$${b64(bits)}`;
 }
 
 const PASSWORD = "Mirai@2026pass";

@@ -15,8 +15,8 @@
     "review_blocker_count": 0,
     "security_issue_count": 0,
     "broken_link_count": 0,
-    "app_tests": 55,
-    "app_tests_pass": 55
+    "app_tests": 57,
+    "app_tests_pass": 57
   },
   "execution": {
     "max_duration_minutes": 300,
@@ -35,7 +35,7 @@
       "secret_scan": "PASS (0 hits)",
       "app_typecheck": "PASS",
       "app_lint": "PASS (0 warnings)",
-      "app_test": "PASS (55/55: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering)",
+      "app_test": "PASS (57/57: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format)",
       "app_build": "PASS (web -> embedded -> typecheck)",
       "git": "main にPR#1（実装・セキュリティ強化・CI/CD・文書整合）とPR#2（deployガード）をマージ済み。CI（app/docs）green。preview・production デプロイ済み・実機検証済み",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
