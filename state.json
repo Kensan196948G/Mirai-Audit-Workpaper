@@ -15,8 +15,8 @@
     "review_blocker_count": 0,
     "security_issue_count": 0,
     "broken_link_count": 0,
-    "app_tests": 78,
-    "app_tests_pass": 78
+    "app_tests": 81,
+    "app_tests_pass": 81
   },
   "execution": {
     "max_duration_minutes": 300,
@@ -35,15 +35,17 @@
       "secret_scan": "PASS (0 hits・CIにgitleaks追加)",
       "app_typecheck": "PASS",
       "app_lint": "PASS (0 warnings)",
-      "app_test": "PASS (78/78: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format/health-readiness/admin-users/remediation-status/audit-limit/session-invalidation/auditee-scoping)",
+      "app_test": "PASS (81/81: unit + integration incl. security/CSRF/rate-limit/transitions/access-control/numbering/seed-format/health-readiness/admin-users/remediation-status/audit-limit/session-invalidation/auditee-scoping/ui-env)",
       "app_build": "PASS (web -> embedded -> typecheck)",
       "ui_navigation": "CHG-037: サイドメニュー遷移の無限再取得ループを修正（render(skipLoad)）。jsdom実機相当で全画面1回取得・描画を確認。PR#15・main b281103 を preview/MVP/本番（deployment 377ccc41）へ反映済み",
       "ui_sidebar_style": "CHG-038: サイドメニュー選択時の左端青インジケーターを削除し網掛けのみに変更。PR#17・main c451d31 を preview/MVP/本番（deployment b8fdaff8）へ反映済み",
       "ui_webui_v2": "CHG-039/040: WebUI全面改編（v2・白基調・SVGアイコン・ダッシュボード追加・検索・モーダルEsc閉じ等）を実装し、PR#19・main de805fd を preview/MVP/本番（deployment 759d73eb）へ反映済み。API・権限・状態遷移・監査ログ追記専用は不変（表示出し分けのみ）。テスト78件/ビルド/lint/リンクPASS、本番/MVPのHTMLハッシュ 5f861fb8 一致",
-      "deploy": "CHG-035/036 反映済み: main 980ace4（PR#13）→ preview/MVP 自動デプロイ成功・MVP実機で被監査部門の閲覧制限確認（scope null・workpapers 0・自部門依頼のみ・調書API 403）。本番は workflow_dispatch（run 31934106518・deployment 8fa8e29a）でデプロイ成功（health db:ok・bootstrap 403・/api/me 401・HSTS/no-store/CSP確認・DB 0ユーザー）。バックアップはD1 export＋アーティファクト30日（再試行3回）",
-      "git": "main にPR#1〜13 マージ済み（main 980ace4）。CI green（app/docs/secretscan）・npm audit 0件・gitleaks 0件。branch protection 有効（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。",
+      "deploy": "CHG-039/040/042/043 反映済み: main d0aeaea（PR#19/20/21/22）→ preview/MVP 自動デプロイ成功・本番は workflow_dispatch（run 31946619142・deployment 5cc1b500）でデプロイ成功（health db:ok・/api/me 401・bootstrap 403・本番用UI配信・HSTS/no-store/CSP確認）。バックアップはD1 export＋アーティファクト30日（再試行3回）",
+      "git": "main にPR#1〜22 マージ済み（main d0aeaea）。CI green（app/docs/secretscan）・npm audit 0件・gitleaks 0件。branch protection 有効（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
-      "next_action": "①初期安定化監視（1〜2週間のエラー率・ログ・メトリクス日次確認）②実アカウントのプロビジョニング（BL-09: 初回管理者はRunbook §3.1のCLI手順、以降はユーザー管理UI）と受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育 ③正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提"
+      "next_action": "①初期安定化監視（1〜2週間のエラー率・ログ・メトリクス日次確認）②実アカウントのプロビジョニング（BL-09: 初回管理者はRunbook §3.1のCLI手順、以降はユーザー管理UI）と受入試験（UAT-01〜10）・権限棚卸し・復元試験・教育 ③正式運用（実データ）は監査役会・総務部・情報システム部門の承認が前提",
+      "ui_webui_prod": "CHG-042: 本番用WebUI（index.production.html）を新設し、環境別（本番のみ本番用UI・preview/MVPは通常UI）で配信を出し分け。PR#21・main f403c25 を preview/MVP/本番（deployment 5cc1b500）へ反映済み。テスト用ID・暫定注記は本番用UIから排除",
+      "ui_a11y": "CHG-043: アクセシビリティ・タイポグラフィ修正（ラベルfor 46件・role=alert・CJKタイポグラフィ）を通常UI/本番用UIの両方へ適用。PR#22・main d0aeaea を preview/MVP/本番（deployment 5cc1b500）へ反映済み。本番用UIにrole=alert 2箇所・テストID 0件を実機確認"
     }
   },
   "priority": {
