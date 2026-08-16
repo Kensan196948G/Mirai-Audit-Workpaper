@@ -39,6 +39,7 @@
       "app_build": "PASS (web -> embedded -> typecheck)",
       "ui_navigation": "CHG-037: サイドメニュー遷移の無限再取得ループを修正（render(skipLoad)）。jsdom実機相当で全画面1回取得・描画を確認。PR#15・main b281103 を preview/MVP/本番（deployment 377ccc41）へ反映済み",
       "ui_sidebar_style": "CHG-038: サイドメニュー選択時の左端青インジケーターを削除し網掛けのみに変更。PR#17・main c451d31 を preview/MVP/本番（deployment b8fdaff8）へ反映済み",
+      "ui_webui_v2": "CHG-039/040: WebUI全面改編（v2・白基調・SVGアイコン・ダッシュボード追加・検索・モーダルEsc閉じ等）を実装し、PR#19・main de805fd を preview/MVP/本番（deployment 759d73eb）へ反映済み。API・権限・状態遷移・監査ログ追記専用は不変（表示出し分けのみ）。テスト78件/ビルド/lint/リンクPASS、本番/MVPのHTMLハッシュ 5f861fb8 一致",
       "deploy": "CHG-035/036 反映済み: main 980ace4（PR#13）→ preview/MVP 自動デプロイ成功・MVP実機で被監査部門の閲覧制限確認（scope null・workpapers 0・自部門依頼のみ・調書API 403）。本番は workflow_dispatch（run 31934106518・deployment 8fa8e29a）でデプロイ成功（health db:ok・bootstrap 403・/api/me 401・HSTS/no-store/CSP確認・DB 0ユーザー）。バックアップはD1 export＋アーティファクト30日（再試行3回）",
       "git": "main にPR#1〜13 マージ済み（main 980ace4）。CI green（app/docs/secretscan）・npm audit 0件・gitleaks 0件。branch protection 有効（必須チェック app/docs/secretscan・PRレビュー1件・force push禁止）。",
       "tracked_files": "app/実装（src/tests/migrations/web/CI/CD）＋文書群",
